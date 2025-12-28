@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            // CONTEÚDO DA ABA 2: Relatório Individual
+            <!-- CONTEÚDO DA ABA 2: Relatório Individual -->
             <div id="content-relatorio" class="hidden animate-fade-in">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">Relatório Individual</h2>
                 
@@ -553,7 +553,10 @@ Exemplo Texto (Use IA ✨):
 
             const [y, m] = mes.split('-').map(Number);
             // FIX DATE: Usar UTC
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1));
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            });
 
             if(filtered.length === 0) return showMessage("Sem dados para esta scooteira.", 'warning');
 
@@ -587,7 +590,10 @@ Exemplo Texto (Use IA ✨):
 
             const [y, m] = mes.split('-').map(Number);
             // FIX DATE: Usar getUTCMonth e getUTCFullYear para garantir precisão no mês
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1) && parseDate(r.data).getUTCFullYear() === y).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
 
             if(filtered.length === 0) {
                  document.getElementById('relatorio-resumo-cards').classList.add('hidden');
@@ -662,7 +668,11 @@ Exemplo Texto (Use IA ✨):
             if(!nome || !mes) return showMessage("Selecione dados.", 'warning');
             const [y, m] = mes.split('-').map(Number);
             // FIX DATE
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+
             if(filtered.length === 0) return showMessage("Sem dados.", 'warning');
             const headers = ["Data", "Nome", "Squad", "Entrada", "Saída", "Duração (h)", "Turno"];
             const rows = filtered.map(r => [r.data, r.nome, r.squadReal, r.entrada, r.saida, (r.duracaoSegundos / 3600).toFixed(2).replace('.', ','), r.turnoAtuado]);
