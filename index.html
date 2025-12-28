@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- NOME UNIFICADO NA ABA -->
-    <title>Dash Atuaçãoo - Scooto</title>
+    <title>Dash Atuação - Scooto</title>
     
     <!-- Favicon de Scooter -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
@@ -399,7 +399,6 @@ Exemplo Texto (Use IA ✨):
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
-
         // 3. ID único para o armazenamento de dados. Pode ser o nome do seu projeto.
         const appId = "scooto-gestao-v1"; 
 
@@ -867,50 +866,71 @@ Exemplo Texto (Use IA ✨):
             let grandTotal = 0;
 
             data.forEach(r => { 
-                // 1. Limpa espaços extras antes de qualquer verificação
+                // 1. Limpa espaços e normaliza
                 let s = r.squadReal ? r.squadReal.trim() : 'Outro';
                 
-                // --- CORREÇÃO DE NOMES DUPLICADOS ---
-                // Se estiver escrito "Rec Cred" ou variações, conta como "Rec. Crédito"
-                if(s && (s.toLowerCase() === 'rec cred' || s.toLowerCase() === 'rec. cred' || s.toLowerCase().includes('recupera'))) {
+                // Normalização agressiva para garantir que Rec Cred caia na chave certa
+                const lower = s.toLowerCase();
+                if(lower.includes('rec') || lower.includes('crédito') || lower.includes('credito')) {
                     s = 'Rec Cred';
-                }
-                if(s && s.toLowerCase().includes('monitor')) {
+                } else if(lower.includes('monitor')) {
                     s = 'Monitoria';
                 }
-                // ------------------------------------
 
                 if(!totals[s]) totals[s] = 0; 
                 totals[s] += r.duracaoSegundos; 
                 grandTotal += r.duracaoSegundos;
             });
             
-            // Render specific Squads
+            // 2. Renderiza Squads Fixos (Incluindo Rec Cred)
             SQUADS_OPCOES.forEach(s => {
                 const sec = totals[s] || 0;
                 
-                // 2. REGRA: Se estiver zerado, não exibe o cartão
                 if (sec === 0) return;
 
                 const [h, m] = formatDuration(sec).split(':');
-                let borderClass = 'border-l-4 border-indigo-500';
+                
+                // Definição de Cores
+                let borderClass = 'border-l-4 border-indigo-500'; // Padrão
                 if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
-                if(s.includes('Rec')) borderClass = 'border-l-4 border-red-500';
+                
+                // --- AQUI ESTÁ A COR VERMELHA ---
+                if(s === 'Rec Cred' || s.includes('Rec')) borderClass = 'border-l-4 border-red-600'; 
+                // --------------------------------
+                
                 if(s.includes('Monitoria')) borderClass = 'border-l-4 border-yellow-500';
                 if(s === 'OJR') borderClass = 'border-l-4 border-orange-500';
 
-                container.innerHTML += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}"><h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3><p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p></div>`;
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
+                        <p class="text-2xl font-bold text-gray-800">
+                            ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
+                            ${m}<span class="text-sm text-gray-400 font-normal">m</span>
+                        </p>
+                    </div>`;
             });
             
-            // Handle squads not in the hardcoded list (Dynamic Squads)
+            // 3. Renderiza Outros Squads (Dinâmicos)
             Object.keys(totals).forEach(s => {
                 if (!SQUADS_OPCOES.includes(s)) {
                     const sec = totals[s];
-                    // Também esconde dinâmicos se, por algum motivo, estiverem zerados
                     if (sec === 0) return;
 
                     const [h, m] = formatDuration(sec).split(':');
-                    container.innerHTML += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 border-l-4 border-gray-500"><h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3><p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p></div>`;
+                    
+                    // Fallback de segurança: Se por acaso "Rec Cred" cair aqui, força vermelho também
+                    let dynBorder = 'border-l-4 border-gray-500';
+                    if (s.toLowerCase().includes('rec')) dynBorder = 'border-l-4 border-red-600';
+
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${dynBorder}">
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
+                            <p class="text-2xl font-bold text-gray-800">
+                                ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
+                                ${m}<span class="text-sm text-gray-400 font-normal">m</span>
+                            </p>
+                        </div>`;
                 }
             });
 
