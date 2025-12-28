@@ -232,6 +232,7 @@
                                 <option value="SC">SC</option>
                                 <option value="Rec. Crédito">Rec. Crédito</option>
                                 <option value="Monitoria">Monitoria</option>
+                                <option value="OJR">OJR</option>
                             </select>
                         </div>
                         <div class="md:col-span-2">
@@ -405,7 +406,7 @@ Exemplo Texto (Use IA ✨):
         let isAuthReady = false;
         let agentesByPseudo = {};
         
-        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria"];
+        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR"];
         const TURNOS_OPCOES = ["Diária Extra", "Troca", "Freela", "Monitora", "Meu Turno"];
         
         const MOCK_CADASTROS = [
@@ -862,8 +863,19 @@ Exemplo Texto (Use IA ✨):
             let grandTotal = 0;
 
             data.forEach(r => { 
-                if(!totals[r.squadReal]) totals[r.squadReal] = 0; 
-                totals[r.squadReal] += r.duracaoSegundos; 
+                let s = r.squadReal;
+                // --- CORREÇÃO DE NOMES DUPLICADOS ---
+                // Se estiver escrito "Rec Cred" ou variações, conta como "Rec. Crédito"
+                if(s && (s.toLowerCase() === 'rec cred' || s.toLowerCase() === 'rec. cred' || s.toLowerCase().includes('recupera'))) {
+                    s = 'Rec. Crédito';
+                }
+                if(s && s.toLowerCase().includes('monitor')) {
+                    s = 'Monitoria';
+                }
+                // ------------------------------------
+
+                if(!totals[s]) totals[s] = 0; 
+                totals[s] += r.duracaoSegundos; 
                 grandTotal += r.duracaoSegundos;
             });
             
@@ -885,6 +897,8 @@ Exemplo Texto (Use IA ✨):
                 if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
                 if(s.includes('Rec')) borderClass = 'border-l-4 border-pink-500';
                 if(s.includes('Monitoria')) borderClass = 'border-l-4 border-yellow-500';
+                if(s === 'OJR') borderClass = 'border-l-4 border-orange-500';
+
                 container.innerHTML += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}"><h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3><p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p></div>`;
             });
             
@@ -906,6 +920,7 @@ Exemplo Texto (Use IA ✨):
             else if(squad === 'SC') classes = "bg-purple-100 text-purple-800";
             else if(squad === 'Rec. Crédito') classes = "bg-pink-100 text-pink-800";
             else if(squad === 'Monitoria') classes = "bg-yellow-100 text-yellow-800";
+            else if(squad === 'OJR') classes = "bg-orange-100 text-orange-800";
             return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${classes}">${squad}</span>`;
         }
 
