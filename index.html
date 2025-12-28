@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- NOME UNIFICADO NA ABA -->
+    <!-- NOME UNIFICADO NA ABA - ATUALIZADO -->
     <title>Dash Atuação - Scooto</title>
     
     <!-- Favicon de Scooter -->
@@ -44,9 +44,9 @@
         <header class="bg-indigo-600 p-6 sm:p-10 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <!-- NOME UNIFICADO NO CABEÇALHO -->
+                    <!-- NOME UNIFICADO NO CABEÇALHO - ATUALIZADO -->
                     <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto</h1>
-                    <p class="text-indigo-100 text-sm mt-1">Squads x Scooteiras</p>
+                    <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
                 </div>
                 <div class="hidden md:block text-right">
                     <p id="auth-status" class="text-xs text-indigo-200 font-mono bg-indigo-800 py-1 px-2 rounded">Conectando...</p>
@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            <!-- CONTEÚDO DA ABA 2: Relatório Individual -->
+            // CONTEÚDO DA ABA 2: Relatório Individual
             <div id="content-relatorio" class="hidden animate-fade-in">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">Relatório Individual</h2>
                 
@@ -174,18 +174,21 @@
                     </div>
                 </div>
 
-                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
+                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                         <span class="text-xs text-gray-500 uppercase font-medium">Dias Trabalhados</span>
                         <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-dias">-</span>
                     </div>
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas</span>
-                        <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-horas">-</span>
+                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas Geral</span>
+                        <span class="text-3xl font-bold text-indigo-600 mt-1" id="resumo-total-horas">-</span>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Squad Principal</span>
-                        <span class="text-xl font-bold text-indigo-600 mt-auto" id="resumo-squad-princ">-</span>
+                    <!-- Nova área para Squads - ocupa 2 colunas no LG -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:col-span-2">
+                        <span class="text-xs text-gray-500 uppercase font-medium mb-2">Horas por Squad</span>
+                        <div id="resumo-squads-list" class="flex flex-wrap gap-2 mt-auto">
+                            <!-- Inserido via JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -386,7 +389,9 @@ Exemplo Texto (Use IA ✨):
         // =========================================================================================
         
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
-        const firebaseConfig = {
+        // Para usar no GitHub Pages, substitua os valores abaixo.
+        // Para testar no Preview, o sistema usará automaticamente a variável __firebase_config se disponível.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
@@ -399,6 +404,7 @@ Exemplo Texto (Use IA ✨):
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
+
         // 3. ID único para o armazenamento de dados. Pode ser o nome do seu projeto.
         const appId = "scooto-gestao-v1"; 
 
@@ -438,11 +444,20 @@ Exemplo Texto (Use IA ✨):
         // === Gemini API Helper ===
         async function callGemini(prompt) {
             // Verifica se a chave foi configurada
-            if (!geminiApiKey || geminiApiKey.includes("COLE_SUA")) {
+            // Se estivermos no preview, __gemini_api_key pode ser usado, ou a chave colada manualmente.
+            let key = geminiApiKey;
+            if (key.includes("COLE_SUA")) {
+                 // Fallback para variável de ambiente se disponível
+                 if (typeof apiKey !== 'undefined' && apiKey) key = apiKey; 
+                 else if (typeof __gemini_api_key !== 'undefined') key = __gemini_api_key;
+            }
+
+            if (!key || key.includes("COLE_SUA")) {
                 throw new Error("Chave da API Gemini não configurada no código.");
             }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+            // MUDANÇA: Usando modelo estável 1.5-flash para garantir compatibilidade com API Keys pessoais
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
             const delays = [1000, 2000, 4000];
             
             for (let i = 0; i <= delays.length; i++) {
@@ -510,7 +525,8 @@ Exemplo Texto (Use IA ✨):
             const [y, m] = val.split('-').map(Number);
             const filtered = allRegistros.filter(r => {
                 const d = parseDate(r.data);
-                return d && d.getFullYear() === y && d.getMonth() === (m-1);
+                // FIX DATE: Usar UTC para evitar problema de fuso (dia 1 virar dia 30 anterior)
+                return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
             });
 
             if(filtered.length === 0) return showMessage("Sem dados para analisar neste mês.", 'warning');
@@ -536,7 +552,8 @@ Exemplo Texto (Use IA ✨):
             if(!nome || !mes) return showMessage("Selecione scooteira e mês.", 'warning');
 
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1));
+            // FIX DATE: Usar UTC
+            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1));
 
             if(filtered.length === 0) return showMessage("Sem dados para esta scooteira.", 'warning');
 
@@ -550,7 +567,9 @@ Exemplo Texto (Use IA ✨):
                 const analysis = await callGemini(prompt);
                 modalContent.innerHTML = marked.parse(analysis);
             } catch (e) {
-                modalContent.textContent = "Erro ao gerar análise.";
+                // MUDANÇA: Mostrar a mensagem de erro real
+                console.error(e);
+                modalContent.textContent = "Erro ao gerar análise: " + e.message;
             }
         }
 
@@ -567,7 +586,8 @@ Exemplo Texto (Use IA ✨):
             }
 
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE: Usar getUTCMonth e getUTCFullYear para garantir precisão no mês
+            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1) && parseDate(r.data).getUTCFullYear() === y).sort((a,b) => parseDate(a.data) - parseDate(b.data));
 
             if(filtered.length === 0) {
                  document.getElementById('relatorio-resumo-cards').classList.add('hidden');
@@ -576,24 +596,51 @@ Exemplo Texto (Use IA ✨):
             }
 
             let totalSegundos = 0;
-            const squadsCount = {};
+            const squadsDuration = {}; // Mudado para somar duração
+            
             tbody.innerHTML = '';
             filtered.forEach(r => {
                 totalSegundos += r.duracaoSegundos;
-                squadsCount[r.squadReal] = (squadsCount[r.squadReal] || 0) + 1;
+                // Acumula segundos por squad
+                squadsDuration[r.squadReal] = (squadsDuration[r.squadReal] || 0) + r.duracaoSegundos;
+                
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition border-b border-gray-50";
                 const dateObj = parseDate(r.data);
-                const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' });
+                const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', timeZone: 'UTC' }); // Forçar UTC no display do dia da semana também
                 tr.innerHTML = `<td class="px-6 py-3 font-medium text-gray-900">${r.data}</td><td class="px-6 py-3 text-xs text-gray-500 uppercase">${diaSemana}</td><td class="px-6 py-3">${getSquadBadge(r.squadReal)}</td><td class="px-6 py-3 font-mono text-xs">${r.entrada}</td><td class="px-6 py-3 font-mono text-xs">${r.saida}</td><td class="px-6 py-3 font-mono text-xs font-semibold text-gray-600">${formatDuration(r.duracaoSegundos)}</td><td class="px-6 py-3 text-xs text-gray-500">${r.turnoAtuado}</td>`;
                 tbody.appendChild(tr);
             });
 
+            // Resumo Geral
             document.getElementById('resumo-total-dias').textContent = filtered.length;
             const [h, min] = formatDuration(totalSegundos).split(':');
             document.getElementById('resumo-total-horas').innerHTML = `${h}<span class="text-sm font-normal text-gray-400">h</span> ${min}<span class="text-sm font-normal text-gray-400">m</span>`;
-            const mainSquad = Object.entries(squadsCount).sort((a,b) => b[1] - a[1])[0][0];
-            document.getElementById('resumo-squad-princ').textContent = mainSquad;
+            
+            // Resumo por Squad (Novo)
+            const squadsListContainer = document.getElementById('resumo-squads-list');
+            squadsListContainer.innerHTML = '';
+            
+            Object.entries(squadsDuration).sort((a,b) => b[1] - a[1]).forEach(([squad, duracao]) => {
+                const [sqH, sqM] = formatDuration(duracao).split(':');
+                
+                // Pega cor baseada no badge existente
+                let colorClass = "bg-gray-100 text-gray-700 border-gray-200";
+                if(squad === 'CB') colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                else if(squad === 'SC') colorClass = "bg-purple-50 text-purple-700 border-purple-200";
+                else if(squad.includes('Rec')) colorClass = "bg-red-50 text-red-700 border-red-200";
+                else if(squad.includes('Monitoria')) colorClass = "bg-yellow-50 text-yellow-700 border-yellow-200";
+                else if(squad === 'OJR') colorClass = "bg-orange-50 text-orange-700 border-orange-200";
+
+                const pill = document.createElement('div');
+                pill.className = `flex items-center px-3 py-2 rounded-lg border ${colorClass}`;
+                pill.innerHTML = `
+                    <span class="text-xs font-bold uppercase mr-2">${squad}</span>
+                    <span class="text-sm font-mono font-semibold">${sqH}h${sqM}</span>
+                `;
+                squadsListContainer.appendChild(pill);
+            });
+
             document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
         };
 
@@ -601,7 +648,8 @@ Exemplo Texto (Use IA ✨):
             const val = document.getElementById('mes-select').value;
             if(!val) return showMessage("Selecione um mês.", 'warning');
             const [y, m] = val.split('-').map(Number);
-            const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getFullYear() === y && d.getMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE
+            const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
             if(filtered.length === 0) return showMessage("Sem dados.", 'warning');
             const headers = ["Data", "Nome", "Pseudo", "Squad", "Entrada", "Saída", "Duração (h)", "Turno"];
             const rows = filtered.map(r => [r.data, r.nome, r.pseudo, r.squadReal, r.entrada, r.saida, (r.duracaoSegundos / 3600).toFixed(2).replace('.', ','), r.turnoAtuado]);
@@ -613,7 +661,8 @@ Exemplo Texto (Use IA ✨):
             const mes = document.getElementById('relatorio-mes-select').value;
             if(!nome || !mes) return showMessage("Selecione dados.", 'warning');
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE
+            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getUTCMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
             if(filtered.length === 0) return showMessage("Sem dados.", 'warning');
             const headers = ["Data", "Nome", "Squad", "Entrada", "Saída", "Duração (h)", "Turno"];
             const rows = filtered.map(r => [r.data, r.nome, r.squadReal, r.entrada, r.saida, (r.duracaoSegundos / 3600).toFixed(2).replace('.', ','), r.turnoAtuado]);
@@ -694,7 +743,8 @@ Exemplo Texto (Use IA ✨):
         // Firebase Init Logic Atualizada para GitHub Pages
         async function initApp() {
             // Verificar se o usuário preencheu a config
-            if (firebaseConfig.apiKey.includes("COLE_SUA")) {
+            // No preview, usamos a lógica "typeof" abaixo, então ele não cairá no erro se as chaves manuais estiverem vazias, desde que a var de ambiente exista.
+            if (firebaseConfig.apiKey && firebaseConfig.apiKey.includes("COLE_SUA")) {
                 showMessage("ATENÇÃO: Configure as chaves do Firebase no arquivo index.html!", 'error');
                 return;
             }
@@ -768,15 +818,15 @@ Exemplo Texto (Use IA ✨):
             const monthInput = document.getElementById('mes-select');
             if(monthInput) loadHistorico();
         }
-
-        window.loadHistorico = () => {
+        function loadHistorico() {
             if(!db) return;
             const val = document.getElementById('mes-select').value;
             if(!val) return;
             const [y, m] = val.split('-').map(Number);
             onSnapshot(collection(db, `artifacts/${appId}/public/data/registros_diarios`), (snap) => {
                 allRegistros = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getFullYear() === y && d.getMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+                // FIX DATE: Usar getUTCMonth e getUTCFullYear
+                const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
                 renderHistoryTable(filtered);
                 renderSummary(filtered);
                 if(!document.getElementById('content-relatorio').classList.contains('hidden')) { window.loadRelatorioIndividual(); }
@@ -865,11 +915,11 @@ Exemplo Texto (Use IA ✨):
             const totals = {};
             let grandTotal = 0;
 
+            // 1. Agregação e Normalização
             data.forEach(r => { 
-                // 1. Limpa espaços e normaliza
                 let s = r.squadReal ? r.squadReal.trim() : 'Outro';
                 
-                // Normalização agressiva para garantir que Rec Cred caia na chave certa
+                // Normalização robusta para garantir agrupamento correto
                 const lower = s.toLowerCase();
                 if(lower.includes('rec') || lower.includes('crédito') || lower.includes('credito')) {
                     s = 'Rec Cred';
@@ -882,27 +932,35 @@ Exemplo Texto (Use IA ✨):
                 grandTotal += r.duracaoSegundos;
             });
             
-            // 2. Renderiza Squads Fixos (Incluindo Rec Cred)
+            // Helper para estilos
+            const getCardStyle = (name) => {
+                if (name === 'SC') return 'border-l-4 border-purple-500';
+                if (name === 'Rec Cred' || name.toLowerCase().includes('rec')) return 'border-l-4 border-red-600'; // Vermelho aqui
+                if (name.includes('Monitoria')) return 'border-l-4 border-yellow-500';
+                if (name === 'OJR') return 'border-l-4 border-orange-500';
+                if (name === 'CB') return 'border-l-4 border-indigo-500';
+                return 'border-l-4 border-gray-500';
+            };
+
+            // Helper para style inline forçado (para garantir override)
+            const getInlineStyle = (name) => {
+                if (name === 'Rec Cred' || name.toLowerCase().includes('rec')) {
+                    return 'style="border-left-color: #dc2626 !important;"'; // Força vermelho
+                }
+                return '';
+            };
+
+            // 2. Renderiza Squads Fixos
             SQUADS_OPCOES.forEach(s => {
                 const sec = totals[s] || 0;
-                
                 if (sec === 0) return;
 
                 const [h, m] = formatDuration(sec).split(':');
-                
-                // Definição de Cores
-                let borderClass = 'border-l-4 border-indigo-500'; // Padrão
-                if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
-                
-                // --- AQUI ESTÁ A COR VERMELHA ---
-                if(s === 'Rec Cred' || s.includes('Rec')) borderClass = 'border-l-4 border-red-600'; 
-                // --------------------------------
-                
-                if(s.includes('Monitoria')) borderClass = 'border-l-4 border-yellow-500';
-                if(s === 'OJR') borderClass = 'border-l-4 border-orange-500';
+                const borderClass = getCardStyle(s);
+                const styleAttr = getInlineStyle(s);
 
                 container.innerHTML += `
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}" ${styleAttr}>
                         <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
                         <p class="text-2xl font-bold text-gray-800">
                             ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
@@ -911,20 +969,18 @@ Exemplo Texto (Use IA ✨):
                     </div>`;
             });
             
-            // 3. Renderiza Outros Squads (Dinâmicos)
+            // 3. Renderiza Outros Squads
             Object.keys(totals).forEach(s => {
                 if (!SQUADS_OPCOES.includes(s)) {
                     const sec = totals[s];
                     if (sec === 0) return;
 
                     const [h, m] = formatDuration(sec).split(':');
-                    
-                    // Fallback de segurança: Se por acaso "Rec Cred" cair aqui, força vermelho também
-                    let dynBorder = 'border-l-4 border-gray-500';
-                    if (s.toLowerCase().includes('rec')) dynBorder = 'border-l-4 border-red-600';
+                    const borderClass = getCardStyle(s);
+                    const styleAttr = getInlineStyle(s);
 
                     container.innerHTML += `
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${dynBorder}">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}" ${styleAttr}>
                             <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
                             <p class="text-2xl font-bold text-gray-800">
                                 ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
@@ -934,7 +990,7 @@ Exemplo Texto (Use IA ✨):
                 }
             });
 
-            // Render Grand Total Card LAST
+            // Total Geral
             const [gh, gm] = formatDuration(grandTotal).split(':');
              container.innerHTML += `
                 <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between">
