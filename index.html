@@ -283,8 +283,7 @@
         </div>
     </div>
 
-    <!-- MODAIS -->
-    <!-- Modal Seleção, Detalhes, Importação, Análise e Confirmação... (Mantidos) -->
+    <!-- MODAIS (Selection, Details, Import, Analysis, Confirmation) -->
     
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
@@ -388,11 +387,8 @@ Exemplo Texto (Use IA ✨):
         // CONFIGURAÇÃO PARA GITHUB PAGES - PREENCHA AQUI!
         // =========================================================================================
         
-        // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
-        // Para usar no GitHub Pages, substitua os valores abaixo.
-        // Para testar no Preview, o sistema usará automaticamente a variável __firebase_config se disponível.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+           apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
   storageBucket: "atuacao2026.firebasestorage.app",
@@ -404,8 +400,6 @@ Exemplo Texto (Use IA ✨):
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
-
-        // 3. ID único para o armazenamento de dados. Pode ser o nome do seu projeto.
         const appId = "scooto-gestao-v1"; 
 
         // =========================================================================================
@@ -441,13 +435,10 @@ Exemplo Texto (Use IA ✨):
             { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
-        // === Gemini API Helper ===
+        // === API Helpers (CORREÇÃO DE ERRO 404) ===
         async function callGemini(prompt) {
-            // Verifica se a chave foi configurada
-            // Se estivermos no preview, __gemini_api_key pode ser usado, ou a chave colada manualmente.
             let key = geminiApiKey;
             if (key.includes("COLE_SUA")) {
-                 // Fallback para variável de ambiente se disponível
                  if (typeof apiKey !== 'undefined' && apiKey) key = apiKey; 
                  else if (typeof __gemini_api_key !== 'undefined') key = __gemini_api_key;
             }
@@ -456,11 +447,12 @@ Exemplo Texto (Use IA ✨):
                 throw new Error("Chave da API Gemini não configurada no código.");
             }
 
-            // MUDANÇA: Usando modelo estável 1.5-flash para garantir compatibilidade com API Keys pessoais
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            const delays = [1000, 2000, 4000];
+            // Lista de modelos para tentar (fallback automático para evitar erro 404)
+            const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-001", "gemini-pro"];
             
-            for (let i = 0; i <= delays.length; i++) {
+            for (const model of modelsToTry) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+                
                 try {
                     const response = await fetch(url, {
                         method: 'POST',
@@ -471,6 +463,12 @@ Exemplo Texto (Use IA ✨):
                     });
 
                     if (!response.ok) {
+                        // Se for erro 404 (Modelo não encontrado), tenta o próximo silenciosamente
+                        if (response.status === 404) {
+                            console.warn(`Modelo ${model} retornou 404. Tentando próximo...`);
+                            continue;
+                        }
+                        
                         const errText = await response.text();
                         if (response.status === 400 || response.status === 403) {
                             throw new Error(`Erro de Permissão/Requisição (${response.status}): Verifique sua API Key.`);
@@ -480,15 +478,17 @@ Exemplo Texto (Use IA ✨):
 
                     const data = await response.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+                    
                 } catch (error) {
-                    if (i === delays.length) throw error;
-                    await new Promise(r => setTimeout(r, delays[i]));
+                    // Se não for erro 404, ou se for o último modelo da lista, lança o erro
+                    if (!error.message.includes('404') || model === modelsToTry[modelsToTry.length - 1]) {
+                        throw error;
+                    }
                 }
             }
         }
 
         // === AI Features, UI Logic, CSV Export, etc. ===
-        // (Mantém a lógica original, apenas referenciando as novas variáveis)
 
         window.handleSmartImport = async () => {
             const text = document.getElementById('import-data-json').value.trim();
@@ -570,7 +570,6 @@ Exemplo Texto (Use IA ✨):
                 const analysis = await callGemini(prompt);
                 modalContent.innerHTML = marked.parse(analysis);
             } catch (e) {
-                // MUDANÇA: Mostrar a mensagem de erro real
                 console.error(e);
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
             }
