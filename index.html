@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão de Ponto - Scooto</title>
+    
+    <!-- Favicon de Scooter -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -376,28 +379,17 @@ Exemplo Texto (Use IA ✨):
         
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
         const firebaseConfig = {
-             apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
-
+apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
-
   projectId: "atuacao2026",
-
   storageBucket: "atuacao2026.firebasestorage.app",
-
   messagingSenderId: "862692587738",
-
   appId: "1:862692587738:web:f8cbedfd0951a4632b8de3",
-
   measurementId: "G-GYBGDY5L14"
-
         };
-
         // 2. Chave de API do Gemini (Google AI Studio)
-
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
-
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
-
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
 
         // 3. ID único para o armazenamento de dados. Pode ser o nome do seu projeto.
@@ -414,25 +406,26 @@ Exemplo Texto (Use IA ✨):
         const TURNOS_OPCOES = ["Diária Extra", "Troca", "Freela", "Monitora", "Meu Turno"];
         
         const MOCK_CADASTROS = [
-{ nome: "Juliana da Silva Sfair", pseudo: "Lóri S", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
-{ nome: "Raylla Caroline Fernandes Santos", pseudo: "Teresa S.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
-{ nome: "Barbara Santos De Souza Moreira", pseudo: "Nara M", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Viviane Santiago de Oliveira", pseudo: "Menna S.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00", cargaPadrao: 6 },
-{ nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Maria Eduarda Ferreira Gusmão", pseudo: "Ruth G.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Thaís Hayelen", pseudo: "Raquel H.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Rafaela Lins da Costa", pseudo: "Leila C.", squadPadrao: "SC", turnoPadrao: "FDS", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
-{ nome: "Ana Claudia Ferreira de Souza", pseudo: "Ravena F.", squadPadrao: "SC", turnoPadrao: "Ter. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Crislaine Gomes da Silva", pseudo: "Izabel G.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Ilanna Rodrigues Nascimento", pseudo: "Noelle R.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-{ nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "MONITORA", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
-{ nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "MONITORA", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Juliana da Silva Sfair", pseudo: "Lóri S", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Raylla Caroline Fernandes Santos", pseudo: "Teresa S.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Barbara Santos De Souza Moreira", pseudo: "Nara M", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Viviane Santiago de Oliveira", pseudo: "Menna S.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00", cargaPadrao: 6 },
+            { nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Maria Eduarda Ferreira Gusmão", pseudo: "Ruth G.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Thaís Hayelen", pseudo: "Raquel H.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Rafaela Lins da Costa", pseudo: "Leila C.", squadPadrao: "SC", turnoPadrao: "FDS", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Ana Claudia Ferreira de Souza", pseudo: "Ravena F.", squadPadrao: "SC", turnoPadrao: "Ter. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Crislaine Gomes da Silva", pseudo: "Izabel G.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Ilanna Rodrigues Nascimento", pseudo: "Noelle R.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
         // === Gemini API Helper ===
@@ -749,7 +742,6 @@ Exemplo Texto (Use IA ✨):
             });
         };
 
-        // --- FUNÇÃO QUE FALTAVA (CORRIGIDO) ---
         function renderCadastro() {
             const tbody = document.getElementById('cadastro-list-body');
             tbody.innerHTML = '';
@@ -896,17 +888,35 @@ Exemplo Texto (Use IA ✨):
 
         async function processImportedData(rows) {
              const valid = [];
+             let unknownAgents = 0;
+             let duplicates = 0;
+
              for(const item of rows) {
                 let agent = agentesByPseudo[item.nome] || scooteirasCadastro.find(a => a.nome === item.nome || a.pseudo === item.nome);
                 if(!agent) agent = scooteirasCadastro.find(a => item.nome.includes(a.pseudo));
-                if(agent && !checkDuplicate(agent.nome, item.data)) {
-                    valid.push({ nome: agent.nome, pseudo: agent.pseudo, data: item.data, entrada: item.entrada, saida: item.saida, squadReal: item.squadReal || agent.squadPadrao, turnoAtuado: "Meu Turno", duracaoSegundos: calculateDuration(item.entrada, item.saida), registradoEm: new Date().toISOString() });
+                
+                if(!agent) {
+                    unknownAgents++;
+                    console.warn(`Agente desconhecida: ${item.nome}`);
+                    continue;
                 }
+
+                if(checkDuplicate(agent.nome, item.data)) {
+                    duplicates++;
+                    continue;
+                }
+
+                valid.push({ nome: agent.nome, pseudo: agent.pseudo, data: item.data, entrada: item.entrada, saida: item.saida, squadReal: item.squadReal || agent.squadPadrao, turnoAtuado: "Meu Turno", duracaoSegundos: calculateDuration(item.entrada, item.saida), registradoEm: new Date().toISOString() });
              }
+
              if(valid.length) {
                  await runTransaction(db, async (txn) => { const col = collection(db, `artifacts/${appId}/public/data/registros_diarios`); valid.forEach(v => txn.set(doc(col), v)); });
                  showMessage(`Importado ${valid.length} registros.`, 'success'); closeModal('import-modal');
-             } else { showMessage("Nenhum dado novo/válido.", 'warning'); }
+             } else { 
+                 if (unknownAgents > 0) showMessage(`Erro: ${unknownAgents} nome(s) não encontrados na aba Equipe. Cadastre-as primeiro!`, 'error');
+                 else if (duplicates > 0) showMessage(`Atenção: Todos os ${duplicates} registros já existiam no sistema.`, 'warning');
+                 else showMessage("Nenhum dado válido encontrado.", 'warning'); 
+             }
         }
 
         window.handleImport = async () => {
