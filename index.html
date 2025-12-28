@@ -388,7 +388,7 @@ Exemplo Texto (Use IA ✨):
         // =========================================================================================
         
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-           apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
   storageBucket: "atuacao2026.firebasestorage.app",
@@ -435,7 +435,7 @@ Exemplo Texto (Use IA ✨):
             { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
-        // === API Helpers (CORREÇÃO DE ERRO 404) ===
+        // === API Helpers (CORREÇÃO DE ERRO 404 e NULL) ===
         async function callGemini(prompt) {
             let key = geminiApiKey;
             if (key.includes("COLE_SUA")) {
@@ -465,8 +465,12 @@ Exemplo Texto (Use IA ✨):
                     if (!response.ok) {
                         // Se for erro 404 (Modelo não encontrado), tenta o próximo silenciosamente
                         if (response.status === 404) {
-                            console.warn(`Modelo ${model} retornou 404. Tentando próximo...`);
-                            continue;
+                            console.warn(`Modelo ${model} retornou 404.`);
+                            // Se for o último, não podemos apenas continuar, temos que deixar o erro acontecer ou lançar um
+                            if (model === modelsToTry[modelsToTry.length - 1]) {
+                                throw new Error(`Erro 404: Nenhum dos modelos testados foi encontrado. Verifique sua chave de API e região.`);
+                            }
+                            continue; // Tenta o próximo
                         }
                         
                         const errText = await response.text();
@@ -480,12 +484,14 @@ Exemplo Texto (Use IA ✨):
                     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
                     
                 } catch (error) {
-                    // Se não for erro 404, ou se for o último modelo da lista, lança o erro
+                    // Se não for erro 404 (já tratado acima), ou se for o último modelo da lista, lança o erro
                     if (!error.message.includes('404') || model === modelsToTry[modelsToTry.length - 1]) {
                         throw error;
                     }
                 }
             }
+            // Caso saia do loop sem retornar (ex: todos 404 sem throw), lança erro genérico
+            throw new Error("Falha ao conectar com todos os modelos de IA.");
         }
 
         // === AI Features, UI Logic, CSV Export, etc. ===
@@ -505,6 +511,9 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 const result = await callGemini(prompt);
+                // Validação extra para garantir que marked não quebre
+                if (!result) throw new Error("A IA não retornou nenhum dado.");
+                
                 const cleanResult = result.replace(/```json/g, '').replace(/```/g, '').trim();
                 const parsedData = JSON.parse(cleanResult);
                 if (!Array.isArray(parsedData) || parsedData.length === 0) throw new Error("Dados não identificados.");
@@ -540,7 +549,8 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 const analysis = await callGemini(prompt);
-                modalContent.innerHTML = marked.parse(analysis);
+                // Correção robusta para evitar erro de undefined no marked
+                modalContent.innerHTML = marked.parse(analysis || "A análise não retornou texto.");
             } catch (e) {
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
             }
@@ -568,7 +578,8 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 const analysis = await callGemini(prompt);
-                modalContent.innerHTML = marked.parse(analysis);
+                // Correção robusta para evitar erro de undefined no marked
+                modalContent.innerHTML = marked.parse(analysis || "A análise não retornou texto.");
             } catch (e) {
                 console.error(e);
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
