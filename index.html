@@ -140,4 +140,959 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Scooteira</label>
-                            <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                            <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" onchange="loadRelatorioIndividual()">
+                                <option value="" disabled selected>Selecione...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Mês</label>
+                            <input type="month" id="relatorio-mes-select" class="w-full p-2.5 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" onchange="loadRelatorioIndividual()">
+                        </div>
+                        <div class="flex items-end space-x-2">
+                             <button class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg font-medium shadow-sm transition flex items-center justify-center" onclick="exportIndividualCsv()">
+                                 <i data-lucide="file-down" class="w-4 h-4 mr-2"></i> CSV
+                             </button>
+                             <button onclick="analyzeIndividualData()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 px-4 rounded-lg font-medium shadow-sm transition flex items-center justify-center">
+                                <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i> Insights
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                        <span class="text-xs text-gray-500 uppercase font-medium">Dias Trabalhados</span>
+                        <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-dias">-</span>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas</span>
+                        <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-horas">-</span>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                        <span class="text-xs text-gray-500 uppercase font-medium">Squad Principal</span>
+                        <span class="text-xl font-bold text-indigo-600 mt-auto" id="resumo-squad-princ">-</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 font-medium">Data</th>
+                                <th class="px-6 py-3 font-medium">Dia</th>
+                                <th class="px-6 py-3 font-medium">Squad</th>
+                                <th class="px-6 py-3 font-medium">Entrada</th>
+                                <th class="px-6 py-3 font-medium">Saída</th>
+                                <th class="px-6 py-3 font-medium">Duração</th>
+                                <th class="px-6 py-3 font-medium">Turno</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorio-body" class="divide-y divide-gray-100">
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Selecione os filtros acima.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-cadastro" class="hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide border-b pb-2">Adicionar Nova Agente</h3>
+                    <form id="add-agent-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Nome Completo</label>
+                            <input type="text" id="new-nome" placeholder="Nome da Scooteira" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Pseudo</label>
+                            <input type="text" id="new-pseudo" placeholder="Ex: Diana C." class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Squad Padrão</label>
+                            <select id="new-squad" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                <option value="CB">CB</option>
+                                <option value="SC">SC</option>
+                                <option value="Rec. Crédito">Rec. Crédito</option>
+                                <option value="Monitoria">Monitoria</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Dias Padrão</label>
+                            <input type="text" id="new-turno" placeholder="Ex: Seg. à Sex." class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Entrada</label>
+                            <input type="time" id="new-entrada" value="08:00" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Saída</label>
+                            <input type="time" id="new-saida" value="14:00" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm" required>
+                        </div>
+                        <div class="md:col-span-6 flex justify-end mt-2">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-6 rounded-lg font-medium shadow-sm transition text-sm">
+                                 + Adicionar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 font-medium">Nome (Pseudo)</th>
+                                <th class="px-6 py-3 font-medium">Squad</th>
+                                <th class="px-6 py-3 font-medium">Dias</th>
+                                <th class="px-6 py-3 font-medium">Horário</th>
+                                <th class="px-6 py-3 font-medium text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cadastro-list-body" class="divide-y divide-gray-100">
+                            <tr><td colspan="5" class="text-center py-8 text-gray-400">Carregando equipe...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Selecionar Scooteiras</h3>
+                <button onclick="closeModal('selection-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="agentes-checkbox-list" class="p-4 space-y-2 max-h-[60vh] overflow-y-auto"></div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end">
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium text-sm" onclick="closeModal('selection-modal')">Concluído</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="details-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-indigo-600 px-6 py-4 text-white">
+                <h3 class="text-lg font-bold" id="details-modal-title">Ajuste de Detalhes</h3>
+                <p class="text-indigo-100 text-xs mt-1" id="modal-instructions"></p>
+            </div>
+            <form id="details-form" class="flex-1 overflow-hidden flex flex-col">
+                <input type="hidden" id="recordIdToEdit" value=""> 
+                <div id="agentes-detalhes-container" class="p-6 space-y-6 overflow-y-auto flex-1"></div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                    <button type="button" class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition" onclick="closeModal('details-modal')">Cancelar</button>
+                    <button type="submit" id="btn-modal-submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="import-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-blue-600"></i> Importar Histórico</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-4">
+                    Cole os dados (Excel/CSV) <strong>OU</strong> um texto simples (E-mail/Whatsapp).
+                    <br><span class="text-xs text-gray-400">Use "Importar com IA ✨" para textos desorganizados.</span>
+                </p>
+                <textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-mono text-xs bg-gray-50" placeholder="Exemplo CSV:
+Scooteira	Data	Entrada	Saída	Squad
+Maria	15/11/2025	08:00	14:00	CB
+
+Exemplo Texto (Use IA ✨):
+'A Maria trabalhou ontem das 8h às 14h no squad CB e a Joana fez das 10 às 16h.'"></textarea>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button type="button" class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition" onclick="closeModal('import-modal')">Cancelar</button>
+                <div class="relative group">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg blur opacity-40 group-hover:opacity-100 transition duration-200"></div>
+                    <button class="relative bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 shadow-sm flex items-center" onclick="handleSmartImport()">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2 text-purple-600"></i> Importar com IA
+                    </button>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="handleImport()">Importar CSV</button>
+            </div>
+            <div id="ai-loading-overlay" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center flex-col z-10">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mb-3"></div>
+                <p class="text-purple-800 font-medium text-sm animate-pulse">A Inteligência Artificial está a ler os seus dados...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-analysis-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 text-white flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center"><i data-lucide="bot" class="w-5 h-5 mr-2"></i> Análise Inteligente</h3>
+                <button onclick="closeModal('ai-analysis-modal')" class="text-purple-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-8 overflow-y-auto flex-1 prose prose-sm max-w-none text-gray-700 leading-relaxed" id="ai-analysis-content">
+                </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end">
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium" onclick="closeModal('ai-analysis-modal')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i data-lucide="alert-triangle" class="h-6 w-6 text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2" id="confirm-title">Confirmar</h3>
+            <p class="text-sm text-gray-500 mb-6" id="confirm-message">Tem certeza?</p>
+            <div class="flex justify-center space-x-3">
+                <button class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition" onclick="window.resolveConfirmation(false)">Cancelar</button>
+                <button id="confirm-yes-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition shadow-sm" onclick="window.resolveConfirmation(true)">Sim, Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-agent-modal-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, runTransaction, deleteDoc, setLogLevel, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =========================================================================================
+        // CONFIGURAÇÃO
+        // =========================================================================================
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+            authDomain: "atuacao2026.firebaseapp.com",
+            projectId: "atuacao2026",
+            storageBucket: "atuacao2026.firebasestorage.app",
+            messagingSenderId: "862692587738",
+            appId: "1:862692587738:web:f8cbedfd0951a4632b8de3",
+            measurementId: "G-GYBGDY5L14"
+        };
+        
+        const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
+        const appId = "scooto-gestao-v1"; 
+
+        // Configuração de estado
+        let db, auth, userId = null;
+        let scooteirasCadastro = [], allRegistros = [], selectedAgentsNames = [];
+        let isAuthReady = false;
+        let agentesByPseudo = {};
+        
+        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR"];
+        const TURNOS_OPCOES = ["Diária Extra", "Troca", "Freela", "Monitora", "Meu Turno"];
+        
+        const MOCK_CADASTROS = [
+           { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Juliana da Silva Sfair", pseudo: "Lóri S", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Raylla Caroline Fernandes Santos", pseudo: "Teresa S.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Barbara Santos De Souza Moreira", pseudo: "Nara M", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Viviane Santiago de Oliveira", pseudo: "Menna S.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00", cargaPadrao: 6 },
+            { nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Maria Eduarda Ferreira Gusmão", pseudo: "Ruth G.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Thaís Hayelen", pseudo: "Raquel H.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Rafaela Lins da Costa", pseudo: "Leila C.", squadPadrao: "SC", turnoPadrao: "FDS", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Ana Claudia Ferreira de Souza", pseudo: "Ravena F.", squadPadrao: "SC", turnoPadrao: "Ter. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Crislaine Gomes da Silva", pseudo: "Izabel G.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Ilanna Rodrigues Nascimento", pseudo: "Noelle R.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
+        ];
+
+        // === Gemini API Helper ===
+        // CORREÇÃO: Versão do Gemini alterada para 1.5-flash (v2.5 não existe publicamente nesta API)
+        async function callGemini(prompt) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Falha na API Gemini');
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                throw error;
+            }
+        }
+
+        // === AI Features ===
+
+        // Feature 1: Smart Import
+        window.handleSmartImport = async () => {
+            const text = document.getElementById('import-data-json').value.trim();
+            if (!text) return showMessage("Por favor, cole algum texto para importar.", 'warning');
+
+            document.getElementById('ai-loading-overlay').classList.remove('hidden');
+
+            const prompt = `
+                Você é um assistente de extração de dados de RH.
+                Extraia os dados de turnos do seguinte texto (que pode ser informal, email, whatsapp, etc).
+                
+                O contexto é: Ano atual 2025. Se a data não tiver ano, assuma 2025.
+                Se o squad não for mencionado, deixe em branco ou tente inferir se óbvio.
+                
+                Texto: "${text}"
+
+                Retorne APENAS um JSON válido. Não use Markdown. Não explique nada.
+                O formato deve ser um array de objetos:
+                [
+                    {
+                        "nome": "Nome ou Pseudo encontrado",
+                        "data": "DD/MM/YYYY",
+                        "entrada": "HH:MM",
+                        "saida": "HH:MM",
+                        "squadReal": "CB, SC, Rec. Crédito ou Monitoria (opcional)"
+                    }
+                ]
+            `;
+
+            try {
+                const result = await callGemini(prompt);
+                // Clean markdown code blocks if present
+                const cleanResult = result.replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsedData = JSON.parse(cleanResult);
+                
+                if (!Array.isArray(parsedData) || parsedData.length === 0) {
+                    throw new Error("Não foi possível identificar turnos no texto.");
+                }
+
+                await processImportedData(parsedData);
+                
+                document.getElementById('import-data-json').value = '';
+                
+            } catch (error) {
+                showMessage("Erro na IA: " + error.message, 'error');
+            } finally {
+                document.getElementById('ai-loading-overlay').classList.add('hidden');
+            }
+        };
+
+        // Feature 2: Monthly Analysis
+        window.analyzeMonthlyData = async () => {
+            const val = document.getElementById('mes-select').value;
+            if(!val) return showMessage("Selecione um mês primeiro.", 'warning');
+            
+            // Get visible data from "allRegistros" filtered by month
+            const [y, m] = val.split('-').map(Number);
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && d.getFullYear() === y && d.getMonth() === (m-1);
+            });
+
+            if(filtered.length === 0) return showMessage("Sem dados para analisar neste mês.", 'warning');
+
+            // Show loading modal
+            const modalContent = document.getElementById('ai-analysis-content');
+            modalContent.innerHTML = '<div class="flex justify-center p-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>';
+            openModal('ai-analysis-modal');
+
+            // Prepare summary data for token efficiency
+            const summaryData = filtered.map(r => `${r.nome} (${r.squadReal}): ${r.data} ${r.entrada}-${r.saida}`).join('\n');
+
+            const prompt = `
+                Analise estes dados de turnos de trabalho de uma equipa de suporte (Scooto) para o mês ${val}.
+                
+                Dados:
+                ${summaryData}
+
+                Forneça um relatório executivo em Português (Portugal) com formatação Markdown.
+                Inclua:
+                1. Resumo Geral (Total de turnos, cargas horárias principais).
+                2. Distribuição por Squad (Quem trabalhou mais em qual squad).
+                3. Alertas (Quem fez muitas horas extras ou trabalhou muitos dias seguidos, se detetável).
+                4. Sugestão de Otimização (Onde falta cobertura).
+                
+                Seja profissional, direto e encorajador.
+            `;
+
+            try {
+                const analysis = await callGemini(prompt);
+                modalContent.innerHTML = marked.parse(analysis);
+            } catch (e) {
+                modalContent.textContent = "Erro ao gerar análise: " + e.message;
+            }
+        };
+
+        // Feature 3: Individual Analysis
+        window.analyzeIndividualData = async () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            if(!nome || !mes) return showMessage("Selecione scooteira e mês.", 'warning');
+
+            const [y, m] = mes.split('-').map(Number);
+            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1));
+
+            if(filtered.length === 0) return showMessage("Sem dados para esta scooteira.", 'warning');
+
+            const modalContent = document.getElementById('ai-analysis-content');
+            modalContent.innerHTML = '<div class="flex justify-center p-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>';
+            openModal('ai-analysis-modal');
+
+            const prompt = `
+                Analise o desempenho individual da scooteira ${nome} em ${mes}.
+                
+                Registos:
+                ${JSON.stringify(filtered.map(r => ({data: r.data, entrada: r.entrada, saida: r.saida, squad: r.squadReal})))}
+
+                Escreva um feedback construtivo em Português (Portugal) para ser lido pela gestão.
+                Foque na assiduidade, consistência de horários e carga horária total.
+                Use Markdown.
+            `;
+
+            try {
+                const analysis = await callGemini(prompt);
+                modalContent.innerHTML = marked.parse(analysis);
+            } catch (e) {
+                modalContent.textContent = "Erro ao gerar análise.";
+            }
+        }
+
+
+        // === UI Functions ===
+        window.switchTab = (tabName) => {
+            // Reset styles
+            ['registro', 'relatorio', 'cadastro'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const content = document.getElementById(`content-${t}`);
+                if (btn && content) {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('tab-inactive');
+                    content.classList.add('hidden');
+                }
+            });
+            // Activate selected
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            const activeContent = document.getElementById(`content-${tabName}`);
+            if (activeBtn && activeContent) {
+                activeBtn.classList.add('tab-active');
+                activeBtn.classList.remove('tab-inactive');
+                activeContent.classList.remove('hidden');
+            }
+            hideMessage();
+            refreshIcons();
+            
+            // Reload logic if tab is reports
+            if(tabName === 'relatorio') {
+                loadRelatorioIndividual();
+            }
+        };
+
+        window.showSelectionModal = () => openModal('selection-modal');
+        window.showImportModal = () => openModal('import-modal');
+        
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
+        };
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+            refreshIcons();
+        }
+
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function showMessage(text, type = 'info') {
+            const box = document.getElementById('message-box');
+            box.textContent = text;
+            box.className = 'mx-6 mt-6 p-4 text-sm rounded-lg shadow-sm border-l-4 transition-all flex items-center';
+            if (type === 'success') box.className += ' bg-emerald-50 text-emerald-800 border-emerald-500';
+            else if (type === 'error') box.className += ' bg-red-50 text-red-800 border-red-500';
+            else box.className += ' bg-amber-50 text-amber-800 border-amber-500';
+            box.classList.remove('hidden');
+            setTimeout(() => { if(!box.classList.contains('hidden')) hideMessage(); }, 5000); // Auto-hide
+        }
+
+        function hideMessage() { document.getElementById('message-box').classList.add('hidden'); }
+
+        // === Helper Functions ===
+        function formatDate(date) { return date.toLocaleDateString('pt-BR', {timeZone: 'UTC'}); }
+        function parseDate(dateStr) { 
+            if(!dateStr) return new Date();
+            const [day, m, y] = dateStr.split('/'); 
+            return new Date(Date.UTC(y, m-1, day)); 
+        }
+        
+        function formatDuration(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
+        
+        function calculateDuration(start, end) {
+            const toSec = (t) => { const [h,m] = t.split(':').map(Number); return h*3600 + m*60; };
+            let diff = toSec(end) - toSec(start);
+            if (diff <= 0) diff += 24*3600; // Virada de dia
+            return diff;
+        }
+
+        function checkDuplicate(nome, data, excludeId=null) {
+            return allRegistros.some(r => r.nome === nome && r.data === data && r.id !== excludeId);
+        }
+
+        // === Logic Functions ===
+        
+        window.toggleAgentSelection = (nome) => {
+            const idx = selectedAgentsNames.indexOf(nome);
+            if (idx > -1) selectedAgentsNames.splice(idx, 1);
+            else selectedAgentsNames.push(nome);
+            updateSelectionDisplay();
+        };
+
+        function updateSelectionDisplay() {
+            const btn = document.getElementById('agentes-selection-display');
+            const count = selectedAgentsNames.length;
+            const span = btn.querySelector('span');
+            
+            if (count === 0) {
+                span.textContent = 'Clique para selecionar...';
+                btn.classList.remove('border-indigo-500', 'ring-1', 'ring-indigo-500');
+            } else {
+                span.textContent = `${count} Agente(s) Selecionada(s)`;
+                btn.classList.add('border-indigo-500', 'ring-1', 'ring-indigo-500');
+            }
+        }
+
+        // === RELATÓRIO INDIVIDUAL (Adicionado pois faltava) ===
+        window.loadRelatorioIndividual = () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            const tbody = document.getElementById('relatorio-body');
+            const cards = document.getElementById('relatorio-resumo-cards');
+            
+            if(!nome || !mes) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Selecione uma scooteira e um mês.</td></tr>';
+                cards.classList.add('hidden');
+                return;
+            }
+
+            const [y, m] = mes.split('-').map(Number);
+            
+            // Filtrar registros
+            const registros = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return r.nome === nome && d.getFullYear() === y && d.getMonth() === (m-1);
+            }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+
+            if(registros.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Nenhum registro encontrado neste período.</td></tr>';
+                cards.classList.add('hidden');
+                return;
+            }
+
+            // Calcular Cards
+            let totalSegundos = 0;
+            const squadCount = {};
+            
+            let html = '';
+            registros.forEach(r => {
+                totalSegundos += r.duracaoSegundos;
+                squadCount[r.squadReal] = (squadCount[r.squadReal] || 0) + 1;
+                
+                const dayName = parseDate(r.data).toLocaleDateString('pt-BR', { weekday: 'short' });
+                
+                html += `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4">${r.data}</td>
+                        <td class="px-6 py-4 uppercase text-xs">${dayName}</td>
+                        <td class="px-6 py-4">${r.squadReal}</td>
+                        <td class="px-6 py-4 font-mono">${r.entrada}</td>
+                        <td class="px-6 py-4 font-mono">${r.saida}</td>
+                        <td class="px-6 py-4 font-bold text-gray-700">${formatDuration(r.duracaoSegundos)}</td>
+                        <td class="px-6 py-4 text-xs">${r.turnoAtuado}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Atualizar Cards
+            document.getElementById('resumo-total-dias').textContent = registros.length;
+            
+            const [h, min] = formatDuration(totalSegundos).split(':');
+            document.getElementById('resumo-total-horas').textContent = `${h}h ${min}m`;
+            
+            const mainSquad = Object.keys(squadCount).reduce((a, b) => squadCount[a] > squadCount[b] ? a : b, '-');
+            document.getElementById('resumo-squad-princ').textContent = mainSquad;
+            
+            cards.classList.remove('hidden');
+        };
+
+        // === Export Logic ===
+        window.exportToCsv = () => {
+             if(allRegistros.length === 0) return showMessage("Sem dados para exportar.", 'warning');
+             downloadCsv(allRegistros, "historico_geral.csv");
+        };
+
+        window.exportIndividualCsv = () => {
+             const nome = document.getElementById('relatorio-agente-select').value;
+             if(!nome) return showMessage("Selecione uma scooteira.", 'warning');
+             
+             const mes = document.getElementById('relatorio-mes-select').value;
+             const [y, m] = mes.split('-').map(Number);
+             
+             const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return r.nome === nome && d.getFullYear() === y && d.getMonth() === (m-1);
+             });
+             
+             if(filtered.length === 0) return showMessage("Sem dados para exportar.", 'warning');
+             downloadCsv(filtered, `historico_${nome}_${mes}.csv`);
+        };
+
+        function downloadCsv(data, filename) {
+             const headers = ["Data", "Nome", "Pseudo", "Squad", "Entrada", "Saida", "Duracao", "Turno"];
+             const rows = data.map(r => [
+                 r.data, 
+                 r.nome, 
+                 r.pseudo || '', 
+                 r.squadReal, 
+                 r.entrada, 
+                 r.saida, 
+                 formatDuration(r.duracaoSegundos), 
+                 r.turnoAtuado
+             ]);
+             
+             let csvContent = "data:text/csv;charset=utf-8," 
+                 + headers.join(",") + "\n" 
+                 + rows.map(e => e.join(",")).join("\n");
+                 
+             const encodedUri = encodeURI(csvContent);
+             const link = document.createElement("a");
+             link.setAttribute("href", encodedUri);
+             link.setAttribute("download", filename);
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+        }
+
+        // === Firebase & Data ===
+
+        async function initApp() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await setPersistence(auth, browserSessionPersistence);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        document.getElementById('auth-status').textContent = 'Conectado';
+                        document.getElementById('auth-status').className = 'text-xs text-emerald-200 font-mono bg-emerald-800 py-1 px-2 rounded';
+                        loadData();
+                    } else {
+                        // Login anônimo para simplificar
+                        await signInAnonymously(auth);
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                showMessage("Erro crítico de inicialização.", 'error');
+            }
+        }
+
+        function loadData() {
+            const cadastroRef = collection(db, `artifacts/${appId}/public/data/scooteiras_cadastro`);
+            onSnapshot(cadastroRef, async (snap) => {
+                if (snap.empty && MOCK_CADASTROS.length > 0) {
+                    // Seed inicial se vazio
+                    await runTransaction(db, async (txn) => {
+                        MOCK_CADASTROS.forEach(s => txn.set(doc(cadastroRef, s.nome), s));
+                    });
+                } else {
+                    scooteirasCadastro = snap.docs.map(d => d.data()).sort((a,b) => a.nome.localeCompare(b.nome));
+                    // Map for quick lookup
+                    agentesByPseudo = {};
+                    scooteirasCadastro.forEach(a => { if(a.pseudo) agentesByPseudo[a.pseudo] = a; });
+                }
+                renderCheckboxes();
+                renderCadastro();
+            });
+            
+            // Load history based on current month input
+            const monthInput = document.getElementById('mes-select');
+            if(monthInput) loadHistorico();
+        }
+
+        window.loadHistorico = () => {
+            if(!db) return;
+            const val = document.getElementById('mes-select').value;
+            if(!val) return;
+            const [y, m] = val.split('-').map(Number);
+
+            // Ouvinte em tempo real para os registros
+            onSnapshot(collection(db, `artifacts/${appId}/public/data/registros_diarios`), (snap) => {
+                allRegistros = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                
+                const filtered = allRegistros.filter(r => {
+                    const d = parseDate(r.data);
+                    return d && d.getFullYear() === y && d.getMonth() === (m-1);
+                }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+                
+                renderHistoryTable(filtered);
+                renderSummary(filtered);
+                
+                // Refresh individual report if visible
+                if(!document.getElementById('content-relatorio').classList.contains('hidden')) {
+                    window.loadRelatorioIndividual();
+                }
+            });
+        };
+
+        // === Renders ===
+        function renderCheckboxes() {
+            const container = document.getElementById('agentes-checkbox-list');
+            const reportSelect = document.getElementById('relatorio-agente-select');
+            
+            container.innerHTML = '';
+            reportSelect.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+            
+            scooteirasCadastro.forEach(a => {
+                // Checkbox Item
+                const div = document.createElement('div');
+                div.className = 'flex items-center p-2 hover:bg-gray-50 rounded transition cursor-pointer';
+                div.onclick = (e) => { 
+                    // Prevent double toggle if clicking direct on checkbox
+                    if(e.target.type !== 'checkbox') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                        window.toggleAgentSelection(a.nome);
+                    }
+                };
+                div.innerHTML = `
+                    <input type="checkbox" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
+                           ${selectedAgentsNames.includes(a.nome) ? 'checked' : ''} 
+                           onchange="window.toggleAgentSelection('${a.nome}')">
+                    <div class="ml-3 text-sm">
+                        <p class="font-medium text-gray-700">${a.nome}</p>
+                        <p class="text-xs text-gray-500">${a.pseudo}</p>
+                    </div>
+                `;
+                container.appendChild(div);
+
+                // Select Option
+                const opt = document.createElement('option');
+                opt.value = a.nome;
+                opt.textContent = a.nome;
+                reportSelect.appendChild(opt);
+            });
+        }
+
+        function renderHistoryTable(data) {
+            const tbody = document.getElementById('historico-body');
+            tbody.innerHTML = '';
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Nenhum registro encontrado.</td></tr>';
+                return;
+            }
+            data.forEach(r => {
+                const badgeColor = getSquadBadge(r.squadReal);
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-50 last:border-0";
+                tr.innerHTML = `
+                    <td class="px-6 py-3 font-medium text-gray-900 whitespace-nowrap">${r.data}</td>
+                    <td class="px-6 py-3">
+                        <div class="flex flex-col">
+                            <span class="font-medium text-gray-700">${r.nome}</span>
+                            <span class="text-xs text-gray-400">${r.pseudo || '-'}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-3">${badgeColor}</td>
+                    <td class="px-6 py-3 font-mono text-xs">${r.entrada}</td>
+                    <td class="px-6 py-3 font-mono text-xs">${r.saida}</td>
+                    <td class="px-6 py-3 font-mono text-xs text-gray-500">${formatDuration(r.duracaoSegundos)}</td>
+                    <td class="px-6 py-3 text-xs">${r.turnoAtuado}</td>
+                    <td class="px-6 py-3 text-right">
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="editRegistro('${r.id}')" class="p-1 text-blue-600 hover:bg-blue-50 rounded"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                            <button onclick="deleteRegistroConfirmation('${r.id}')" class="p-1 text-red-600 hover:bg-red-50 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            refreshIcons();
+        }
+
+        function renderSummary(data) {
+            const container = document.getElementById('resumo-squads');
+            container.innerHTML = '';
+            
+            const totals = {};
+            data.forEach(r => {
+                if(!totals[r.squadReal]) totals[r.squadReal] = 0;
+                totals[r.squadReal] += r.duracaoSegundos;
+            });
+            
+            SQUADS_OPCOES.forEach(s => {
+                const sec = totals[s] || 0;
+                const [h, m] = formatDuration(sec).split(':');
+                let borderClass = 'border-l-4 border-indigo-500';
+                if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
+                if(s.includes('Rec')) borderClass = 'border-l-4 border-pink-500';
+                if(s.includes('Monitoria')) borderClass = 'border-l-4 border-yellow-500';
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}">
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
+                        <p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p>
+                    </div>
+                `;
+            });
+        }
+
+        function renderCadastro() {
+            const tbody = document.getElementById('cadastro-list-body');
+            tbody.innerHTML = '';
+            scooteirasCadastro.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-50";
+                tr.innerHTML = `
+                    <td class="px-6 py-3">
+                        <div class="font-medium text-gray-900">${a.nome}</div>
+                        <div class="text-xs text-gray-400">${a.pseudo}</div>
+                    </td>
+                    <td class="px-6 py-3 text-xs font-semibold text-gray-600">${a.squadPadrao}</td>
+                    <td class="px-6 py-3 text-xs text-gray-500">${a.turnoPadrao || '-'}</td>
+                    <td class="px-6 py-3 text-xs font-mono text-gray-500">${a.entradaPadrao} - ${a.saidaPadrao}</td>
+                    <td class="px-6 py-3 text-right">
+                        <button onclick="editAgent('${a.nome}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium mr-3">Editar</button>
+                        <button onclick="deleteAgentConfirmation('${a.nome}')" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getSquadBadge(squad) {
+            let classes = "bg-gray-100 text-gray-800";
+            if(squad === 'CB') classes = "bg-indigo-100 text-indigo-800";
+            else if(squad === 'SC') classes = "bg-purple-100 text-purple-800";
+            else if(squad === 'Rec. Crédito') classes = "bg-pink-100 text-pink-800";
+            else if(squad === 'Monitoria') classes = "bg-yellow-100 text-yellow-800";
+            return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${classes}">${squad}</span>`;
+        }
+
+        // === Event Handlers & Main Logic ===
+        
+        // 1. ADICIONAR NOVA AGENTE
+        document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('new-nome').value.trim();
+            const pseudo = document.getElementById('new-pseudo').value.trim();
+            const squad = document.getElementById('new-squad').value;
+            const turno = document.getElementById('new-turno').value;
+            const entrada = document.getElementById('new-entrada').value;
+            const saida = document.getElementById('new-saida').value;
+
+            if(!nome || !pseudo) { showMessage("Preencha nome e pseudo.", 'error'); return; }
+
+            try {
+                const newAgent = {
+                    nome, pseudo, squadPadrao: squad, turnoPadrao: turno,
+                    entradaPadrao: entrada, saidaPadrao: saida, cargaPadrao: 6
+                };
+                
+                await setDoc(doc(db, `artifacts/${appId}/public/data/scooteiras_cadastro`, nome), newAgent);
+                
+                showMessage("Agente adicionada com sucesso!", 'success');
+                e.target.reset();
+                document.getElementById('new-entrada').value = "08:00";
+                document.getElementById('new-saida').value = "14:00";
+            } catch(err) {
+                console.error(err);
+                showMessage("Erro ao adicionar: " + err.message, 'error');
+            }
+        });
+
+        window.handleEntrySubmission = () => {
+            const dateInput = document.getElementById('data-atuacao').value;
+            if(!dateInput || selectedAgentsNames.length === 0) {
+                showMessage("Por favor, selecione a data e as agentes.", 'error');
+                return;
+            }
+            
+            const [y,m,d] = dateInput.split('-');
+            const dataFormatada = `${d}/${m}/${y}`;
+
+            // Check duplicates
+            const agents = selectedAgentsNames.map(n => scooteirasCadastro.find(a => a.nome === n));
+            if(agents.some(a => checkDuplicate(a.nome, dataFormatada))) {
+                showMessage("Atenção: Já existe registro para uma das agentes nesta data.", 'warning');
+                return;
+            }
+
+            // Setup Modal
+            document.getElementById('recordIdToEdit').value = '';
+            document.getElementById('details-modal-title').textContent = 'Confirmar Lançamentos';
+            document.getElementById('modal-instructions').textContent = `Data: ${dataFormatada}`;
+            
+            const container = document.getElementById('agentes-detalhes-container');
+            container.innerHTML = '';
+
+            agents.forEach((a, idx) => {
+                let defTurno = "Meu Turno";
+                
+                const html = `
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200" data-agent-block="${idx}">
+                    <div class="flex justify-between mb-3">
+                        <h4 class="font-bold text-sm text-gray-800">${a.nome}</h4>
+                        <span class="text-xs bg-white border px-2 py-0.5 rounded text-gray-500">${a.squadPadrao}</span>
+                    </div>
+                    <input type="hidden" name="nome_${idx}" value="${a.nome}">
+                    <input type="hidden" name="pseudo_${idx}" value="${a.pseudo}">
+                    <input type="hidden" name="data_${idx}" value="${dataFormatada}">
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Entrada</label>
+                            <input type="time" name="entrada_${idx}" value="${a.entradaPadrao}" class="w-full text-sm border-gray-300 rounded focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Saída</label>
+                            <input type="time" name="saida_${idx}" value="${a.saidaPadrao}" class="w-full text-sm border-gray-300 rounded focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Squad Real</label>
+                            <select name="squad_${idx}" class="w-full text-sm border-gray-300 rounded focus:ring-indigo-500">
+                                ${SQUADS_OPCOES.map(s => `<option value="${s}" ${s===a.squadPadrao?'selected':''}>${s}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold text-gray-400 mb-1">Turno</label>
+                            <select name="turno_${idx}" class="w-full text-sm border-gray-300 rounded focus:ring-indigo-500">
+                                ${TURNOS_OPCOES.map(t => `<option value="${t}" ${t===defTurno?'selected':''}>${t}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+                container.innerHTML += html;
+            });
+            
+            openModal('details-modal');
+        };
+
+        // Form Submit (Details Modal)
+        document.getElementById('details-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const isUpdate = !!document.getElementById('recordIdTo
