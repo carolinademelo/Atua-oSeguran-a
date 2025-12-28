@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- NOME UNIFICADO NA ABA - ATUALIZADO -->
     <title>Dash Atuação - Scooto</title>
     
-    <!-- Favicon de Scooter -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FONTE ALTERADA PARA MONTSERRAT -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Marked para Markdown da IA -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* FONTE APLICADA AQUI */
@@ -40,11 +34,9 @@
 
     <div id="app" class="w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-hidden">
         
-        <!-- Header Moderno -->
         <header class="bg-indigo-600 p-6 sm:p-10 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <!-- NOME UNIFICADO NO CABEÇALHO - ATUALIZADO -->
                     <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto</h1>
                     <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
                 </div>
@@ -54,7 +46,6 @@
             </div>
         </header>
         
-        <!-- Navegação (Tabs) -->
         <div class="flex border-b border-gray-200 bg-gray-50 px-6 overflow-x-auto">
             <button id="tab-registro" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-active whitespace-nowrap" onclick="switchTab('registro')">
                 <span class="flex items-center"><i data-lucide="calendar-check" class="w-4 h-4 mr-2"></i> Registro Diário</span>
@@ -67,14 +58,11 @@
             </button>
         </div>
         
-        <!-- Área de Mensagens -->
         <div id="message-box" class="hidden mx-6 mt-6 p-4 text-sm rounded-lg shadow-sm border-l-4 transition-all" role="alert"></div>
 
         <div class="p-6 sm:p-8 min-h-[500px]">
             
-            <!-- CONTEÚDO DA ABA 1: Registro Diário e Histórico -->
             <div id="content-registro" class="animate-fade-in">
-                <!-- Card de Registro -->
                 <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8 shadow-sm">
                     <h2 class="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
                         <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Novo Lançamento
@@ -102,7 +90,6 @@
                     </div>
                 </div>
 
-                <!-- Seção de Histórico -->
                 <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-4 gap-4">
                     <h2 class="text-xl font-semibold text-gray-800">Histórico Mensal</h2>
                     <div class="flex items-center space-x-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
@@ -147,7 +134,6 @@
                 </div>
             </div>
 
-            <!-- CONTEÚDO DA ABA 2: Relatório Individual -->
             <div id="content-relatorio" class="hidden animate-fade-in">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">Relatório Individual</h2>
                 
@@ -183,12 +169,10 @@
                         <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas Geral</span>
                         <span class="text-3xl font-bold text-indigo-600 mt-1" id="resumo-total-horas">-</span>
                     </div>
-                    <!-- Nova área para Squads - ocupa 2 colunas no LG -->
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:col-span-2">
                         <span class="text-xs text-gray-500 uppercase font-medium mb-2">Horas por Squad</span>
                         <div id="resumo-squads-list" class="flex flex-wrap gap-2 mt-auto">
-                            <!-- Inserido via JS -->
-                        </div>
+                            </div>
                     </div>
                 </div>
 
@@ -212,7 +196,6 @@
                 </div>
             </div>
 
-            <!-- CONTEÚDO DA ABA 3: Gestão de Cadastros -->
             <div id="content-cadastro" class="hidden animate-fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
@@ -283,8 +266,6 @@
         </div>
     </div>
 
-    <!-- MODAIS (Selection, Details, Import, Analysis, Confirmation) -->
-    
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
@@ -384,29 +365,27 @@ Exemplo Texto (Use IA ✨):
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, runTransaction, deleteDoc, setLogLevel, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================================
-        // CONFIGURAÇÃO PARA GITHUB PAGES - PREENCHA AQUI!
+        // CONFIGURAÇÃO
         // =========================================================================================
         
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
-  authDomain: "atuacao2026.firebaseapp.com",
-  projectId: "atuacao2026",
-  storageBucket: "atuacao2026.firebasestorage.app",
-  messagingSenderId: "862692587738",
-  appId: "1:862692587738:web:f8cbedfd0951a4632b8de3",
-  measurementId: "G-GYBGDY5L14"
+            authDomain: "atuacao2026.firebaseapp.com",
+            projectId: "atuacao2026",
+            storageBucket: "atuacao2026.firebasestorage.app",
+            messagingSenderId: "862692587738",
+            appId: "1:862692587738:web:f8cbedfd0951a4632b8de3",
+            measurementId: "G-GYBGDY5L14"
         };
-        // 2. Chave de API do Gemini (Google AI Studio)
-        // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
-        // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
-        const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
         
-        // CORREÇÃO: Usa o ID do ambiente se existir, senão usa o padrão para GitHub Pages
+        // --- CORREÇÃO DA IA ---
+        // Se houver uma chave definida globalmente (Github), usa ela. Se não, usa a padrão.
+        const geminiApiKey = typeof __gemini_api_key !== 'undefined' ? __gemini_api_key : "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
+        
         const appId = typeof __app_id !== 'undefined' ? __app_id : "scooto-gestao-v1"; 
 
         // =========================================================================================
         
-        // Helper global para strings seguras (conforme solicitado)
         const safeStr = (val) => (val || '').toString();
 
         let db, auth, userId = null;
@@ -440,7 +419,7 @@ Exemplo Texto (Use IA ✨):
             { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
-        // === API Helpers (BLINDAGEM CONTRA ERROS 404/UNDEFINED) ===
+        // === CORREÇÃO DA IA: BLINDAGEM CONTRA ERRO DE REPLACE/UNDEFINED ===
         async function callGemini(prompt) {
             let key = geminiApiKey;
             if (key.includes("COLE_SUA")) {
@@ -449,10 +428,11 @@ Exemplo Texto (Use IA ✨):
             }
 
             if (!key || key.includes("COLE_SUA")) {
-                throw new Error("Chave da API Gemini não configurada no código.");
+                throw new Error("Chave da API Gemini não configurada.");
             }
 
-            const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-001", "gemini-pro"];
+            // Tenta modelos diferentes para evitar erros 404 se um modelo for depreciado
+            const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
             
             for (const model of modelsToTry) {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
@@ -469,35 +449,25 @@ Exemplo Texto (Use IA ✨):
                     if (!response.ok) {
                         if (response.status === 404) {
                             console.warn(`Modelo ${model} retornou 404.`);
-                            if (model === modelsToTry[modelsToTry.length - 1]) {
-                                throw new Error(`Erro 404: Nenhum dos modelos testados foi encontrado.`);
-                            }
                             continue; // Tenta o próximo
                         }
                         const errText = await response.text();
-                        if (response.status === 400 || response.status === 403) {
-                            throw new Error(`Erro Permissão (${response.status}): Verifique API Key.`);
-                        }
                         throw new Error(`Erro Gemini (${response.status}): ${errText}`);
                     }
 
                     const data = await response.json();
                     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     
-                    // Se achou texto, retorna
-                    if (text) return text;
+                    // --- FIX: Sempre retorna string, nunca undefined ---
+                    if (text) return String(text); 
                     
-                    // Se a resposta veio vazia mas sem erro HTTP
-                    console.warn(`Modelo ${model} retornou vazio.`);
-
                 } catch (error) {
                     if (!error.message.includes('404') || model === modelsToTry[modelsToTry.length - 1]) {
                         throw error;
                     }
                 }
             }
-            // Retorna vazio string para não quebrar quem chama
-            return "";
+            return ""; // Retorno padrão seguro
         }
 
         // === AI Features & UI Logic ===
@@ -511,7 +481,7 @@ Exemplo Texto (Use IA ✨):
 
             const prompt = `
                 Você é um assistente de extração de dados de RH.
-                Extraia os dados de turnos do seguinte texto (que pode ser informal, email, whatsapp, etc).
+                Extraia os dados de turnos do seguinte texto.
                 O contexto é: Ano atual 2025.
                 Texto: "${text}"
                 Retorne APENAS um JSON válido (array de objetos com nome, data DD/MM/YYYY, entrada HH:MM, saida HH:MM, squadReal).
@@ -520,13 +490,11 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 let result = await callGemini(prompt);
-                console.log("IA Raw Result:", result); // Debug
-
-                // BLINDAGEM: Garante que result seja string antes de usar .replace
-                const resultSeguro = safeStr(result);
                 
-                // Limpa Markdown se houver
-                const cleanResult = resultSeguro.replace(/```json/g, '').replace(/```/g, '').trim();
+                // --- FIX: BLINDAGEM DO REPLACE ---
+                // Garante que 'result' seja uma string antes de tentar limpar
+                const safeResult = String(result || "");
+                const cleanResult = safeResult.replace(/```json/g, '').replace(/```/g, '').trim();
                 
                 if (!cleanResult) throw new Error("A IA retornou uma resposta vazia.");
 
@@ -535,7 +503,7 @@ Exemplo Texto (Use IA ✨):
                     parsedData = JSON.parse(cleanResult);
                 } catch (jsonErr) {
                      console.error("Erro parsing JSON:", cleanResult);
-                     throw new Error("A IA não gerou um JSON válido. Tente reformular o texto.");
+                     throw new Error("A IA não gerou um JSON válido.");
                 }
 
                 if (!Array.isArray(parsedData) || parsedData.length === 0) throw new Error("Dados não identificados no JSON.");
@@ -558,7 +526,6 @@ Exemplo Texto (Use IA ✨):
             const [y, m] = val.split('-').map(Number);
             const filtered = allRegistros.filter(r => {
                 const d = parseDate(r.data);
-                // FIX DATE: Usar UTC para evitar problema de fuso (dia 1 virar dia 30 anterior)
                 return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
             });
 
@@ -573,8 +540,8 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 let analysis = await callGemini(prompt);
-                // BLINDAGEM: Garante que é string para o Marked
-                const safeAnalysis = safeStr(analysis || "A análise não retornou texto.");
+                // --- FIX: BLINDAGEM DO MARKED ---
+                const safeAnalysis = String(analysis || "A análise não retornou texto.");
                 modalContent.innerHTML = marked.parse(safeAnalysis);
             } catch (e) {
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
@@ -587,7 +554,6 @@ Exemplo Texto (Use IA ✨):
             if(!nome || !mes) return showMessage("Selecione scooteira e mês.", 'warning');
 
             const [y, m] = mes.split('-').map(Number);
-            // FIX DATE: Usar UTC
             const filtered = allRegistros.filter(r => {
                 const d = parseDate(r.data);
                 return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
@@ -603,8 +569,8 @@ Exemplo Texto (Use IA ✨):
 
             try {
                 let analysis = await callGemini(prompt);
-                // BLINDAGEM: Garante que é string para o Marked
-                const safeAnalysis = safeStr(analysis || "A análise não retornou texto.");
+                // --- FIX: BLINDAGEM DO MARKED ---
+                const safeAnalysis = String(analysis || "A análise não retornou texto.");
                 modalContent.innerHTML = marked.parse(safeAnalysis);
             } catch (e) {
                 console.error(e);
