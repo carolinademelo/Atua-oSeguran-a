@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- NOME UNIFICADO NA ABA -->
-    <title>Atuação Scooteiras Segurança - Scooto</title>
+    <title>Dash Atuação - Scooto</title>
     
     <!-- Favicon de Scooter -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FONTE ALTERADA PARA MONTSERRAT -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Marked para Markdown da IA -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        /* FONTE APLICADA AQUI */
+        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
         .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -43,8 +45,8 @@
             <div class="flex justify-between items-center">
                 <div>
                     <!-- NOME UNIFICADO NO CABEÇALHO -->
-                    <h1 class="text-3xl font-bold tracking-tight">Gestão de Ponto - Scooto</h1>
-                    <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
+                    <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto - Scooto</h1>
+                    <p class="text-indigo-100 text-sm mt-1">Squads X Scooteiras</p>
                 </div>
                 <div class="hidden md:block text-right">
                     <p id="auth-status" class="text-xs text-indigo-200 font-mono bg-indigo-800 py-1 px-2 rounded">Conectando...</p>
@@ -385,7 +387,7 @@ Exemplo Texto (Use IA ✨):
         
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
         const firebaseConfig = {
-           apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
   storageBucket: "atuacao2026.firebasestorage.app",
@@ -865,7 +867,9 @@ Exemplo Texto (Use IA ✨):
             let grandTotal = 0;
 
             data.forEach(r => { 
-                let s = r.squadReal;
+                // 1. Limpa espaços extras antes de qualquer verificação
+                let s = r.squadReal ? r.squadReal.trim() : 'Outro';
+                
                 // --- CORREÇÃO DE NOMES DUPLICADOS ---
                 // Se estiver escrito "Rec Cred" ou variações, conta como "Rec. Crédito"
                 if(s && (s.toLowerCase() === 'rec cred' || s.toLowerCase() === 'rec. cred' || s.toLowerCase().includes('recupera'))) {
@@ -884,6 +888,10 @@ Exemplo Texto (Use IA ✨):
             // Render specific Squads
             SQUADS_OPCOES.forEach(s => {
                 const sec = totals[s] || 0;
+                
+                // 2. REGRA: Se estiver zerado, não exibe o cartão
+                if (sec === 0) return;
+
                 const [h, m] = formatDuration(sec).split(':');
                 let borderClass = 'border-l-4 border-indigo-500';
                 if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
@@ -898,6 +906,9 @@ Exemplo Texto (Use IA ✨):
             Object.keys(totals).forEach(s => {
                 if (!SQUADS_OPCOES.includes(s)) {
                     const sec = totals[s];
+                    // Também esconde dinâmicos se, por algum motivo, estiverem zerados
+                    if (sec === 0) return;
+
                     const [h, m] = formatDuration(sec).split(':');
                     container.innerHTML += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 border-l-4 border-gray-500"><h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3><p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p></div>`;
                 }
