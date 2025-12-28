@@ -380,7 +380,7 @@ Exemplo Texto (Use IA ✨):
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserSessionPersistence, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, runTransaction, deleteDoc, setLogLevel, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================================
@@ -400,9 +400,14 @@ Exemplo Texto (Use IA ✨):
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
-        const appId = "scooto-gestao-v1"; 
+        
+        // CORREÇÃO: Usa o ID do ambiente se existir, senão usa o padrão para GitHub Pages
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "scooto-gestao-v1"; 
 
         // =========================================================================================
+        
+        // Helper global para strings seguras (conforme solicitado)
+        const safeStr = (val) => (val || '').toString();
 
         let db, auth, userId = null;
         let scooteirasCadastro = [], allRegistros = [], selectedAgentsNames = [];
@@ -435,7 +440,7 @@ Exemplo Texto (Use IA ✨):
             { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
-        // === API Helpers (CORREÇÃO DE ERRO 404 e NULL) ===
+        // === API Helpers (BLINDAGEM CONTRA ERROS 404/UNDEFINED) ===
         async function callGemini(prompt) {
             let key = geminiApiKey;
             if (key.includes("COLE_SUA")) {
@@ -447,7 +452,6 @@ Exemplo Texto (Use IA ✨):
                 throw new Error("Chave da API Gemini não configurada no código.");
             }
 
-            // Lista de modelos para tentar (fallback automático para evitar erro 404)
             const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-001", "gemini-pro"];
             
             for (const model of modelsToTry) {
@@ -463,43 +467,47 @@ Exemplo Texto (Use IA ✨):
                     });
 
                     if (!response.ok) {
-                        // Se for erro 404 (Modelo não encontrado), tenta o próximo silenciosamente
                         if (response.status === 404) {
                             console.warn(`Modelo ${model} retornou 404.`);
-                            // Se for o último, não podemos apenas continuar, temos que deixar o erro acontecer ou lançar um
                             if (model === modelsToTry[modelsToTry.length - 1]) {
-                                throw new Error(`Erro 404: Nenhum dos modelos testados foi encontrado. Verifique sua chave de API e região.`);
+                                throw new Error(`Erro 404: Nenhum dos modelos testados foi encontrado.`);
                             }
                             continue; // Tenta o próximo
                         }
-                        
                         const errText = await response.text();
                         if (response.status === 400 || response.status === 403) {
-                            throw new Error(`Erro de Permissão/Requisição (${response.status}): Verifique sua API Key.`);
+                            throw new Error(`Erro Permissão (${response.status}): Verifique API Key.`);
                         }
                         throw new Error(`Erro Gemini (${response.status}): ${errText}`);
                     }
 
                     const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     
+                    // Se achou texto, retorna
+                    if (text) return text;
+                    
+                    // Se a resposta veio vazia mas sem erro HTTP
+                    console.warn(`Modelo ${model} retornou vazio.`);
+
                 } catch (error) {
-                    // Se não for erro 404 (já tratado acima), ou se for o último modelo da lista, lança o erro
                     if (!error.message.includes('404') || model === modelsToTry[modelsToTry.length - 1]) {
                         throw error;
                     }
                 }
             }
-            // Caso saia do loop sem retornar (ex: todos 404 sem throw), lança erro genérico
-            throw new Error("Falha ao conectar com todos os modelos de IA.");
+            // Retorna vazio string para não quebrar quem chama
+            return "";
         }
 
-        // === AI Features, UI Logic, CSV Export, etc. ===
+        // === AI Features & UI Logic ===
 
         window.handleSmartImport = async () => {
             const text = document.getElementById('import-data-json').value.trim();
             if (!text) return showMessage("Por favor, cole algum texto para importar.", 'warning');
-            document.getElementById('ai-loading-overlay').classList.remove('hidden');
+            
+            const overlay = document.getElementById('ai-loading-overlay');
+            if(overlay) overlay.classList.remove('hidden');
 
             const prompt = `
                 Você é um assistente de extração de dados de RH.
@@ -507,23 +515,39 @@ Exemplo Texto (Use IA ✨):
                 O contexto é: Ano atual 2025.
                 Texto: "${text}"
                 Retorne APENAS um JSON válido (array de objetos com nome, data DD/MM/YYYY, entrada HH:MM, saida HH:MM, squadReal).
+                Não use Markdown. Apenas o JSON cru.
             `;
 
             try {
-                const result = await callGemini(prompt);
-                // Validação extra para garantir que marked não quebre
-                if (!result) throw new Error("A IA não retornou nenhum dado.");
+                let result = await callGemini(prompt);
+                console.log("IA Raw Result:", result); // Debug
+
+                // BLINDAGEM: Garante que result seja string antes de usar .replace
+                const resultSeguro = safeStr(result);
                 
-                const cleanResult = result.replace(/```json/g, '').replace(/```/g, '').trim();
-                const parsedData = JSON.parse(cleanResult);
-                if (!Array.isArray(parsedData) || parsedData.length === 0) throw new Error("Dados não identificados.");
+                // Limpa Markdown se houver
+                const cleanResult = resultSeguro.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                if (!cleanResult) throw new Error("A IA retornou uma resposta vazia.");
+
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(cleanResult);
+                } catch (jsonErr) {
+                     console.error("Erro parsing JSON:", cleanResult);
+                     throw new Error("A IA não gerou um JSON válido. Tente reformular o texto.");
+                }
+
+                if (!Array.isArray(parsedData) || parsedData.length === 0) throw new Error("Dados não identificados no JSON.");
+                
                 await processImportedData(parsedData);
                 document.getElementById('import-data-json').value = '';
+                
             } catch (error) {
                 console.error(error);
-                showMessage("Erro na IA: " + error.message, 'error');
+                showMessage("Erro na IA: " + (error.message || error), 'error');
             } finally {
-                document.getElementById('ai-loading-overlay').classList.add('hidden');
+                if(overlay) overlay.classList.add('hidden');
             }
         };
 
@@ -548,9 +572,10 @@ Exemplo Texto (Use IA ✨):
             const prompt = `Analise estes dados de turnos (Scooto) para o mês ${val}. Dados: ${summaryData}. Forneça um relatório executivo em Markdown com Resumo, Distribuição por Squad e Alertas.`;
 
             try {
-                const analysis = await callGemini(prompt);
-                // Correção robusta para evitar erro de undefined no marked
-                modalContent.innerHTML = marked.parse(analysis || "A análise não retornou texto.");
+                let analysis = await callGemini(prompt);
+                // BLINDAGEM: Garante que é string para o Marked
+                const safeAnalysis = safeStr(analysis || "A análise não retornou texto.");
+                modalContent.innerHTML = marked.parse(safeAnalysis);
             } catch (e) {
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
             }
@@ -577,9 +602,10 @@ Exemplo Texto (Use IA ✨):
             const prompt = `Analise o desempenho de ${nome} em ${mes}. Registos: ${JSON.stringify(filtered.map(r => ({data: r.data, entrada: r.entrada, saida: r.saida})))}. Dê feedback construtivo.`;
 
             try {
-                const analysis = await callGemini(prompt);
-                // Correção robusta para evitar erro de undefined no marked
-                modalContent.innerHTML = marked.parse(analysis || "A análise não retornou texto.");
+                let analysis = await callGemini(prompt);
+                // BLINDAGEM: Garante que é string para o Marked
+                const safeAnalysis = safeStr(analysis || "A análise não retornou texto.");
+                modalContent.innerHTML = marked.parse(safeAnalysis);
             } catch (e) {
                 console.error(e);
                 modalContent.textContent = "Erro ao gerar análise: " + e.message;
@@ -775,6 +801,23 @@ Exemplo Texto (Use IA ✨):
                 auth = getAuth(app);
                 await setPersistence(auth, browserSessionPersistence);
                 
+                // AUTHENTICATION STRATEGY (Atualizada para Canvas)
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        try {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } catch (e) {
+                            console.warn("Falha no token customizado, tentando anônimo:", e);
+                            await signInAnonymously(auth);
+                        }
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                
+                // Inicia auth
+                initAuth();
+
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
@@ -782,9 +825,6 @@ Exemplo Texto (Use IA ✨):
                         document.getElementById('auth-status').textContent = 'Conectado';
                         document.getElementById('auth-status').className = 'text-xs text-emerald-200 font-mono bg-emerald-800 py-1 px-2 rounded';
                         loadData();
-                    } else {
-                        // Apenas login anônimo suportado no modo GitHub Pages por padrão
-                        await signInAnonymously(auth);
                     }
                 });
             } catch (e) {
@@ -822,7 +862,17 @@ Exemplo Texto (Use IA ✨):
                     }
                 } else {
                     // Se tem dados no banco, usa eles (sobrescreve o mock local)
-                    scooteirasCadastro = snap.docs.map(d => d.data()).sort((a,b) => a.nome.localeCompare(b.nome));
+                    // BLINDAGEM: Normalização dos dados ao carregar
+                    scooteirasCadastro = snap.docs.map(d => {
+                        const data = d.data();
+                        return {
+                            ...data,
+                            nome: safeStr(data.nome),
+                            pseudo: safeStr(data.pseudo),
+                            squadPadrao: safeStr(data.squadPadrao)
+                        };
+                    }).sort((a,b) => a.nome.localeCompare(b.nome));
+
                     agentesByPseudo = {};
                     scooteirasCadastro.forEach(a => { if(a.pseudo) agentesByPseudo[a.pseudo] = a; });
                     
@@ -937,7 +987,9 @@ Exemplo Texto (Use IA ✨):
 
             // 1. Agregação e Normalização
             data.forEach(r => { 
-                let s = r.squadReal ? r.squadReal.trim() : 'Outro';
+                // BLINDAGEM: Garante string antes do trim
+                let s = safeStr(r.squadReal).trim();
+                if (!s) s = 'Outro';
                 
                 // Normalização robusta para garantir agrupamento correto
                 const lower = s.toLowerCase();
@@ -1024,6 +1076,9 @@ Exemplo Texto (Use IA ✨):
         }
 
         function getSquadBadge(squad) {
+            // BLINDAGEM
+            if (!squad) squad = 'Indefinido';
+            
             let classes = "bg-gray-100 text-gray-800";
             if(squad === 'CB') classes = "bg-indigo-100 text-indigo-800";
             else if(squad === 'SC') classes = "bg-purple-100 text-purple-800";
@@ -1148,12 +1203,13 @@ Exemplo Texto (Use IA ✨):
              const lines = text.split('\n').filter(l => l.trim());
              if(lines.length < 2) throw new Error("Dados insuficientes");
              const seps = ['\t', ';', ',', '|']; let sep = ','; let max = 0; seps.forEach(s => { const c = lines[1].split(s).length; if(c>max){max=c; sep=s;} });
-             const headers = lines[0].split(sep).map(h => h.toLowerCase().replace(/[^a-z]/g, ''));
+             // BLINDAGEM: Garante strings antes de qualquer operação
+             const headers = safeStr(lines[0]).split(sep).map(h => safeStr(h).toLowerCase().replace(/[^a-z]/g, ''));
              const map = { 'data': 'data', 'nome': 'nome', 'agente': 'nome', 'scooteira': 'nome', 'email': 'nome', 'entrada': 'entrada', 'inicio': 'entrada', 'saida': 'saida', 'termino': 'saida', 'squad': 'squadReal', 'sua': 'squadReal', 'turno': 'turnoAtuado' };
              const data = [];
              for(let i=1; i<lines.length; i++) {
                  const cols = lines[i].split(sep); let obj = {};
-                 cols.forEach((c, idx) => { const h = headers[idx]; for(let k in map) if(h.includes(k)) obj[map[k]] = c.replace(/"/g, '').trim(); });
+                 cols.forEach((c, idx) => { const h = headers[idx]; for(let k in map) if(h.includes(k)) obj[map[k]] = safeStr(c).replace(/"/g, '').trim(); });
                  if(obj.nome && obj.data && obj.entrada) {
                      if(obj.entrada.length > 5) obj.entrada = obj.entrada.substring(0,5);
                      if(obj.saida && obj.saida.length > 5) obj.saida = obj.saida.substring(0,5);
