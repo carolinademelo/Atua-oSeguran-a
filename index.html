@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- NOME UNIFICADO NA ABA -->
     <title>Atuação Scooteiras Segurança - Scooto</title>
     
     <!-- Favicon de Scooter -->
@@ -41,7 +42,8 @@
         <header class="bg-indigo-600 p-6 sm:p-10 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Atuação Diária</h1>
+                    <!-- NOME UNIFICADO NO CABEÇALHO -->
+                    <h1 class="text-3xl font-bold tracking-tight">Gestão de Ponto - Scooto</h1>
                     <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
                 </div>
                 <div class="hidden md:block text-right">
@@ -230,7 +232,7 @@
                             <select id="new-squad" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                                 <option value="CB">CB</option>
                                 <option value="SC">SC</option>
-                                <option value="Rec. Crédito">Rec. Crédito</option>
+                                <option value="Rec Cred">Rec Cred</option>
                                 <option value="Monitoria">Monitoria</option>
                                 <option value="OJR">OJR</option>
                             </select>
@@ -383,7 +385,7 @@ Exemplo Texto (Use IA ✨):
         
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
         const firebaseConfig = {
-            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+           apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
   storageBucket: "atuacao2026.firebasestorage.app",
@@ -406,7 +408,7 @@ Exemplo Texto (Use IA ✨):
         let isAuthReady = false;
         let agentesByPseudo = {};
         
-        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR"];
+        const SQUADS_OPCOES = ["CB", "SC", "Rec Cred", "Monitoria", "OJR"];
         const TURNOS_OPCOES = ["Diária Extra", "Troca", "Freela", "Monitora", "Meu Turno"];
         
         const MOCK_CADASTROS = [
@@ -867,7 +869,7 @@ Exemplo Texto (Use IA ✨):
                 // --- CORREÇÃO DE NOMES DUPLICADOS ---
                 // Se estiver escrito "Rec Cred" ou variações, conta como "Rec. Crédito"
                 if(s && (s.toLowerCase() === 'rec cred' || s.toLowerCase() === 'rec. cred' || s.toLowerCase().includes('recupera'))) {
-                    s = 'Rec. Crédito';
+                    s = 'Rec Cred';
                 }
                 if(s && s.toLowerCase().includes('monitor')) {
                     s = 'Monitoria';
@@ -879,16 +881,6 @@ Exemplo Texto (Use IA ✨):
                 grandTotal += r.duracaoSegundos;
             });
             
-            // Render Grand Total Card first
-            const [gh, gm] = formatDuration(grandTotal).split(':');
-             container.innerHTML += `
-                <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between">
-                    <h3 class="text-xs font-bold text-indigo-100 uppercase mb-1 flex items-center">
-                        <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Total Geral
-                    </h3>
-                    <p class="text-3xl font-bold">${gh}<span class="text-sm text-indigo-200 font-normal">h</span> ${gm}<span class="text-sm text-indigo-200 font-normal">m</span></p>
-                </div>`;
-
             // Render specific Squads
             SQUADS_OPCOES.forEach(s => {
                 const sec = totals[s] || 0;
@@ -911,6 +903,16 @@ Exemplo Texto (Use IA ✨):
                 }
             });
 
+            // Render Grand Total Card LAST
+            const [gh, gm] = formatDuration(grandTotal).split(':');
+             container.innerHTML += `
+                <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between">
+                    <h3 class="text-xs font-bold text-indigo-100 uppercase mb-1 flex items-center">
+                        <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Total Geral
+                    </h3>
+                    <p class="text-3xl font-bold">${gh}<span class="text-sm text-indigo-200 font-normal">h</span> ${gm}<span class="text-sm text-indigo-200 font-normal">m</span></p>
+                </div>`;
+
             refreshIcons();
         }
 
@@ -918,7 +920,7 @@ Exemplo Texto (Use IA ✨):
             let classes = "bg-gray-100 text-gray-800";
             if(squad === 'CB') classes = "bg-indigo-100 text-indigo-800";
             else if(squad === 'SC') classes = "bg-purple-100 text-purple-800";
-            else if(squad === 'Rec. Crédito') classes = "bg-pink-100 text-pink-800";
+            else if(squad === 'Rec Cred') classes = "bg-pink-100 text-pink-800";
             else if(squad === 'Monitoria') classes = "bg-yellow-100 text-yellow-800";
             else if(squad === 'OJR') classes = "bg-orange-100 text-orange-800";
             return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${classes}">${squad}</span>`;
