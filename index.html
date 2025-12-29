@@ -289,16 +289,16 @@
     <div id="import-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden">
              <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-blue-600"></i> Importar</h3>
+                <h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-blue-600"></i> Importar do Excel</h3>
                 <button onclick="window.closeModal('import-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6">
-                <p class="text-sm text-gray-600 mb-2">Cole os dados em formato CSV (separado por vírgula):</p>
-                <code class="block bg-gray-100 p-2 rounded text-xs mb-4 text-gray-500">Nome da Scooteira, Data (AAAA-MM-DD), Entrada (HH:MM), Saída (HH:MM), Squad</code>
-                <textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50" placeholder="Ex:&#10;Celina Z,2024-05-20,08:00,14:00,CB&#10;Malu R,2024-05-20,08:00,14:00,CB"></textarea>
+                <p class="text-sm text-gray-600 mb-2">Cole os dados copiados diretamente da planilha (com cabeçalho ou sem):</p>
+                <textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Data	Email	Pseudo	Turno	Início	Fim...&#10;01/12/2025	email@scooto	Nome	Meu Turno	08:00	14:00..."></textarea>
+                <p class="text-xs text-gray-400 mt-2">O sistema detectará automaticamente tabulações e datas no formato DD/MM/AAAA.</p>
             </div>
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="window.handleImport()">Importar Dados</button>
+                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="window.handleImport()">Processar Dados</button>
             </div>
         </div>
     </div>
@@ -639,14 +639,11 @@
             showMessage('Registros salvos com sucesso!', 'success');
             window.closeModal('details-modal');
             
-            // --- CORREÇÃO AQUI: Atualizar o filtro de mês para o mês do registro ---
             const novoMes = dataStr.substring(0, 7);
             const mesAtual = document.getElementById('mes-select').value;
-            
             if (novoMes !== mesAtual) {
                 document.getElementById('mes-select').value = novoMes;
             }
-            // ------------------------------------------------------------------------
             
             window.loadHistorico();
         });
@@ -738,7 +735,7 @@
             }
         };
 
-        // --- FUNÇÕES DE IMPORTAÇÃO (NOVAS) ---
+        // --- FUNÇÕES DE IMPORTAÇÃO (REESCRITA PARA EXCEL/TABULAÇÃO) ---
         window.showImportModal = () => window.openModal('import-modal');
 
         window.handleImport = async () => {
@@ -747,14 +744,49 @@
 
             const lines = text.split('\n');
             let successCount = 0;
+            let lastProcessedMonth = null;
 
             for(let line of lines) {
-                const cols = line.split(',');
-                if(cols.length >= 4) {
-                    const [nome, dataStr, ent, sai, sq] = cols.map(c => c.trim());
-                    
-                    if(!nome || !dataStr || !ent || !sai) continue;
+                // Tenta dividir por TAB primeiro (padrão Excel)
+                let cols = line.split('\t');
+                
+                // Se não funcionou, tenta vírgula (fallback)
+                if(cols.length < 5) cols = line.split(',');
 
+                // Verifica se é cabeçalho (pula se encontrar "Data" ou "Email")
+                if(cols.length > 0 && (cols[0].includes('Data') || cols[1].includes('mail'))) continue;
+
+                // Baseado na sua estrutura:
+                // Col 0: Data (DD/MM/YYYY)
+                // Col 2: Pseudo (Nome)
+                // Col 4: Entrada (8:00:00)
+                // Col 5: Saída (14:00:00)
+                // Col 8: Squad (SC, CB, etc)
+                // Col 3: Turno (Meu Turno, etc) - Opcional
+
+                if(cols.length >= 8) {
+                    const dataBr = cols[0].trim(); // 01/12/2025
+                    const pseudo = cols[2].trim(); // Ruth G.
+                    const entRaw = cols[4].trim(); // 8:00:00
+                    const saiRaw = cols[5].trim(); // 14:00:00
+                    const sq = cols[8].trim();     // SC
+                    const turno = cols[3] ? cols[3].trim() : "Importado";
+
+                    if(!dataBr || !pseudo) continue;
+
+                    // Converter Data DD/MM/YYYY -> YYYY-MM-DD
+                    const parts = dataBr.split('/');
+                    if(parts.length !== 3) continue;
+                    const dataIso = `${parts[2]}-${parts[1]}-${parts[0]}`; // 2025-12-01
+
+                    // Armazena o mês para atualizar o filtro depois
+                    lastProcessedMonth = `${parts[2]}-${parts[1]}`;
+
+                    // Limpar Hora (8:00:00 -> 08:00)
+                    const ent = entRaw.substring(0, 5);
+                    const sai = saiRaw.substring(0, 5);
+
+                    // Calcular horas
                     const d1 = new Date(`2000-01-01T${ent}`);
                     const d2 = new Date(`2000-01-01T${sai}`);
                     let diff = (d2 - d1) / 1000 / 60 / 60; 
@@ -762,13 +794,13 @@
 
                     try {
                         await addDoc(collection(db, logsCol), {
-                            data: dataStr,
-                            mes: dataStr.substring(0, 7),
-                            scooteira: nome,
+                            data: dataIso,
+                            mes: dataIso.substring(0, 7),
+                            scooteira: pseudo, // Usando Pseudo pois é o que vem na planilha
                             squad: sq || 'Importado',
                             entrada: ent,
                             saida: sai,
-                            turno: 'Importado',
+                            turno: turno,
                             horas: parseFloat(diff.toFixed(2)),
                             timestamp: new Date()
                         });
@@ -779,6 +811,12 @@
             
             showMessage(`${successCount} registros importados!`, 'success');
             window.closeModal('import-modal');
+            
+            // ATUALIZAÇÃO AUTOMÁTICA DO FILTRO
+            if(lastProcessedMonth) {
+                document.getElementById('mes-select').value = lastProcessedMonth;
+            }
+
             window.loadHistorico();
         };
 
