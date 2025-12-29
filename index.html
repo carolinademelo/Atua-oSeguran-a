@@ -640,23 +640,271 @@
                 state.agents.sort((a,b) => a.nome.localeCompare(b.nome)).map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
         };
 
-        // (Mantenha as funções renderCapacityAccordion, renderTrocasAccordion e loadRelatorioIndividual aqui, 
-        //  apenas atualize-as para usar state.history em vez de currentHistoryList se necessário, 
-        //  e use showToast em erros)
-        
-        // ... [Código das abas restantes similar ao original mas usando state.history] ...
-        
-        // Exemplo simplificado para Capacidade (para economizar espaço na resposta, mas você deve incluir a lógica completa):
-        window.renderCapacityAccordion = () => {
-            // Reutilizar lógica original, apenas garanta que está lendo state.history
-            const container = document.getElementById('capacity-accordion-container');
-            if(state.history.length === 0) {
-                 container.innerHTML = '<div class="text-center text-gray-400 py-8">Sem dados para calcular capacidade.</div>';
-                 return;
-            }
-            // ... (Resto da lógica de accordion aqui)
-            // Dica: Use document.createElement em vez de strings gigantes se possível, ou mantenha a string se for mais fácil.
+        // --- FUNÇÕES AUXILIARES (DATAS) ---
+        function getISOWeek(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
+
+        // --- ABA: CAPACIDADE ---
+        window.renderCapacityAccordion = () => {
+            const mes = document.getElementById('mes-select').value;
+            if(!mes) return;
+            const [ano, mesNum] = mes.split('-').map(Number);
+            const container = document.getElementById('capacity-accordion-container');
+            
+            container.innerHTML = "";
+            
+            if (state.history.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8 italic">Sem dados neste mês para calcular a capacidade.</div>';
+                return;
+            }
+
+            const dataMap = {};
+            state.history.forEach(log => {
+                if(!dataMap[log.data]) dataMap[log.data] = {};
+                dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
+            });
+
+            const weeks = {};
+            const first = new Date(ano, mesNum - 1, 1);
+            const last = new Date(ano, mesNum, 0);
+            
+            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+                const w = getISOWeek(new Date(d));
+                if (!weeks[w]) weeks[w] = [];
+                weeks[w].push(new Date(d));
+            }
+
+            Object.keys(weeks).forEach(wNum => {
+                const days = weeks[wNum];
+                const weekId = `week-${wNum}`;
+                
+                const header = document.createElement('div');
+                header.className = "cursor-pointer bg-white border border-gray-200 p-4 rounded-lg mb-2 hover:border-indigo-500 hover:shadow-md transition-all flex justify-between items-center";
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Semana ${wNum}</span></div><i data-lucide="chevron-down" class="text-gray-400 w-4 h-4"></i>`;
+                header.onclick = () => {
+                    const content = document.getElementById(weekId);
+                    content.classList.toggle('hidden');
+                    lucide.createIcons();
+                };
+
+                const content = document.createElement('div');
+                content.id = weekId;
+                content.className = "hidden mb-6 border border-gray-200 border-t-0 rounded-b-lg overflow-x-auto bg-white p-2 shadow-inner";
+
+                let tableHtml = `<table class="w-full text-xs"><thead><tr><th class="p-2 text-left bg-gray-50 border">Dia</th>`;
+                SQUADS_CONFIG.forEach(s => tableHtml += `<th class="p-2 text-center bg-gray-50 border font-bold text-${s.color}-700">${s.id}</th>`);
+                tableHtml += `</tr></thead><tbody>`;
+
+                days.forEach(dateObj => {
+                    const dateKey = dateObj.toISOString().split('T')[0];
+                    const dow = dateObj.getDay(); // 0 = Dom, 6 = Sab
+                    tableHtml += `<tr><td class="p-2 border font-bold bg-gray-50 text-gray-600">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'})}</td>`;
+                    
+                    SQUADS_CONFIG.forEach(sq => {
+                        const squadName = sq.id;
+                        const actual = (dataMap[dateKey] && dataMap[dateKey][squadName]) ? dataMap[dateKey][squadName] : 0;
+                        
+                        // Lógica de Metas
+                        const target = (METAS_SQUAD[squadName] && METAS_SQUAD[squadName][dow] !== undefined) ? METAS_SQUAD[squadName][dow] : 0;
+                        
+                        let cellClass = "p-2 border text-center";
+                        let badgeClass = "text-gray-400";
+                        
+                        if (target > 0) {
+                            if (actual < target) {
+                                cellClass += " bg-red-50 text-red-800";
+                                badgeClass = "text-red-300";
+                            } else if (actual > target) {
+                                cellClass += " bg-amber-50 text-amber-800";
+                                badgeClass = "text-amber-300";
+                            } else {
+                                cellClass += " bg-emerald-50 text-emerald-800";
+                                badgeClass = "text-emerald-300";
+                            }
+                        }
+
+                        tableHtml += `<td class="${cellClass}">
+                            <div class="font-bold">${actual.toFixed(1)}h</div>
+                            <div class="text-[9px] ${badgeClass}">Meta: ${target}</div>
+                        </td>`;
+                    });
+                    tableHtml += `</tr>`;
+                });
+
+                content.innerHTML = tableHtml + `</tbody></table>`;
+                container.appendChild(header);
+                container.appendChild(content);
+            });
+            lucide.createIcons();
+        };
+
+        // --- ABA: TROCAS ---
+        window.renderTrocasAccordion = () => {
+            const mes = document.getElementById('mes-select').value;
+            if(!mes) return;
+            const [ano, mesNum] = mes.split('-').map(Number);
+            const container = document.getElementById('trocas-accordion-container');
+            container.innerHTML = "";
+
+            const dailyLogs = {};
+            state.history.forEach(log => { if(!dailyLogs[log.data]) dailyLogs[log.data] = []; dailyLogs[log.data].push(log); });
+
+            const weeks = {};
+            const first = new Date(ano, mesNum - 1, 1);
+            const last = new Date(ano, mesNum, 0);
+            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+                const w = getISOWeek(new Date(d));
+                if (!weeks[w]) weeks[w] = [];
+                weeks[w].push(new Date(d));
+            }
+
+            Object.keys(weeks).forEach(wNum => {
+                const days = weeks[wNum];
+                const weekId = `trocas-week-${wNum}`;
+                
+                const header = document.createElement('div');
+                header.className = "cursor-pointer bg-white border border-gray-200 p-4 rounded-lg mb-2 hover:border-indigo-500 hover:shadow-md transition-all flex justify-between items-center";
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div><i data-lucide="chevron-down" class="text-gray-400 w-4 h-4"></i>`;
+                header.onclick = () => {
+                    document.getElementById(weekId).classList.toggle('hidden');
+                    lucide.createIcons();
+                };
+
+                const content = document.createElement('div');
+                content.id = weekId;
+                content.className = "hidden mb-4 p-4 bg-white border border-t-0 rounded-b-lg shadow-inner";
+
+                let trocasHtml = "";
+                days.forEach(dateObj => {
+                    const dateKey = dateObj.toISOString().split('T')[0];
+                    const logsDia = dailyLogs[dateKey] || [];
+                    const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase().replace('.',''); // seg, ter...
+                    
+                    // Quem trabalhou mas NÃO era o turno padrão (Extra/Troca)
+                    const extras = logsDia.filter(l => {
+                        const a = state.agents.find(ag => ag.nome === l.scooteira || ag.pseudo === l.scooteira);
+                        if (!a) return false;
+                        const turno = a.turnoPadrao.toLowerCase();
+                        // Lógica simplificada de verificação de dia
+                        const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
+                        return !ehDiaDeTrabalho;
+                    });
+
+                    // Quem DEVIA trabalhar mas NÃO tem log (Ausente/Trocou)
+                    const ausentes = state.agents.filter(a => {
+                        if (a.status === 'Distrato') return false;
+                        const turno = a.turnoPadrao.toLowerCase();
+                        const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
+                        const trabalhou = logsDia.some(l => l.scooteira === a.nome || l.scooteira === a.pseudo);
+                        return ehDiaDeTrabalho && !trabalhou;
+                    });
+
+                    if(extras.length > 0 && ausentes.length > 0) {
+                        let diaHtml = "";
+                        extras.forEach(ex => {
+                            const exSq = normalizarSquad(ex.squad);
+                            // Tenta achar alguém do mesmo squad que faltou
+                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq) || ausentes[0]; 
+                            
+                            if(par) {
+                                diaHtml += `
+                                <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg mb-2 border-l-4 border-indigo-500">
+                                    <i data-lucide="arrow-right-left" class="text-indigo-400 w-4 h-4"></i>
+                                    <div class="text-sm">
+                                        <strong class="text-indigo-800">${ex.scooteira}</strong> cobriu 
+                                        <strong class="text-gray-600">${par.nome}</strong> no squad ${exSq}.
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                        if(diaHtml) trocasHtml += `<div class="mb-4"><h4 class="font-bold text-xs text-gray-400 uppercase mb-2 border-b pb-1">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${dateObj.toLocaleDateString('pt-BR', {weekday:'long'})}</h4>${diaHtml}</div>`;
+                    }
+                });
+
+                content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic text-center py-2">Nenhuma troca óbvia detectada nesta semana.</p>`;
+                container.appendChild(header);
+                container.appendChild(content);
+            });
+            lucide.createIcons();
+        };
+
+        // --- ABA: RELATÓRIOS ---
+        window.loadRelatorioIndividual = async () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            const table = document.getElementById('relatorio-body');
+            const cards = document.getElementById('relatorio-resumo-cards');
+            
+            if(!nome || !mes) return;
+            
+            table.innerHTML = '<tr><td colspan="5" class="text-center py-8"><div class="loader mx-auto"></div></td></tr>';
+            cards.classList.add('hidden');
+
+            try {
+                // Busca específica para garantir dados caso o mês selecionado seja diferente do histórico principal
+                const q = query(collection(db, COLLECTIONS.LOGS), where("mes", "==", mes));
+                const snap = await getDocs(q);
+                
+                const agente = state.agents.find(a => a.nome === nome);
+                const pseudo = agente ? agente.pseudo : "";
+                
+                const list = [];
+                let total = 0;
+                const sqTotal = {};
+                
+                snap.forEach(d => {
+                    const data = d.data();
+                    if(data.scooteira === nome || data.scooteira === pseudo) {
+                        const sq = normalizarSquad(data.squad);
+                        list.push({ ...data, squad: sq });
+                        total += data.horas;
+                        sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
+                    }
+                });
+                
+                list.sort((a,b) => b.data.localeCompare(a.data));
+                
+                // Render Cards
+                cards.classList.remove('hidden');
+                let sqHtml = "";
+                Object.keys(sqTotal).forEach(s => { 
+                    const color = getSquadColor(s);
+                    sqHtml += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-${color}-500">
+                        <div class="text-xs text-gray-400 uppercase font-bold">${s}</div>
+                        <div class="text-xl font-bold text-gray-700">${sqTotal[s].toFixed(1)}h</div>
+                    </div>`; 
+                });
+                
+                cards.innerHTML = `
+                <div class="bg-indigo-600 p-4 rounded-xl shadow-md text-white">
+                    <div class="text-xs opacity-80 uppercase font-bold">Total Mês</div>
+                    <div class="text-3xl font-bold">${total.toFixed(1)}h</div>
+                </div>${sqHtml}`;
+                
+                // Render Table
+                if(list.length === 0) {
+                    table.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 italic">Nenhum registro encontrado para esta scooteira neste mês.</td></tr>';
+                } else {
+                    table.innerHTML = list.map(i => `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td>
+                            <td class="px-6 py-4"><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">${i.squad}</span></td>
+                            <td class="px-6 py-4 text-center text-gray-500 font-mono text-xs">${i.entrada}</td>
+                            <td class="px-6 py-4 text-center text-gray-500 font-mono text-xs">${i.saida}</td>
+                            <td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(2)}h</td>
+                        </tr>`).join('');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Erro ao gerar relatório.", "error");
+                table.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao buscar dados.</td></tr>';
+            }
+        };
 
         // --- CADASTRO ---
 
