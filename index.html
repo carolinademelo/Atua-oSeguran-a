@@ -280,7 +280,19 @@
     </div>
 
     <div id="details-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col"><div class="bg-indigo-600 px-6 py-4 text-white"><h3 class="text-lg font-bold">Ajuste de Detalhes</h3><p class="text-indigo-100 text-xs mt-1">Confirme os horários.</p></div><form id="details-form" class="flex-1 overflow-hidden flex flex-col"><div id="agentes-detalhes-container" class="p-6 space-y-6 overflow-y-auto flex-1"></div><div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3"><button type="button" class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition" onclick="window.closeModal('details-modal')">Cancelar</button><button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition">Confirmar</button></div></form></div>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="bg-indigo-600 px-6 py-4 text-white">
+                <h3 class="text-lg font-bold">Confirmar Lançamento</h3>
+                <p class="text-indigo-100 text-xs mt-1">Verifique os horários e a squad antes de salvar.</p>
+            </div>
+            <form id="details-form" class="flex-1 overflow-hidden flex flex-col">
+                <div id="agentes-detalhes-container" class="p-6 space-y-6 overflow-y-auto flex-1"></div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                    <button type="button" class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition" onclick="window.closeModal('details-modal')">Cancelar</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition">Confirmar e Salvar</button>
+                </div>
+            </form>
+        </div>
     </div>
     
     <div id="edit-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
@@ -445,14 +457,34 @@
             selectedBoxes.forEach(box => {
                 const nome = box.value;
                 const agent = currentAgents.find(a => a.nome === nome);
+                
+                // CRIAÇÃO DO SELECT DE SQUAD
+                const squadOptions = SQUADS_OPCOES.map(s => 
+                    `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`
+                ).join('');
+
                 container.innerHTML += `
                     <div class="p-4 border rounded-lg bg-gray-50">
                         <h4 class="font-bold text-indigo-900 mb-2">${agent.nome}</h4>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div><label class="text-xs">Entrada</label><input type="time" name="ent_${nome}" value="${agent.entradaPadrao}" class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs">Saída</label><input type="time" name="sai_${nome}" value="${agent.saidaPadrao}" class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs">Squad</label><input type="text" name="sq_${nome}" value="${agent.squadPadrao}" class="w-full border rounded p-1"></div>
-                            <div><label class="text-xs">Turno</label><input type="text" name="trn_${nome}" value="${agent.turnoPadrao}" class="w-full border rounded p-1"></div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Entrada</label>
+                                <input type="time" name="ent_${nome}" value="${agent.entradaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Saída</label>
+                                <input type="time" name="sai_${nome}" value="${agent.saidaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Squad do Dia</label>
+                                <select name="sq_${nome}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 bg-white">
+                                    ${squadOptions}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500">Turno</label>
+                                <input type="text" name="trn_${nome}" value="${agent.turnoPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                            </div>
                         </div>
                     </div>`;
             });
@@ -470,7 +502,8 @@
                 const nome = box.value;
                 const ent = document.querySelector(`input[name="ent_${nome}"]`).value;
                 const sai = document.querySelector(`input[name="sai_${nome}"]`).value;
-                const sq = document.querySelector(`input[name="sq_${nome}"]`).value;
+                // Agora pegamos o valor do Select
+                const sq = document.querySelector(`select[name="sq_${nome}"]`).value; 
                 const trn = document.querySelector(`input[name="trn_${nome}"]`).value;
                 
                 if (await verificarSobreposicao(nome, dataStr, ent, sai)) { conflictFound = true; continue; }
@@ -558,7 +591,9 @@
             const snap = await getDocs(q);
             currentHistoryList = []; 
             snap.forEach(d => currentHistoryList.push({id: d.id, ...d.data()}));
-            currentHistoryList.sort((a,b) => a.data.localeCompare(b.data));
+            
+            // ALTERAÇÃO: ORDEM DECRESCENTE (MAIS RECENTE PRIMEIRO)
+            currentHistoryList.sort((a,b) => b.data.localeCompare(a.data));
             
             tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
             
