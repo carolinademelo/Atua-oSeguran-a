@@ -375,29 +375,17 @@ Exemplo Texto (Use IA ✨):
 
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
         const firebaseConfig = {
-      apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
-             apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
-
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
-
   projectId: "atuacao2026",
-
   storageBucket: "atuacao2026.firebasestorage.app",
-
   messagingSenderId: "862692587738",
-
   appId: "1:862692587738:web:f8cbedfd0951a4632b8de3",
-
   measurementId: "G-GYBGDY5L14"
-
         };
-
         // 2. Chave de API do Gemini (Google AI Studio)
-
         // IMPORTANTE: Em um site público (GitHub Pages), esta chave ficará visível.
-
         // Restrinja o uso desta chave apenas para o domínio do seu GitHub Pages no console da Google Cloud.
-
         const geminiApiKey = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
 
         // 3. ID único para o armazenamento de dados. Pode ser o nome do seu projeto.
@@ -540,7 +528,6 @@ Exemplo Texto (Use IA ✨):
         }
 
         // Funções de UI, Lógica e Helpers (Mantidas iguais ao original)
-        // Funções de UI, Lógica e Helpers
         window.loadRelatorioIndividual = () => {
             const nome = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
@@ -734,23 +721,6 @@ Exemplo Texto (Use IA ✨):
                 if(!document.getElementById('content-relatorio').classList.contains('hidden')) { window.loadRelatorioIndividual(); }
             });
         };
-
-        // --- FUNÇÃO QUE FALTAVA (CORRIGIDO) ---
-        function renderCadastro() {
-            const tbody = document.getElementById('cadastro-list-body');
-            tbody.innerHTML = '';
-            if(scooteirasCadastro.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">Nenhuma scooteira cadastrada.</td></tr>';
-                return;
-            }
-            scooteirasCadastro.forEach(a => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition border-b border-gray-50 last:border-0";
-                tr.innerHTML = `<td class="px-6 py-3 font-medium text-gray-900">${a.nome} <span class="block text-xs text-gray-400 font-normal">${a.pseudo}</span></td><td class="px-6 py-3">${getSquadBadge(a.squadPadrao)}</td><td class="px-6 py-3 text-sm text-gray-600">${a.turnoPadrao}</td><td class="px-6 py-3 font-mono text-xs text-gray-500">${a.entradaPadrao} - ${a.saidaPadrao}</td><td class="px-6 py-3 text-right"><div class="flex justify-end space-x-2"><button onclick="editAgent('${a.nome}')" class="p-1 text-blue-600 hover:bg-blue-50 rounded"><i data-lucide="pencil" class="w-4 h-4"></i></button><button onclick="deleteAgentConfirmation('${a.nome}')" class="p-1 text-red-600 hover:bg-red-50 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>`;
-                tbody.appendChild(tr);
-            });
-            refreshIcons();
-        }
 
         function renderCheckboxes() {
             const container = document.getElementById('agentes-checkbox-list');
