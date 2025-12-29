@@ -196,6 +196,9 @@
             <div id="content-cadastro" class="hidden animate-fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
+                    <button onclick="window.seedDatabase()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium text-xs flex items-center shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Carregar Lista Padrão
+                    </button>
                 </div>
 
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
@@ -212,13 +215,7 @@
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">Squad Padrão</label>
                             <select id="new-squad" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm">
-                                <option value="CB">CB</option>
-                                <option value="SC">SC</option>
-                                <option value="Rec Cred">Rec Cred</option>
-                                <option value="Monitoria">Monitoria</option>
-                                <option value="OJR">OJR</option>
-                                <option value="Outro">Outro</option>
-                            </select>
+                                </select>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-xs font-medium text-gray-500 mb-1">Dias Padrão</label>
@@ -331,33 +328,89 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURAÇÃO CORRIGIDA ---
+        // ==========================================
+        // CONFIGURAÇÃO E DADOS INICIAIS
+        // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", // Chave única
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
             authDomain: "atuacao2026.firebaseapp.com",
             projectId: "atuacao2026",
             storageBucket: "atuacao2026.firebasestorage.app",
             messagingSenderId: "563632231622",
             appId: "1:563632231622:web:ce3e04e43cc647614214f5"
         };
+        const appId = "atuacao2026";
+        
+        // Configuração das Opções
+        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "Coraliados", "Hunter", "Vendas", "OJR", "Outro"];
+        
+        // MOCK_CADASTROS - LISTA COMPLETA
+        const MOCK_CADASTROS = [
+            // SQUAD CB
+            { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Laís Cristine dos Reis", pseudo: "Malu R", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Renata Mendes Valentim", pseudo: "Luara M", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Sáb.", entradaPadrao: "09:00", saidaPadrao: "15:00" },
+            { nome: "Juliana da Silva Sfair", pseudo: "Lóri S", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00" },
+            { nome: "Raylla Caroline Fernandes Santos", pseudo: "Teresa S.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00" },
+            { nome: "Barbara Santos De Souza Moreira", pseudo: "Nara M", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Viviane Santiago de Oliveira", pseudo: "Menna S.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Adriana Yurie Becker de Carvalho Chino", pseudo: "Diana C.", squadPadrao: "CB", turnoPadrao: "Dom. à Quar.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
+            { nome: "Lissandra Pereira da Frota", pseudo: "Aurora P.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
+            { nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
+            
+            // SQUAD SC
+            { nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Maria Eduarda Ferreira Gusmão", pseudo: "Ruth G.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Thaís Hayelen", pseudo: "Raquel H.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Rafaela Lins da Costa", pseudo: "Leila C.", squadPadrao: "SC", turnoPadrao: "FDS", entradaPadrao: "10:00", saidaPadrao: "16:00" },
+            { nome: "Ana Claudia Ferreira de Souza", pseudo: "Ravena F.", squadPadrao: "SC", turnoPadrao: "Ter. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Crislaine Gomes da Silva", pseudo: "Izabel G.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Ilanna Rodrigues Nascimento", pseudo: "Noelle R.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
+            { nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
 
+            // Monitoria
+            { nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+
+            // Coraliados
+            { nome: "Ingrid de Arruda Azeredo", pseudo: "Duda A.", squadPadrao: "Coraliados", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
+            { nome: "Vanessa Maria de Medeiros Abreu", pseudo: "Sara M", squadPadrao: "Coraliados", turnoPadrao: "Semanal", entradaPadrao: "14:00", saidaPadrao: "18:00" },
+
+            // Hunter
+            { nome: "Marcia de Paulo Araujo de Souza", pseudo: "Maria Marc", squadPadrao: "Hunter", turnoPadrao: "Semanal", entradaPadrao: "11:00", saidaPadrao: "17:00" },
+            { nome: "Juliana Dos Santos Candido", pseudo: "Mia C", squadPadrao: "Hunter", turnoPadrao: "Semanal", entradaPadrao: "11:00", saidaPadrao: "17:00" },
+
+            // Vendas
+            { nome: "Pryscilla Santos Seabra", pseudo: "Paula", squadPadrao: "Vendas", turnoPadrao: "Semanal", entradaPadrao: "10:00", saidaPadrao: "16:00" },
+
+            // Rec Cred
+            { nome: "Pamella Ferreira de Lima Amorim", pseudo: "Cassia A.", squadPadrao: "Rec. Crédito", turnoPadrao: "Semanal", entradaPadrao: "10:00", saidaPadrao: "15:00" },
+
+            // OJR
+            { nome: "Mariana Bezerra André", pseudo: "Vitória M.", squadPadrao: "OJR", turnoPadrao: "Semanal", entradaPadrao: "09:00", saidaPadrao: "14:00" }
+        ];
+
+        // --- APP LOGIC ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "atuacao2026"; // Definido para uso nos caminhos
 
-        // --- REFERÊNCIAS ---
+        // Referências
         const logsCol = `artifacts/${appId}/public/data/scooteiras_atividades`;
         const agentsCol = `artifacts/${appId}/public/data/scooteiras_cadastro`;
 
         let currentAgents = [];
-        let confirmationResolver = null;
 
-        // --- AUTENTICAÇÃO ---
+        // Auth
         signInAnonymously(auth).then(() => {
             document.getElementById('auth-status').innerText = "Conectado";
             document.getElementById('auth-status').classList.remove('bg-indigo-800');
             document.getElementById('auth-status').classList.add('bg-emerald-600');
+            initSquadSelect();
             loadAgents();
             loadHistorico();
         }).catch((error) => {
@@ -366,7 +419,7 @@
             document.getElementById('auth-status').classList.add('bg-red-600');
         });
 
-        // --- UI UTILS ---
+        // UI Helpers
         window.switchTab = (tabId) => {
             ['registro', 'relatorio', 'cadastro'].forEach(t => {
                 document.getElementById(`content-${t}`).classList.add('hidden');
@@ -386,7 +439,12 @@
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
 
-        // --- AGENTS LOGIC ---
+        const initSquadSelect = () => {
+             const sel = document.getElementById('new-squad');
+             sel.innerHTML = SQUADS_OPCOES.map(s => `<option value="${s}">${s}</option>`).join('');
+        };
+
+        // --- AGENTS MANAGEMENT ---
         const loadAgents = async () => {
             const q = query(collection(db, agentsCol));
             const snap = await getDocs(q);
@@ -400,6 +458,10 @@
         const renderAgentsTable = () => {
             const tbody = document.getElementById('cadastro-list-body');
             tbody.innerHTML = '';
+            
+            // Ordenar por nome
+            currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
+
             currentAgents.forEach(a => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition border-b border-gray-50";
@@ -416,6 +478,24 @@
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
+        };
+        
+        // SEED DATABASE - Para corrigir o problema de "registros apagados"
+        window.seedDatabase = async () => {
+            if(!confirm("Atenção: Isso tentará salvar as 30+ scooteiras da lista padrão no banco de dados. \n\nSe elas já existirem, os dados serão atualizados. Deseja continuar?")) return;
+            
+            showMessage('Carregando dados... aguarde.', 'info');
+            let count = 0;
+            
+            for(const a of MOCK_CADASTROS) {
+                try {
+                    await setDoc(doc(db, agentsCol, a.nome), a);
+                    count++;
+                } catch(e) { console.error("Erro ao salvar", a.nome, e); }
+            }
+            
+            showMessage(`${count} scooteiras cadastradas/atualizadas com sucesso!`, 'success');
+            loadAgents();
         };
 
         document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
@@ -454,7 +534,9 @@
             const a = currentAgents.find(x => x.nome === nome);
             if(!a) return;
             
-            // Modal dinâmico de edição
+            // Modal de edição atualizado com OJR e novos squads
+            const options = SQUADS_OPCOES.map(s => `<option value="${s}" ${s===a.squadPadrao?'selected':''}>${s}</option>`).join('');
+
             const m = document.createElement('div');
             m.id = 'edit-agent-modal';
             m.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50';
@@ -468,7 +550,7 @@
                         <input id="ea-pseudo" class="w-full p-2 border rounded" value="${a.pseudo}"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="block text-xs uppercase text-gray-500">Squad</label>
-                            <input id="ea-squad" class="w-full p-2 border rounded" value="${a.squadPadrao}"></div>
+                            <select id="ea-squad" class="w-full p-2 border rounded">${options}</select></div>
                             <div><label class="block text-xs uppercase text-gray-500">Dias</label>
                             <input id="ea-dias" class="w-full p-2 border rounded" value="${a.turnoPadrao}"></div>
                         </div>
@@ -501,7 +583,7 @@
             });
         };
 
-        // --- REGISTRO DIÁRIO LOGIC ---
+        // --- REGISTRO DIÁRIO ---
         window.showSelectionModal = () => {
             renderSelectionList();
             window.openModal('selection-modal');
@@ -512,7 +594,7 @@
             div.innerHTML = currentAgents.map(a => `
                 <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-indigo-50 cursor-pointer transition">
                     <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
-                    <div><span class="font-medium text-gray-800">${a.nome}</span> <span class="text-xs text-gray-500">(${a.pseudo})</span></div>
+                    <div><span class="font-medium text-gray-800">${a.nome}</span> <span class="text-xs text-gray-500">(${a.pseudo})</span> <span class="text-[10px] bg-gray-100 px-1 rounded">${a.squadPadrao}</span></div>
                 </label>
             `).join('');
         };
@@ -551,9 +633,7 @@
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
-            const batch = []; 
-
-            // Simples loop para salvar (em prod usar batch do firestore se quiser atomicidade estrita)
+            
             for (const box of selectedBoxes) {
                 const nome = box.value;
                 const ent = document.querySelector(`input[name="ent_${nome}"]`).value;
@@ -561,7 +641,6 @@
                 const sq = document.querySelector(`input[name="sq_${nome}"]`).value;
                 const trn = document.querySelector(`input[name="trn_${nome}"]`).value;
                 
-                // Calc duration
                 const d1 = new Date(`2000-01-01T${ent}`);
                 const d2 = new Date(`2000-01-01T${sai}`);
                 let diff = (d2 - d1) / 1000 / 60 / 60; 
@@ -594,8 +673,6 @@
             const snap = await getDocs(q);
             const list = [];
             snap.forEach(d => list.push({id: d.id, ...d.data()}));
-            
-            // Ordenar por data
             list.sort((a,b) => a.data.localeCompare(b.data));
 
             const tbody = document.getElementById('historico-body');
@@ -623,7 +700,6 @@
         };
 
         const updateStats = (list) => {
-            // Stats simples para o resumo mensal
             const squads = {};
             list.forEach(i => {
                 if(!squads[i.squad]) squads[i.squad] = 0;
@@ -646,7 +722,7 @@
             }
         };
 
-        // --- CONFIRMATION UTIL ---
+        // --- EXTRAS ---
         const confirmAction = () => {
             return new Promise((resolve) => {
                 window.openModal('confirmation-modal');
@@ -657,7 +733,6 @@
             });
         };
 
-        // --- RELATÓRIOS INDIVIDUAIS ---
         const renderRelatorioSelect = () => {
             const sel = document.getElementById('relatorio-agente-select');
             sel.innerHTML = '<option value="" disabled selected>Selecione...</option>' + 
@@ -676,7 +751,6 @@
             snap.forEach(d => list.push(d.data()));
             list.sort((a,b) => a.data.localeCompare(b.data));
             
-            // Render Table
             const tbody = document.getElementById('relatorio-body');
             tbody.innerHTML = '';
             let totalH = 0;
@@ -693,42 +767,28 @@
                     </tr>`;
             });
 
-            // Show cards
             document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
             document.getElementById('resumo-total-dias').innerText = list.length;
             document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
         };
 
-        // --- ANALISE IA (SIMULADA LOCAMENTE) ---
         window.analyzeMonthlyData = async () => {
-            const mes = document.getElementById('mes-select').value;
-            const tbody = document.getElementById('historico-body');
-            if(tbody.innerText.includes("Carregando") || tbody.rows.length === 0) {
+             const mes = document.getElementById('mes-select').value;
+             const tbody = document.getElementById('historico-body');
+             if(tbody.innerText.includes("Carregando") || tbody.rows.length === 0) {
                  showMessage("Carregue dados primeiro.", "error"); return;
-            }
-            
-            const html = `
-                <h3>Análise do Mês ${mes}</h3>
-                <p>Com base nos dados carregados, o time teve uma performance consistente.</p>
-                <ul>
-                    <li>Total de registros processados com sucesso.</li>
-                    <li>Verifique os cards de resumo para totalização por Squad.</li>
-                </ul>
-                <p><strong>Dica:</strong> Para insights mais profundos, certifique-se de que todas as scooteiras registraram seus pontos corretamente.</p>
-            `;
-            document.getElementById('ai-analysis-content').innerHTML = html;
-            window.openModal('ai-analysis-modal');
+             }
+             document.getElementById('ai-analysis-content').innerHTML = `<h3>Análise do Mês ${mes}</h3><p>Análise simulada: O time apresenta estabilidade.</p>`;
+             window.openModal('ai-analysis-modal');
         };
         
         window.analyzeIndividualData = () => {
              const nome = document.getElementById('relatorio-agente-select').value;
              if(!nome) { showMessage("Selecione uma scooteira", "error"); return; }
-             
-             document.getElementById('ai-analysis-content').innerHTML = `<h3>Performance de ${nome}</h3><p>Análise detalhada gerada com sucesso. A colaboradora mantém regularidade nos horários.</p>`;
+             document.getElementById('ai-analysis-content').innerHTML = `<h3>Performance de ${nome}</h3><p>Colaboradora com registros regulares.</p>`;
              window.openModal('ai-analysis-modal');
         };
 
-        // --- INIT ---
         window.onload = () => {
             const d = new Date();
             const m = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
