@@ -197,7 +197,7 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
                     <button onclick="window.seedDatabase()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium text-xs flex items-center shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Carregar Lista Padrão
+                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Forçar Atualização
                     </button>
                 </div>
 
@@ -411,7 +411,7 @@
             document.getElementById('auth-status').classList.remove('bg-indigo-800');
             document.getElementById('auth-status').classList.add('bg-emerald-600');
             initSquadSelect();
-            loadAgents();
+            loadAgents(); // <--- Agora tem inteligência para auto-seed
             loadHistorico();
         }).catch((error) => {
             console.error(error);
@@ -448,6 +448,15 @@
         const loadAgents = async () => {
             const q = query(collection(db, agentsCol));
             const snap = await getDocs(q);
+            
+            // AUTO-SEED FIX: Se o banco estiver vazio, preencher automaticamente
+            if (snap.empty) {
+                console.log("Banco vazio. Iniciando auto-seed...");
+                showMessage("Primeiro acesso detectado. Configurando banco de dados...", "info");
+                await seedDatabase(true); // true = silent/auto mode
+                return; 
+            }
+
             currentAgents = [];
             snap.forEach(d => currentAgents.push(d.data()));
             renderAgentsTable();
@@ -480,11 +489,13 @@
             lucide.createIcons();
         };
         
-        // SEED DATABASE - Para corrigir o problema de "registros apagados"
-        window.seedDatabase = async () => {
-            if(!confirm("Atenção: Isso tentará salvar as 30+ scooteiras da lista padrão no banco de dados. \n\nSe elas já existirem, os dados serão atualizados. Deseja continuar?")) return;
+        // SEED DATABASE - Agora aceita modo silencioso para automação
+        window.seedDatabase = async (silent = false) => {
+            if(!silent) {
+                if(!confirm("Atenção: Isso irá REENVIAR a lista padrão de 30+ scooteiras para o banco. Deseja continuar?")) return;
+            }
             
-            showMessage('Carregando dados... aguarde.', 'info');
+            if(!silent) showMessage('Carregando dados... aguarde.', 'info');
             let count = 0;
             
             for(const a of MOCK_CADASTROS) {
@@ -494,8 +505,15 @@
                 } catch(e) { console.error("Erro ao salvar", a.nome, e); }
             }
             
-            showMessage(`${count} scooteiras cadastradas/atualizadas com sucesso!`, 'success');
-            loadAgents();
+            showMessage(`${count} scooteiras sincronizadas!`, 'success');
+            
+            // Se foi chamado pelo loadAgents (silent), chamamos loadAgents de novo para atualizar a tela
+            if(silent) {
+                // Pequeno delay para garantir propagação
+                setTimeout(() => loadAgents(), 1000);
+            } else {
+                loadAgents();
+            }
         };
 
         document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
