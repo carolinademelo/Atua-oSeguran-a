@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Histórico de Atuação</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Histórico</h2>
                     <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border-gray-300 rounded-md text-sm">
                 </div>
                 <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
@@ -107,10 +107,6 @@
             </div>
 
             <div id="content-trocas" class="hidden animate-fade-in">
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Cadeira de Atuação</h2>
-                    <p class="text-xs text-gray-500">Identificação de quem atuou na cadeira de quem.</p>
-                </div>
                 <div id="trocas-accordion-container" class="space-y-4"></div>
             </div>
 
@@ -122,7 +118,7 @@
                             <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg text-sm" onchange="window.loadRelatorioIndividual()"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês de Referência</label>
                             <input type="month" id="relatorio-mes-select" class="w-full p-2.5 border-gray-300 rounded-lg text-sm" onchange="window.loadRelatorioIndividual()">
                         </div>
                     </div>
@@ -144,7 +140,7 @@
                         <input type="text" id="new-nome" placeholder="Nome Completo" class="p-2 border rounded text-sm" required>
                         <input type="text" id="new-pseudo" placeholder="Pseudo" class="p-2 border rounded text-sm" required>
                         <select id="new-squad" class="p-2 border rounded text-sm"></select>
-                        <input type="text" id="new-turno" placeholder="Escala (Ex: Seg-Sex)" class="p-2 border rounded text-sm">
+                        <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="p-2 border rounded text-sm">
                         <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
                         <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
                         <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Cadastrar</button>
@@ -153,11 +149,7 @@
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                            <tr>
-                                <th class="px-6 py-3">Nome / Pseudo</th>
-                                <th class="px-6 py-3 text-center">Status</th>
-                                <th class="px-6 py-3 text-right">Ações</th>
-                            </tr>
+                            <tr><th class="px-6 py-3">Nome / Pseudo</th><th class="px-6 py-3 text-center">Status</th><th class="px-6 py-3 text-right">Ações</th></tr>
                         </thead>
                         <tbody id="cadastro-list-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -168,23 +160,23 @@
 
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 class="font-bold text-lg mb-4">Selecionar Equipe</h3>
+            <h3 class="font-bold text-lg mb-4">Seleção</h3>
             <div id="agentes-checkbox-list" class="space-y-2 max-h-96 overflow-y-auto mb-6"></div>
-            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Confirmar</button>
+            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Concluir</button>
         </div>
     </div>
 
     <div id="details-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div class="p-6 bg-indigo-600 text-white font-bold flex justify-between">
-                <span>Confirmar Detalhes</span>
+                <span>Confirmar Dados</span>
                 <button onclick="window.closeModal('details-modal')"><i data-lucide="x"></i></button>
             </div>
             <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1 bg-gray-50">
                 <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
             <div class="p-4 bg-white border-t flex justify-end">
-                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold">Salvar Tudo</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg">Salvar Tudo</button>
             </div>
         </div>
     </div>
@@ -204,8 +196,6 @@
 
         const SQUADS_ATIVAS = ["SC", "CB", "Rec. Crédito", "OJR", "Monitoria"];
         const squadColorMap = { "SC": "emerald", "CB": "indigo", "Rec. Crédito": "amber", "OJR": "purple", "Monitoria": "cyan", "Outro": "slate" };
-        
-        // METAS DA SQUAD (Tabela fixa)
         const METAS_SQUAD = {
             "SC": { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
             "CB": { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
@@ -282,9 +272,7 @@
                             <option value="Distrato" ${a.status === 'Distrato' ? 'selected' : ''}>Distrato</option>
                         </select>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteAgent('${a.nome}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
+                    <td class="px-6 py-4 text-right"><button onclick="window.deleteAgent('${a.nome}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                 </tr>`).join('');
             lucide.createIcons();
         };
@@ -296,11 +284,7 @@
 
         const renderSelectionList = () => {
             const ativas = currentAgents.filter(a => a.status === 'Ativa');
-            document.getElementById('agentes-checkbox-list').innerHTML = ativas.map(a => `
-                <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded">
-                    <span class="text-sm font-medium text-gray-700">${a.nome}</span>
-                </label>`).join('');
+            document.getElementById('agentes-checkbox-list').innerHTML = ativas.map(a => `<label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer"><input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded"><span class="text-sm font-medium text-gray-700">${a.nome}</span></label>`).join('');
         };
 
         const renderRelatorioSelect = () => {
@@ -314,19 +298,7 @@
             if (!data || selected.length === 0) return alert("Selecione data e scooteiras.");
             document.getElementById('agentes-detalhes-container').innerHTML = selected.map(nome => {
                 const a = currentAgents.find(x => x.nome === nome);
-                return `
-                <div class="confirm-row p-4 border rounded-lg bg-white relative" data-nome="${a.nome}">
-                    <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    <div class="font-bold text-indigo-600 mb-2">${a.nome}</div>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <input type="time" value="${a.entradaPadrao}" class="confirm-ent border p-1 rounded text-sm">
-                        <input type="time" value="${a.saidaPadrao}" class="confirm-sai border p-1 rounded text-sm">
-                        <select class="confirm-squad border p-1 rounded text-sm">
-                            ${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === a.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
-                        <input type="text" value="${a.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm">
-                    </div>
-                </div>`;
+                return `<div class="confirm-row p-4 border rounded-lg bg-white relative" data-nome="${a.nome}"><button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button><div class="font-bold text-indigo-600 mb-2">${a.nome}</div><div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><input type="time" value="${a.entradaPadrao}" class="confirm-ent border p-1 rounded text-sm"><input type="time" value="${a.saidaPadrao}" class="confirm-sai border p-1 rounded text-sm"><select class="confirm-squad border p-1 rounded text-sm">${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === a.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}</select><input type="text" value="${a.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm"></div></div>`;
             }).join('');
             window.openModal('details-modal');
             lucide.createIcons();
@@ -363,7 +335,7 @@
             currentHistoryList.sort((a,b) => b.data.localeCompare(a.data) || b.entrada.localeCompare(a.entrada));
             
             document.getElementById('historico-body').innerHTML = currentHistoryList.map(item => {
-                const agente = currentAgents.find(a => a.nome === item.scooteira || a.pseudo === item.scooteira);
+                const agente = currentAgents.find(a => a.nome === item.scooteira);
                 let contratado = 0;
                 if (agente) {
                     const h1 = new Date(`2000-01-01T${agente.entradaPadrao}`);
@@ -371,25 +343,8 @@
                     contratado = (h2 - h1) / 3600000;
                     if (contratado < 0) contratado += 24;
                 }
-                
-                let corTotal = "text-indigo-600";
-                if (item.horas < contratado) corTotal = "text-red-500";
-                if (item.horas > contratado) corTotal = "text-amber-600";
-                if (item.horas === contratado && contratado > 0) corTotal = "text-emerald-600";
-
-                return `
-                <tr class="hover:bg-gray-50 border-b">
-                    <td class="px-6 py-4 text-xs">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4 font-bold text-gray-800">${item.scooteira}</td>
-                    <td class="px-6 py-4"><span class="squad-tag text-${squadColorMap[item.squad]}-600 border-${squadColorMap[item.squad]}-600">${item.squad}</span></td>
-                    <td class="px-6 py-4 text-xs text-center">${item.entrada} - ${item.saida}</td>
-                    <td class="px-6 py-4 font-bold text-center ${corTotal}">
-                        ${item.horas.toFixed(1)}h <span class="text-gray-300 font-normal">/ ${contratado.toFixed(1)}h</span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteLog('${item.id}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>`;
+                let corTotal = item.horas < contratado ? "text-red-500" : (item.horas > contratado ? "text-amber-600" : "text-emerald-600");
+                return `<tr class="hover:bg-gray-50 border-b"><td class="px-6 py-4 text-xs">${item.data.split('-').reverse().join('/')}</td><td class="px-6 py-4 font-bold text-gray-800">${item.scooteira}</td><td class="px-6 py-4"><span class="squad-tag text-${squadColorMap[item.squad]}-600 border-${squadColorMap[item.squad]}-600">${item.squad}</span></td><td class="px-6 py-4 text-xs text-center">${item.entrada} - ${item.saida}</td><td class="px-6 py-4 font-bold text-center ${corTotal}">${item.horas.toFixed(1)}h <small class="text-gray-300 font-normal">/ ${contratado.toFixed(1)}h</small></td><td class="px-6 py-4 text-right"><button onclick="window.deleteLog('${item.id}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
             }).join('');
             lucide.createIcons();
             updateStats();
@@ -398,27 +353,17 @@
         const updateStats = () => {
             const totals = {};
             currentHistoryList.forEach(i => { totals[i.squad] = (totals[i.squad] || 0) + i.horas; });
-            document.getElementById('resumo-squads').innerHTML = SQUADS_ATIVAS.map(s => `
-                <div class="bg-white p-4 rounded-xl border-t-4 border-${squadColorMap[s]}-500 shadow-sm">
-                    <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">${s}</div>
-                    <div class="text-xl font-bold text-gray-700">${(totals[s] || 0).toFixed(1)}h</div>
-                </div>`).join('');
+            document.getElementById('resumo-squads').innerHTML = SQUADS_ATIVAS.map(s => `<div class="bg-white p-4 rounded-xl border-t-4 border-${squadColorMap[s]}-500 shadow-sm"><div class="text-[10px] text-gray-400 uppercase font-bold mb-1">${s}</div><div class="text-xl font-bold text-gray-700">${(totals[s] || 0).toFixed(1)}h</div></div>`).join('');
         };
 
-        // CAPACIDADE & METAS
         window.renderCapacityAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
             const [ano, mesNum] = mes.split('-').map(Number);
             const container = document.getElementById('capacity-accordion-container');
             container.innerHTML = "";
-            
             const dataMap = {};
-            currentHistoryList.forEach(log => {
-                if(!dataMap[log.data]) dataMap[log.data] = {};
-                dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
-            });
-
+            currentHistoryList.forEach(log => { if(!dataMap[log.data]) dataMap[log.data] = {}; dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas; });
             const weeks = {};
             const first = new Date(ano, mesNum - 1, 1);
             const last = new Date(ano, mesNum, 0);
@@ -427,67 +372,45 @@
                 if (!weeks[w]) weeks[w] = [];
                 weeks[w].push(new Date(d));
             }
-
             Object.keys(weeks).forEach(wNum => {
                 const days = weeks[wNum];
                 const weekId = `week-${wNum}`;
-                const weekSquadTotals = {};
-                days.forEach(dateObj => {
-                    const dateKey = dateObj.toISOString().split('T')[0];
-                    if (dataMap[dateKey]) { 
-                        Object.keys(dataMap[dateKey]).forEach(sq => { weekSquadTotals[sq] = (weekSquadTotals[sq] || 0) + dataMap[dateKey][sq]; }); 
-                    }
-                });
-
                 const header = document.createElement('div');
                 header.className = "week-group-header shadow-sm flex justify-between items-center";
-                header.innerHTML = `<div><span class="font-bold text-indigo-700">Meta Semanal ${wNum}</span></div><div class="flex flex-wrap gap-2">${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `<span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}</div>`;
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Meta Semana ${wNum}</span></div>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
-                
                 const content = document.createElement('div');
                 content.id = weekId;
                 content.className = "week-content";
-                
                 let tableHtml = `<table class="w-full"><thead><tr><th class="cap-header text-left">Dia</th>`;
                 SQUADS_ATIVAS.forEach(s => tableHtml += `<th class="cap-header">${s}</th>`);
                 tableHtml += `</tr></thead><tbody>`;
-
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
                     const dow = dateObj.getDay();
-
                     tableHtml += `<tr><td class="cap-cell font-bold bg-gray-50 text-left px-4">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'})}</td>`;
-                    
                     SQUADS_ATIVAS.forEach(squad => {
                         const actual = (dataMap[dateKey] && dataMap[dateKey][squad]) ? dataMap[dateKey][squad] : 0;
                         const target = (METAS_SQUAD[squad] && METAS_SQUAD[squad][dow] !== undefined) ? METAS_SQUAD[squad][dow] : 0;
-                        
-                        let cellClass = "cap-cell";
-                        if (target > 0) {
-                            if (actual < target) cellClass += " cap-warn-low";
-                            else if (actual > target) cellClass += " cap-warn-high";
-                            else cellClass += " cap-ok";
-                        }
-                        tableHtml += `<td class="${cellClass}">${actual.toFixed(1)}h <span class="text-[9px] block opacity-40">Meta: ${target}</span></td>`;
+                        let cellClass = target > 0 ? (actual < target ? "cap-cell cap-warn-low" : (actual > target ? "cap-cell cap-warn-high" : "cap-cell cap-ok")) : "cap-cell";
+                        tableHtml += `<td class="${cellClass}">${actual.toFixed(1)}h <br><small class="opacity-40 text-[9px]">Meta: ${target}</small></td>`;
                     });
                     tableHtml += `</tr>`;
                 });
-                tableHtml += `</tbody></table>`;
-                content.innerHTML = tableHtml;
+                content.innerHTML = tableHtml + `</tbody></table>`;
                 container.appendChild(header);
                 container.appendChild(content);
             });
         };
 
-        // TROCAS: FRASE PADRÃO "FULANA ATUOU NA CADEIRA DE CICLANA"
         window.renderTrocasAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
-            const [ano, mesNum] = mes.split('-').map(Number);
             const container = document.getElementById('trocas-accordion-container');
             container.innerHTML = "";
             const dailyLogs = {};
             currentHistoryList.forEach(log => { if(!dailyLogs[log.data]) dailyLogs[log.data] = []; dailyLogs[log.data].push(log); });
+            const [ano, mesNum] = mes.split('-').map(Number);
             const weeks = {};
             const first = new Date(ano, mesNum - 1, 1);
             const last = new Date(ano, mesNum, 0);
@@ -501,7 +424,7 @@
                 const weekId = `trocas-week-${wNum}`;
                 const header = document.createElement('div');
                 header.className = "week-group-header shadow-sm flex justify-between items-center";
-                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div><i data-lucide="repeat" class="text-indigo-400"></i>`;
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
                 const content = document.createElement('div');
                 content.id = weekId;
@@ -512,24 +435,22 @@
                     const logsDia = dailyLogs[dateKey] || [];
                     const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
                     const extras = logsDia.filter(l => {
-                        const agente = currentAgents.find(a => a.nome === l.scooteira || a.pseudo === l.scooteira);
-                        if(!agente) return false;
-                        return !(agente.turnoPadrao.toLowerCase().includes(diaSeman) || agente.turnoPadrao.toLowerCase().includes("seg-sex"));
+                        const a = currentAgents.find(ag => ag.nome === l.scooteira);
+                        return a && !(a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
                     });
                     const ausentes = currentAgents.filter(a => {
-                        const noDistrato = a.status !== 'Distrato';
-                        const deveria = (a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
-                        const estava = logsDia.some(l => l.scooteira === a.nome || l.scooteira === a.pseudo);
-                        return noDistrato && deveria && !estava;
+                        const devia = a.status !== 'Distrato' && (a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
+                        const estava = logsDia.some(l => l.scooteira === a.nome);
+                        return devia && !estava;
                     });
                     if(extras.length > 0 && ausentes.length > 0) {
                         let diaHtml = "";
                         extras.forEach(ex => {
-                            const exSquad = normalizarSquad(ex.squad);
-                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSquad);
+                            const exSq = normalizarSquad(ex.squad);
+                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq);
                             if(par) diaHtml += `<div class="exchange-card"><p class="exchange-text"><strong class="text-indigo-700">${ex.scooteira}</strong> atuou na cadeira de <strong class="text-gray-700">${par.nome}</strong>.</p></div>`;
                         });
-                        if(diaHtml) trocasHtml += `<div class="mb-4 border-b border-gray-100 pb-2"><h4 class="font-bold text-xs text-indigo-900 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}</h4>${diaHtml}</div>`;
+                        if(diaHtml) trocasHtml += `<div class="mb-4 border-b pb-2"><h4 class="font-bold text-xs text-indigo-900 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}</h4>${diaHtml}</div>`;
                     }
                 });
                 content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic text-center py-2">Nenhuma troca encontrada.</p>`;
@@ -539,40 +460,29 @@
             lucide.createIcons();
         };
 
-        // RELATÓRIOS (Busca flexível Nome/Pseudo)
         window.loadRelatorioIndividual = async () => {
-            const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
+            const nome = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
-            const resCards = document.getElementById('relatorio-resumo-cards');
             const table = document.getElementById('relatorio-body');
-            
-            if(!nomeSelecionado || !mes) return;
-            table.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400 italic">Buscando...</td></tr>';
-            
-            const agenteObj = currentAgents.find(a => a.nome === nomeSelecionado);
-            const pseudo = agenteObj ? agenteObj.pseudo : "";
-
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
+            const cards = document.getElementById('relatorio-resumo-cards');
+            if(!nome || !mes) return;
+            table.innerHTML = '<tr><td colspan="5" class="text-center py-4">Buscando...</td></tr>';
+            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome)));
             const list = [];
             let total = 0;
             const sqTotal = {};
-            
             snap.forEach(d => {
                 const data = d.data();
-                if(data.scooteira === nomeSelecionado || data.scooteira === pseudo) {
-                    const sq = normalizarSquad(data.squad);
-                    list.push({ ...data, squad: sq });
-                    total += data.horas;
-                    sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
-                }
+                const sq = normalizarSquad(data.squad);
+                list.push({ ...data, squad: sq });
+                total += data.horas;
+                sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
             });
-            
             list.sort((a,b) => b.data.localeCompare(a.data));
-            resCards.classList.remove('hidden');
+            cards.classList.remove('hidden');
             let sqHtml = "";
             Object.keys(sqTotal).forEach(s => { sqHtml += `<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-${squadColorMap[s] || 'gray'}-500"><div class="text-xs text-gray-400 uppercase font-bold">${s}</div><div class="text-xl font-bold text-gray-700">${sqTotal[s].toFixed(1)}h</div></div>`; });
-            resCards.innerHTML = `<div class="bg-indigo-600 p-5 rounded-xl shadow-md text-white"><div class="text-xs opacity-80 uppercase font-bold">Total</div><div class="text-3xl font-bold">${total.toFixed(1)}h</div></div>${sqHtml}`;
+            cards.innerHTML = `<div class="bg-indigo-600 p-5 rounded-xl shadow-md text-white"><div class="text-xs opacity-80 uppercase font-bold">Total Mês</div><div class="text-3xl font-bold">${total.toFixed(1)}h</div></div>${sqHtml}`;
             table.innerHTML = list.length === 0 ? '<tr><td colspan="5" class="text-center py-8">Vazio.</td></tr>' : list.map(i => `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4 text-center">${i.entrada}</td><td class="px-6 py-4 text-center">${i.saida}</td><td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(1)}h</td></tr>`).join('');
         };
 
@@ -587,12 +497,9 @@
             e.preventDefault();
             const nome = document.getElementById('new-nome').value;
             await setDoc(doc(db, agentsCol, nome), {
-                nome: nome,
-                pseudo: document.getElementById('new-pseudo').value,
-                squadPadrao: document.getElementById('new-squad').value,
-                turnoPadrao: document.getElementById('new-turno').value,
-                entradaPadrao: document.getElementById('new-entrada').value,
-                saidaPadrao: document.getElementById('new-saida').value,
+                nome: nome, pseudo: document.getElementById('new-pseudo').value,
+                squadPadrao: document.getElementById('new-squad').value, turnoPadrao: document.getElementById('new-turno').value,
+                entradaPadrao: document.getElementById('new-entrada').value, saidaPadrao: document.getElementById('new-saida').value,
                 status: 'Ativa'
             });
             document.getElementById('add-agent-form').reset();
