@@ -329,7 +329,7 @@
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", // Chave pública do Firebase (ok manter)
             authDomain: "atuacao2026.firebaseapp.com",
             projectId: "atuacao2026",
             storageBucket: "atuacao2026.firebasestorage.app",
@@ -350,8 +350,8 @@
         let currentAgents = [];
         let currentHistoryList = [];
         
-        // --- CHAVE DA API INSERIDA AQUI ---
-        let GEMINI_API_KEY = "AIzaSyDoGeOheMsmmsEQiirykFHI_Y3XMhcSoFA"; 
+        // --- SEGURANÇA: VARIÁVEL INICIA VAZIA ---
+        let GEMINI_API_KEY = ""; 
 
         const getSquadColor = (squad) => {
             const map = { 'CB': 'indigo', 'SC': 'emerald', 'Rec. Crédito': 'amber', 'Monitoria': 'cyan', 'Coraliados': 'rose', 'Hunter': 'orange', 'Vendas': 'teal', 'OJR': 'purple', 'Outro': 'slate' };
@@ -361,17 +361,31 @@
         const timeToMinutes = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
         const normalizeTime = (t) => { if(!t) return ""; t = t.trim(); const parts = t.split(':'); if (parts.length >= 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`; return t; };
 
-        // --- LÓGICA DE IA (GEMINI) ---
+        // --- LÓGICA DE IA (GEMINI) SEGURA ---
         const getApiKey = () => {
+            // 1. Tenta pegar da variável
             if (GEMINI_API_KEY) return GEMINI_API_KEY;
-            const key = prompt("Por favor, insira sua chave de API do Google Gemini (AI Studio):");
-            if (key) { GEMINI_API_KEY = key; return key; }
+
+            // 2. Tenta pegar do LocalStorage (memória do navegador)
+            const storedKey = localStorage.getItem('scooto_gemini_key');
+            if (storedKey) {
+                GEMINI_API_KEY = storedKey;
+                return storedKey;
+            }
+
+            // 3. Pede ao usuário
+            const key = prompt("⚠️ Configuração de Segurança:\n\nCole aqui sua chave API do Google Gemini (AI Studio).\nEla será salva apenas no seu navegador.");
+            if (key) {
+                localStorage.setItem('scooto_gemini_key', key.trim());
+                GEMINI_API_KEY = key.trim();
+                return key.trim();
+            }
             return null;
         };
 
         const callGemini = async (promptText) => {
             const key = getApiKey();
-            if (!key) { alert("Chave de API necessária para usar a IA."); return null; }
+            if (!key) { alert("É necessária uma chave API para gerar os insights."); return null; }
             
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
@@ -379,11 +393,22 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
                 });
+                
+                if (!response.ok) {
+                     // Se der erro de permissão, limpa a chave para pedir de novo
+                    if(response.status === 400 || response.status === 403) {
+                        localStorage.removeItem('scooto_gemini_key');
+                        GEMINI_API_KEY = "";
+                        throw new Error("Chave inválida. Tente novamente.");
+                    }
+                    throw new Error("Erro na API do Google.");
+                }
+
                 const data = await response.json();
                 return data.candidates[0].content.parts[0].text;
             } catch (error) {
                 console.error(error);
-                return "Erro ao consultar a IA. Verifique se a chave está correta.";
+                return `Erro: ${error.message}`;
             }
         };
 
@@ -451,7 +476,6 @@
             renderRelatorioSelect();
         };
 
-        // --- LÓGICA DE TABELA COM SPLIT DE NOME ---
         const renderAgentsTable = () => {
             const tbody = document.getElementById('cadastro-list-body');
             tbody.innerHTML = '';
@@ -472,10 +496,8 @@
             lucide.createIcons();
         };
 
-        // Funções de Registro/Cadastro/Edição
         window.seedDatabase = async (silent) => { 
             if(!silent && !confirm("Reenviar lista padrão?")) return;
-            // Mock data structure would be here
             if(!silent) showMessage("Feito", "success"); 
             loadAgents(); 
         };
@@ -558,7 +580,6 @@
             window.loadHistorico();
         });
 
-        // --- CORREÇÃO DA IMPORTAÇÃO (IMPORTAÇÃO INTELIGENTE COM LOOKUP DE NOME) ---
         window.showImportModal = () => window.openModal('import-modal');
         window.handleImport = async () => {
             const text = document.getElementById('import-data-json').value;
@@ -579,11 +600,10 @@
 
                     if(!dataBr || !importedPseudo) continue;
                     
-                    // CORREÇÃO: Tentar encontrar o Nome Completo pelo Pseudo
                     let finalName = importedPseudo;
                     const foundAgent = currentAgents.find(a => a.pseudo.toLowerCase() === importedPseudo.toLowerCase());
                     if (foundAgent) {
-                        finalName = foundAgent.nome; // Usa o Nome Completo para salvar no banco
+                        finalName = foundAgent.nome; 
                     }
 
                     const parts = dataBr.split('/');
@@ -598,7 +618,7 @@
 
                     await addDoc(collection(db, logsCol), {
                         data: dataIso, mes: dataIso.substring(0, 7),
-                        scooteira: finalName, // Salva o nome correto agora
+                        scooteira: finalName, 
                         squad: sq, entrada: ent, saida: sai, turno: turno, horas: parseFloat(diff.toFixed(2))
                     });
                     successCount++;
@@ -609,7 +629,6 @@
             window.loadHistorico();
         };
 
-        // --- HISTÓRICO: COLUNAS SEPARADAS (NOME E PSEUDO) ---
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -626,9 +645,8 @@
             
             currentHistoryList.forEach(item => {
                 const color = getSquadColor(item.squad);
-                // BUSCAR DADOS DE EXIBIÇÃO
                 const agentData = currentAgents.find(a => a.nome === item.scooteira) || { nome: item.scooteira, pseudo: '-' };
-                const firstName = agentData.nome.split(' ')[0]; // Só o primeiro nome
+                const firstName = agentData.nome.split(' ')[0]; 
                 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50";
@@ -651,43 +669,40 @@
             updateStats(currentHistoryList);
         };
 
-        // --- RELATÓRIO INDIVIDUAL (CORRIGIDO) ---
         window.loadRelatorioIndividual = async () => {
-             const nome = document.getElementById('relatorio-agente-select').value;
-             const mes = document.getElementById('relatorio-mes-select').value;
-             if(!nome || !mes) return;
-             
-             // Busca agora usando o Nome Completo (padronizado)
-             const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
-             const snap = await getDocs(q);
-             const list = [];
-             snap.forEach(d => list.push(d.data()));
-             list.sort((a,b) => a.data.localeCompare(b.data));
-             
-             const tbody = document.getElementById('relatorio-body');
-             tbody.innerHTML = '';
-             let totalH = 0;
-             let squadStats = {}; 
+                const nome = document.getElementById('relatorio-agente-select').value;
+                const mes = document.getElementById('relatorio-mes-select').value;
+                if(!nome || !mes) return;
+                
+                const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
+                const snap = await getDocs(q);
+                const list = [];
+                snap.forEach(d => list.push(d.data()));
+                list.sort((a,b) => a.data.localeCompare(b.data));
+                
+                const tbody = document.getElementById('relatorio-body');
+                tbody.innerHTML = '';
+                let totalH = 0;
+                let squadStats = {}; 
 
-             list.forEach(i => {
-                 totalH += i.horas;
-                 if(!squadStats[i.squad]) squadStats[i.squad] = 0;
-                 squadStats[i.squad] += i.horas;
-                 tbody.innerHTML += `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4">${i.entrada}</td><td class="px-6 py-4">${i.saida}</td><td class="px-6 py-4">${i.horas}h</td></tr>`;
-             });
-             
-             document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
-             document.getElementById('resumo-total-dias').innerText = list.length;
-             document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
-             
-             const statsContainer = document.getElementById('resumo-squads-list');
-             statsContainer.innerHTML = Object.keys(squadStats).map(s => {
-                 const color = getSquadColor(s);
-                 return `<span class="px-3 py-1 text-xs font-bold text-${color}-700 bg-${color}-50 border border-${color}-200 rounded-full mb-2 mr-2">${s}: ${squadStats[s].toFixed(1)}h</span>`;
-             }).join('');
+                list.forEach(i => {
+                    totalH += i.horas;
+                    if(!squadStats[i.squad]) squadStats[i.squad] = 0;
+                    squadStats[i.squad] += i.horas;
+                    tbody.innerHTML += `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4">${i.entrada}</td><td class="px-6 py-4">${i.saida}</td><td class="px-6 py-4">${i.horas}h</td></tr>`;
+                });
+                
+                document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
+                document.getElementById('resumo-total-dias').innerText = list.length;
+                document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
+                
+                const statsContainer = document.getElementById('resumo-squads-list');
+                statsContainer.innerHTML = Object.keys(squadStats).map(s => {
+                    const color = getSquadColor(s);
+                    return `<span class="px-3 py-1 text-xs font-bold text-${color}-700 bg-${color}-50 border border-${color}-200 rounded-full mb-2 mr-2">${s}: ${squadStats[s].toFixed(1)}h</span>`;
+                }).join('');
         };
 
-        // --- AÇÕES DE IA ---
         window.analyzeMonthlyData = async () => {
             const mes = document.getElementById('mes-select').value;
             if(currentHistoryList.length === 0) { showMessage("Tabela vazia.", "error"); return; }
@@ -695,7 +710,6 @@
             document.getElementById('ai-analysis-content').innerHTML = '<p class="text-center italic text-gray-500 animate-pulse">Consultando a IA (Gemini)...</p>';
             window.openModal('ai-analysis-modal');
 
-            // Preparar dados para o prompt (resumo)
             let dataSummary = currentHistoryList.map(i => `${i.data}: ${i.scooteira} (${i.squad}) - ${i.horas}h`).join('\n');
             const prompt = `Analise os seguintes dados de turno de uma equipe de atendimento em ${mes}. Identifique padrões de cobertura, dias com mais/menos gente e squad mais acionado. Responda em Português do Brasil com formatação Markdown (tópicos). Dados:\n${dataSummary}`;
             
@@ -704,22 +718,21 @@
         };
 
         window.analyzeIndividualData = async () => {
-             const nome = document.getElementById('relatorio-agente-select').value;
-             const mes = document.getElementById('relatorio-mes-select').value;
-             const totalH = document.getElementById('resumo-total-horas').innerText;
-             
-             if(!nome || totalH === '-') { showMessage("Selecione uma scooteira primeiro.", "error"); return; }
+                const nome = document.getElementById('relatorio-agente-select').value;
+                const mes = document.getElementById('relatorio-mes-select').value;
+                const totalH = document.getElementById('resumo-total-horas').innerText;
+                
+                if(!nome || totalH === '-') { showMessage("Selecione uma scooteira primeiro.", "error"); return; }
 
-             document.getElementById('ai-analysis-content').innerHTML = '<p class="text-center italic text-gray-500 animate-pulse">Consultando a IA (Gemini)...</p>';
-             window.openModal('ai-analysis-modal');
+                document.getElementById('ai-analysis-content').innerHTML = '<p class="text-center italic text-gray-500 animate-pulse">Consultando a IA (Gemini)...</p>';
+                window.openModal('ai-analysis-modal');
 
-             const prompt = `Analise a performance da scooteira ${nome} no mês ${mes}. Ela trabalhou um total de ${totalH}. Com base em um padrão esperado de ~120h mensais (6h/dia), ela está cumprindo a carga horária? Responda de forma motivadora e profissional em Markdown.`;
-             
-             const result = await callGemini(prompt);
-             document.getElementById('ai-analysis-content').innerHTML = marked.parse(result);
+                const prompt = `Analise a performance da scooteira ${nome} no mês ${mes}. Ela trabalhou um total de ${totalH}. Com base em um padrão esperado de ~120h mensais (6h/dia), ela está cumprindo a carga horária? Responda de forma motivadora e profissional em Markdown.`;
+                
+                const result = await callGemini(prompt);
+                document.getElementById('ai-analysis-content').innerHTML = marked.parse(result);
         };
 
-        // Funções auxiliares (Confirm, Bulk UI, Edit Log, Save Log)
         const confirmAction = () => new Promise(r => { window.openModal('confirmation-modal'); window.resolveConfirmation = (v) => { window.closeModal('confirmation-modal'); r(v); }});
         window.toggleSelectAll = () => { const m = document.getElementById('select-all-history'); document.querySelectorAll('.history-checkbox').forEach(b => b.checked = m.checked); window.updateBulkUI(); };
         window.updateBulkUI = () => { const c = document.querySelectorAll('.history-checkbox:checked'); const b = document.getElementById('bulk-actions-bar'); document.getElementById('bulk-count').innerText = c.length; if(c.length > 0) b.classList.remove('hidden'); else b.classList.add('hidden'); };
@@ -783,14 +796,14 @@
         };
         window.deleteLog = async (id) => { if(await confirmAction()) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); }};
         window.exportToCsv = async () => { 
-             const mes = document.getElementById('mes-select').value;
-             if (!mes) return;
-             const q = query(collection(db, logsCol), where("mes", "==", mes));
-             const snap = await getDocs(q);
-             let csv = "data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas\n";
-             snap.forEach(d => { const i = d.data(); csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; });
-             const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `atuacao_${mes}.csv`;
-             document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                const mes = document.getElementById('mes-select').value;
+                if (!mes) return;
+                const q = query(collection(db, logsCol), where("mes", "==", mes));
+                const snap = await getDocs(q);
+                let csv = "data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas\n";
+                snap.forEach(d => { const i = d.data(); csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; });
+                const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `atuacao_${mes}.csv`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
         const updateStats = (list) => {
             const squads = {};
