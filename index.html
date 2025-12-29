@@ -389,8 +389,12 @@
                     state.history.push(item);
                 });
                 
-                // Ordenação: Data (Decrescente) -> Entrada (Crescente)
-                state.history.sort((a,b) => b.data.localeCompare(a.data) || a.entrada.localeCompare(b.entrada));
+                // Ordenação: 1) Data (Recente primeiro), 2) Entrada (Cedo primeiro), 3) Nome (A-Z)
+                state.history.sort((a,b) => 
+                    b.data.localeCompare(a.data) || 
+                    a.entrada.localeCompare(b.entrada) ||
+                    a.scooteira.localeCompare(b.scooteira)
+                );
                 
                 renderHistoricoTable();
                 updateStats();
@@ -829,7 +833,7 @@
                                     <div class="text-sm">
                                         <strong class="text-indigo-800">${nomeEx}</strong> cobriu 
                                         <strong class="text-gray-600">${nomePar}</strong> 
-                                        <span class="text-xs text-gray-500 bg-gray-100 px-1 rounded ml-1">(${ex.entrada} - ${ex.saida})</span>
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-1 rounded ml-1">(${par.entradaPadrao} - ${par.saidaPadrao})</span>
                                         no squad ${exSq}.
                                     </div>
                                 </div>`;
