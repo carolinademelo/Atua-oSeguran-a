@@ -109,7 +109,7 @@
                             <thead class="bg-gray-50 text-gray-500 uppercase text-xs sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     <th class="px-6 py-3 font-semibold">Data</th>
-                                    <th class="px-6 py-3 font-semibold">Nome</th>
+                                    <th class="px-6 py-3 font-semibold">Nome / Pseudo</th>
                                     <th class="px-6 py-3 font-semibold">Squad</th>
                                     <th class="px-6 py-3 text-center font-semibold">Horário</th>
                                     <th class="px-6 py-3 font-bold text-center font-semibold">Total / Contratado</th>
@@ -366,7 +366,6 @@
             try {
                 await updateDoc(doc(db, COLLECTIONS.AGENTS, nome), { status: novoStatus });
                 showToast("Status atualizado!");
-                // Não precisa recarregar tudo se usarmos state local ou snapshot, mas por segurança no protótipo:
                 loadAgents(); 
             } catch(e) { showToast("Erro ao atualizar.", "error"); }
         };
@@ -419,6 +418,8 @@
             tbody.innerHTML = state.history.map(item => {
                 const agente = state.agents.find(a => a.nome === item.scooteira || a.pseudo === item.scooteira);
                 let contratado = 0;
+                let pseudo = agente ? agente.pseudo : "";
+
                 if (agente) {
                     const h1 = new Date(`2000-01-01T${agente.entradaPadrao}`);
                     const h2 = new Date(`2000-01-01T${agente.saidaPadrao}`);
@@ -437,7 +438,10 @@
                 return `
                 <tr class="hover:bg-gray-50 border-b transition-colors">
                     <td class="px-6 py-4 text-gray-600 font-mono text-xs">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4 font-bold text-gray-700">${item.scooteira}</td>
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-gray-700">${item.scooteira}</div>
+                        <div class="text-xs text-gray-400 font-normal">${pseudo}</div>
+                    </td>
                     <td class="px-6 py-4">
                         <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-${colorName}-100 text-${colorName}-700 border border-${colorName}-200">
                             ${item.squad}
@@ -782,19 +786,16 @@
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
                     const logsDia = dailyLogs[dateKey] || [];
-                    const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase().replace('.',''); // seg, ter...
+                    const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase().replace('.',''); 
                     
-                    // Quem trabalhou mas NÃO era o turno padrão (Extra/Troca)
                     const extras = logsDia.filter(l => {
                         const a = state.agents.find(ag => ag.nome === l.scooteira || ag.pseudo === l.scooteira);
                         if (!a) return false;
                         const turno = a.turnoPadrao.toLowerCase();
-                        // Lógica simplificada de verificação de dia
                         const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
                         return !ehDiaDeTrabalho;
                     });
 
-                    // Quem DEVIA trabalhar mas NÃO tem log (Ausente/Trocou)
                     const ausentes = state.agents.filter(a => {
                         if (a.status === 'Distrato') return false;
                         const turno = a.turnoPadrao.toLowerCase();
@@ -807,16 +808,21 @@
                         let diaHtml = "";
                         extras.forEach(ex => {
                             const exSq = normalizarSquad(ex.squad);
-                            // Tenta achar alguém do mesmo squad que faltou
                             const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq) || ausentes[0]; 
+                            
+                            // EXTRAIR APENAS O PRIMEIRO NOME E O HORÁRIO
+                            const nomeEx = ex.scooteira.split(' ')[0];
+                            const nomePar = par ? par.nome.split(' ')[0] : 'Alguém';
                             
                             if(par) {
                                 diaHtml += `
                                 <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg mb-2 border-l-4 border-indigo-500">
                                     <i data-lucide="arrow-right-left" class="text-indigo-400 w-4 h-4"></i>
                                     <div class="text-sm">
-                                        <strong class="text-indigo-800">${ex.scooteira}</strong> cobriu 
-                                        <strong class="text-gray-600">${par.nome}</strong> no squad ${exSq}.
+                                        <strong class="text-indigo-800">${nomeEx}</strong> cobriu 
+                                        <strong class="text-gray-600">${nomePar}</strong> 
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-1 rounded ml-1">(${ex.entrada} - ${ex.saida})</span>
+                                        no squad ${exSq}.
                                     </div>
                                 </div>`;
                             }
@@ -845,7 +851,6 @@
             cards.classList.add('hidden');
 
             try {
-                // Busca específica para garantir dados caso o mês selecionado seja diferente do histórico principal
                 const q = query(collection(db, COLLECTIONS.LOGS), where("mes", "==", mes));
                 const snap = await getDocs(q);
                 
@@ -868,7 +873,6 @@
                 
                 list.sort((a,b) => b.data.localeCompare(a.data));
                 
-                // Render Cards
                 cards.classList.remove('hidden');
                 let sqHtml = "";
                 Object.keys(sqTotal).forEach(s => { 
@@ -886,7 +890,6 @@
                     <div class="text-3xl font-bold">${total.toFixed(1)}h</div>
                 </div>${sqHtml}`;
                 
-                // Render Table
                 if(list.length === 0) {
                     table.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 italic">Nenhum registro encontrado para esta scooteira neste mês.</td></tr>';
                 } else {
@@ -926,7 +929,7 @@
                 });
                 showToast("Scooteira cadastrada com sucesso!");
                 document.getElementById('add-agent-form').reset();
-                loadAgents(); // Recarrega lista
+                loadAgents(); 
             } catch(e) {
                 console.error(e);
                 showToast("Erro ao cadastrar.", "error");
