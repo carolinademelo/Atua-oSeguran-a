@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -376,12 +376,12 @@
                     state.history.push(item);
                 });
                 
-                // --- NOVA ORDENAÇÃO SOLICITADA ---
+                // --- ORDENAÇÃO ATUALIZADA (Cronológica Inversa e Hora Mais Recente no Topo) ---
                 state.history.sort((a,b) => 
-                    a.data.localeCompare(b.data) ||    // 1. Data (Antigo -> Novo)
-                    a.entrada.localeCompare(b.entrada) || // 2. Horário de Entrada
-                    a.squad.localeCompare(b.squad) ||  // 3. Squad
-                    a.scooteira.localeCompare(b.scooteira) // 4. Nome Alfabético
+                    b.data.localeCompare(a.data) ||       // 1. Data Decrescente (Hoje no topo)
+                    b.entrada.localeCompare(a.entrada) || // 2. Hora de Entrada Decrescente (14h acima de 08h)
+                    a.squad.localeCompare(b.squad) ||     // 3. Squad A-Z
+                    a.scooteira.localeCompare(b.scooteira)// 4. Nome A-Z
                 );
                 
                 renderHistoricoTable();
