@@ -27,10 +27,7 @@
         .week-content.active { display: block; border-top: none; margin-top: -12px; }
         
         .squad-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; border: 1px solid currentColor; }
-        
         .exchange-card { border-left: 4px solid #4f46e5; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-left-width: 4px; }
-        .exchange-text { font-size: 0.85rem; line-height: 1.4; }
-        
         .status-active { color: #166534; background: #dcfce7; }
         .status-inactive { color: #991b1b; background: #fee2e2; }
     </style>
@@ -106,16 +103,12 @@
             <div id="content-capacidade" class="hidden animate-fade-in">
                 <div class="mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Capacidade da Squad</h2>
-                    <p class="text-xs text-gray-500">Comparativo: Total de horas da Squad no dia vs Meta da Tabela.</p>
+                    <p class="text-xs text-gray-500">Total de horas da Squad no dia vs Meta esperada.</p>
                 </div>
                 <div id="capacity-accordion-container" class="space-y-4"></div>
             </div>
 
             <div id="content-trocas" class="hidden animate-fade-in">
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Substituições</h2>
-                    <p class="text-xs text-gray-500">Identificação automática de quem cobriu a cadeira de quem.</p>
-                </div>
                 <div id="trocas-accordion-container" class="space-y-4"></div>
             </div>
 
@@ -152,7 +145,7 @@
                         <input type="text" id="new-turno" placeholder="Escala (Ex: Seg-Sex)" class="p-2 border rounded text-sm">
                         <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
                         <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
-                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Cadastrar Scooteira</button>
+                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6 shadow-sm">Cadastrar</button>
                     </form>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
@@ -189,7 +182,7 @@
                 <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
             <div class="p-4 bg-white border-t flex justify-end">
-                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg">Salvar Registros</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg">Salvar Tudo</button>
             </div>
         </div>
     </div>
@@ -209,11 +202,10 @@
 
         const SQUADS_ATIVAS = ["SC", "CB", "Rec. Crédito", "OJR", "Monitoria"];
         const squadColorMap = { "SC": "emerald", "CB": "indigo", "Rec. Crédito": "amber", "OJR": "purple", "Monitoria": "cyan", "Outro": "slate" };
-        const FERIADOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
-
-        // METAS DE SQUAD (POR DIA DA SEMANA - SUA TABELA)
-        // 0: Dom, 1: Seg, 2: Ter, 3: Qua, 4: Qui, 5: Sex, 6: Sab
-        const METAS_SQUAD = {
+        
+        // METAS DAS SQUADS (Exatamente conforme a imagem enviada)
+        // 0: Domingo, 1: Segunda... 6: Sábado
+        const METAS_POR_DIA = {
             "SC":           { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
             "CB":           { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
             "Rec. Crédito": { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  },
@@ -358,7 +350,6 @@
             loadHistorico();
         };
 
-        // HISTÓRICO: REALIZADO X CONTRATADO
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
@@ -449,7 +440,7 @@
 
                 const header = document.createElement('div');
                 header.className = "week-group-header shadow-sm flex justify-between items-center";
-                header.innerHTML = `<div><span class="font-bold text-indigo-700">Meta Semana ${wNum}</span></div><div class="flex flex-wrap gap-2">${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `<span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}</div>`;
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Semanas ${wNum}</span></div><div class="flex flex-wrap gap-2">${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `<span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}</div>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
                 
                 const content = document.createElement('div');
@@ -462,14 +453,13 @@
 
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
-                    const feriado = FERIADOS.includes(dateKey.substring(5));
-                    let dow = feriado ? 0 : dateObj.getDay();
+                    const dow = dateObj.getDay(); // 0: Dom, 1: Seg...
 
                     tableHtml += `<tr><td class="cap-cell font-bold bg-gray-50 text-left px-4">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'})}</td>`;
                     
                     SQUADS_ATIVAS.forEach(squad => {
                         const actual = (dataMap[dateKey] && dataMap[dateKey][squad]) ? dataMap[dateKey][squad] : 0;
-                        const target = (METAS_SQUAD[squad] && METAS_SQUAD[squad][dow] !== undefined) ? METAS_SQUAD[squad][dow] : 0;
+                        const target = (METAS_POR_DIA[squad] && METAS_POR_DIA[squad][dow] !== undefined) ? METAS_POR_DIA[squad][dow] : 0;
                         
                         let cellClass = "cap-cell";
                         if (target > 0) {
@@ -488,95 +478,6 @@
             });
         };
 
-        // TROCAS: FULANA ATUOU NA CADEIRA DE CICLANA
-        window.renderTrocasAccordion = () => {
-            const mes = document.getElementById('mes-select').value;
-            if(!mes) return;
-            const [ano, mesNum] = mes.split('-').map(Number);
-            const container = document.getElementById('trocas-accordion-container');
-            container.innerHTML = "";
-            
-            const dailyLogs = {};
-            currentHistoryList.forEach(log => {
-                if(!dailyLogs[log.data]) dailyLogs[log.data] = [];
-                dailyLogs[log.data].push(log);
-            });
-
-            const weeks = {};
-            const first = new Date(ano, mesNum - 1, 1);
-            const last = new Date(ano, mesNum, 0);
-            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
-                const w = getISOWeek(new Date(d));
-                if (!weeks[w]) weeks[w] = [];
-                weeks[w].push(new Date(d));
-            }
-
-            Object.keys(weeks).forEach(wNum => {
-                const days = weeks[wNum];
-                const weekId = `trocas-week-${wNum}`;
-                const header = document.createElement('div');
-                header.className = "week-group-header shadow-sm flex justify-between items-center";
-                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div><i data-lucide="repeat" class="text-indigo-400"></i>`;
-                header.onclick = () => document.getElementById(weekId).classList.toggle('active');
-                
-                const content = document.createElement('div');
-                content.id = weekId;
-                content.className = "week-content p-4";
-                let trocasHtml = "";
-
-                days.forEach(dateObj => {
-                    const dateKey = dateObj.toISOString().split('T')[0];
-                    const logsDia = dailyLogs[dateKey] || [];
-                    const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
-                    
-                    const extras = logsDia.filter(l => {
-                        const agente = currentAgents.find(a => a.nome === l.scooteira || a.pseudo === l.scooteira);
-                        if(!agente) return false;
-                        const turno = agente.turnoPadrao.toLowerCase();
-                        return !(turno.includes(diaSeman) || turno.includes("seg-sex"));
-                    });
-
-                    const atuantesNomes = logsDia.map(l => l.scooteira);
-                    const ausentes = currentAgents.filter(a => {
-                        const noDistrato = a.status !== 'Distrato';
-                        const deveria = (a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
-                        const estava = atuantesNomes.includes(a.nome) || atuantesNomes.includes(a.pseudo);
-                        return noDistrato && deveria && !estava;
-                    });
-
-                    if(extras.length > 0 && ausentes.length > 0) {
-                        let diaHtml = "";
-                        extras.forEach(ex => {
-                            const exSquad = normalizarSquad(ex.squad);
-                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSquad);
-                            if(par) {
-                                diaHtml += `<div class="exchange-card">
-                                    <div class="flex items-start gap-3">
-                                        <div class="bg-indigo-100 p-2 rounded-lg"><i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i></div>
-                                        <div>
-                                            <p class="exchange-text"><strong class="text-indigo-700">${ex.scooteira}</strong> atuou na cadeira de <strong class="text-gray-700">${par.nome}</strong>.</p>
-                                            <div class="flex items-center gap-4 mt-2">
-                                                <span class="text-[10px] font-bold uppercase bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100">${exSquad}</span>
-                                                <span class="text-[10px] text-gray-400">Padrão de ${par.nome.split(' ')[0]}: ${par.entradaPadrao} - ${par.saidaPadrao}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>`;
-                            }
-                        });
-                        if(diaHtml) {
-                            trocasHtml += `<div class="mb-4 border-b border-gray-100 pb-2"><h4 class="font-bold text-xs text-indigo-900 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'})}</h4>${diaHtml}</div>`;
-                        }
-                    }
-                });
-
-                content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic text-center py-2">Nenhuma troca nesta semana.</p>`;
-                container.appendChild(header);
-                container.appendChild(content);
-            });
-            lucide.createIcons();
-        };
-
         // RELATÓRIOS: BUSCA NOME E PSEUDO
         window.loadRelatorioIndividual = async () => {
             const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
@@ -585,7 +486,7 @@
             const table = document.getElementById('relatorio-body');
             
             if(!nomeSelecionado || !mes) return;
-            table.innerHTML = '<tr><td colspan="5" class="text-center py-4">Carregando dados...</td></tr>';
+            table.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400 italic">Buscando dados no servidor...</td></tr>';
             
             const agenteObj = currentAgents.find(a => a.nome === nomeSelecionado);
             const pseudo = agenteObj ? agenteObj.pseudo : "";
@@ -613,8 +514,68 @@
                 squadsHtml += `<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-${squadColorMap[sq] || 'gray'}-500"><div class="text-xs text-gray-400 uppercase font-bold">Total ${sq}</div><div class="text-xl font-bold text-gray-700">${horasPorSquad[sq].toFixed(1)}h</div></div>`;
             });
             
-            resumoCards.innerHTML = `<div class="bg-indigo-600 p-5 rounded-xl shadow-md text-white"><div class="text-xs opacity-80 uppercase font-bold">Total Geral</div><div class="text-3xl font-bold">${totalGeral.toFixed(1)}h</div></div>${squadsHtml}<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500"><div class="text-xs text-gray-400 uppercase font-bold">Atuações</div><div class="text-xl font-bold text-emerald-600">${list.length}</div></div>`;
+            resCards.innerHTML = `<div class="bg-indigo-600 p-5 rounded-xl shadow-md text-white"><div class="text-xs opacity-80 uppercase font-bold">Total Geral</div><div class="text-3xl font-bold">${totalGeral.toFixed(1)}h</div></div>${squadsHtml}<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500"><div class="text-xs text-gray-400 uppercase font-bold">Atuações</div><div class="text-xl font-bold text-emerald-600">${list.length}</div></div>`;
             table.innerHTML = list.length === 0 ? '<tr><td colspan="5" class="text-center py-8">Nenhum registro encontrado.</td></tr>' : list.map(i => `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4 text-center">${i.entrada}</td><td class="px-6 py-4 text-center">${i.saida}</td><td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(1)}h</td></tr>`).join('');
+        };
+
+        window.renderTrocasAccordion = () => {
+            const mes = document.getElementById('mes-select').value;
+            if(!mes) return;
+            const [ano, mesNum] = mes.split('-').map(Number);
+            const container = document.getElementById('trocas-accordion-container');
+            container.innerHTML = "";
+            const dailyLogs = {};
+            currentHistoryList.forEach(log => { if(!dailyLogs[log.data]) dailyLogs[log.data] = []; dailyLogs[log.data].push(log); });
+            const weeks = {};
+            const first = new Date(ano, mesNum - 1, 1);
+            const last = new Date(ano, mesNum, 0);
+            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+                const w = getISOWeek(new Date(d));
+                if (!weeks[w]) weeks[w] = [];
+                weeks[w].push(new Date(d));
+            }
+            Object.keys(weeks).forEach(wNum => {
+                const days = weeks[wNum];
+                const weekId = `trocas-week-${wNum}`;
+                const header = document.createElement('div');
+                header.className = "week-group-header shadow-sm flex justify-between items-center";
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div><i data-lucide="repeat" class="text-indigo-400"></i>`;
+                header.onclick = () => document.getElementById(weekId).classList.toggle('active');
+                const content = document.createElement('div');
+                content.id = weekId;
+                content.className = "week-content p-4";
+                let trocasHtml = "";
+                days.forEach(dateObj => {
+                    const dateKey = dateObj.toISOString().split('T')[0];
+                    const logsDia = dailyLogs[dateKey] || [];
+                    const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
+                    const extras = logsDia.filter(l => {
+                        const agente = currentAgents.find(a => a.nome === l.scooteira || a.pseudo === l.scooteira);
+                        if(!agente) return false;
+                        return !(agente.turnoPadrao.toLowerCase().includes(diaSeman) || agente.turnoPadrao.toLowerCase().includes("seg-sex"));
+                    });
+                    const atuantesNomes = logsDia.map(l => l.scooteira);
+                    const ausentes = currentAgents.filter(a => {
+                        const noDistrato = a.status !== 'Distrato';
+                        const deveria = (a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
+                        const estava = atuantesNomes.includes(a.nome) || atuantesNomes.includes(a.pseudo);
+                        return noDistrato && deveria && !estava;
+                    });
+                    if(extras.length > 0 && ausentes.length > 0) {
+                        let diaHtml = "";
+                        extras.forEach(ex => {
+                            const exSquad = normalizarSquad(ex.squad);
+                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSquad);
+                            if(par) diaHtml += `<div class="exchange-card"><p class="exchange-text"><strong class="text-indigo-700">${ex.scooteira}</strong> atuou na cadeira de <strong class="text-gray-700">${par.nome}</strong>.</p></div>`;
+                        });
+                        if(diaHtml) trocasHtml += `<div class="mb-4 border-b border-gray-100 pb-2"><h4 class="font-bold text-xs text-indigo-900 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'})}</h4>${diaHtml}</div>`;
+                    }
+                });
+                content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic text-center py-2">Nenhuma troca encontrada.</p>`;
+                container.appendChild(header);
+                container.appendChild(content);
+            });
+            lucide.createIcons();
         };
 
         function getISOWeek(d) {
