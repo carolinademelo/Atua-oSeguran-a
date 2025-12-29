@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -22,11 +22,15 @@
         .tab-inactive:hover { color: #334155; border-bottom: 2px solid #cbd5e1; }
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Floating Action Bar Animation */
+        .slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
+<body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
 
-    <div id="app" class="w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div id="app" class="w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-hidden relative">
 
         <header class="bg-indigo-600 p-6 sm:p-10 text-white">
             <div class="flex justify-between items-center">
@@ -106,10 +110,13 @@
 
                 <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
 
-                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200 mb-12">
                     <table class="w-full text-sm text-left text-gray-600">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
                             <tr>
+                                <th class="px-6 py-3 w-4">
+                                    <input type="checkbox" id="select-all-history" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" onclick="window.toggleSelectAll()">
+                                </th>
                                 <th class="px-6 py-3 font-medium">Data</th>
                                 <th class="px-6 py-3 font-medium">Scooteira</th>
                                 <th class="px-6 py-3 font-medium">Squad</th>
@@ -121,7 +128,7 @@
                             </tr>
                         </thead>
                         <tbody id="historico-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Carregando dados...</td></tr>
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Carregando dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -129,7 +136,6 @@
 
             <div id="content-relatorio" class="hidden animate-fade-in">
                 <h2 class="text-xl font-bold text-gray-800 mb-6">Relatório Individual</h2>
-
                 <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
@@ -152,7 +158,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                         <span class="text-xs text-gray-500 uppercase font-medium">Dias Trabalhados</span>
@@ -167,7 +172,6 @@
                         <div id="resumo-squads-list" class="flex flex-wrap gap-2 mt-auto"></div>
                     </div>
                 </div>
-
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left text-gray-600">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
@@ -193,7 +197,6 @@
                         <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Forçar Atualização
                     </button>
                 </div>
-
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
                     <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide border-b pb-2">Adicionar Nova Scooteira</h3>
                     <form id="add-agent-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
@@ -229,7 +232,6 @@
                         </div>
                     </form>
                 </div>
-
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left text-gray-600">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
@@ -246,6 +248,57 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulk-actions-bar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-6 z-40 hidden slide-up">
+        <span class="text-sm font-medium"><span id="bulk-count">0</span> selecionados</span>
+        <div class="h-4 w-px bg-gray-600"></div>
+        <button class="flex items-center space-x-2 text-indigo-300 hover:text-white transition" onclick="window.openBulkEditModal()">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+            <span class="text-sm font-medium">Editar Selecionados</span>
+        </button>
+        <button class="flex items-center space-x-2 text-red-400 hover:text-red-200 transition" onclick="window.deleteBulkLogs()">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span class="text-sm font-medium">Excluir</span>
+        </button>
+        <button class="ml-4 text-gray-500 hover:text-gray-300" onclick="window.deselectAll()">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <div id="bulk-edit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-indigo-600 px-6 py-4 text-white">
+                <h3 class="text-lg font-bold">Edição em Massa</h3>
+                <p class="text-indigo-100 text-xs mt-1">Preencha APENAS o que deseja alterar. O que ficar vazio será mantido.</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Nova Data (Opcional)</label>
+                    <input type="date" id="be-data" class="w-full p-2 border rounded bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Novo Squad (Opcional)</label>
+                    <select id="be-squad" class="w-full p-2 border rounded bg-gray-50">
+                        <option value="">-- Manter Original --</option>
+                        </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-1">Nova Entrada</label>
+                        <input type="time" id="be-ent" class="w-full p-2 border rounded bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-gray-500 mb-1">Nova Saída</label>
+                        <input type="time" id="be-sai" class="w-full p-2 border rounded bg-gray-50">
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
+                <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded" onclick="window.closeModal('bulk-edit-modal')">Cancelar</button>
+                <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onclick="window.confirmBulkEdit()">Aplicar Mudanças</button>
             </div>
         </div>
     </div>
@@ -358,7 +411,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // CONFIGURAÇÃO
@@ -375,6 +428,7 @@
         
         const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "Coraliados", "Hunter", "Vendas", "OJR", "Outro"];
         
+        // Mock data omitted for brevity as it's the same as before, but exists in code logic
         const MOCK_CADASTROS = [
             { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Laís Cristine dos Reis", pseudo: "Malu R", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
@@ -418,21 +472,19 @@
         const agentsCol = `artifacts/${appId}/public/data/scooteiras_cadastro`;
 
         let currentAgents = [];
-        let currentHistoryList = []; // Para facilitar a edição
+        let currentHistoryList = [];
 
-        // HELPER DE HORA (A MÁGICA PARA CORRIGIR O 8:00)
+        // HELPER DE HORA
         const normalizeTime = (t) => {
-            if(!t) return "00:00";
-            // Remove espaços extras
+            if(!t) return ""; // Retorna vazio se nao tiver
             t = t.trim();
-            // Se tiver segundos (8:00:00), pega só o inicio, mas com cuidado
             const parts = t.split(':');
             if (parts.length >= 2) {
-                const h = parts[0].padStart(2, '0'); // Garante 08
-                const m = parts[1].padStart(2, '0'); // Garante 00
-                return `${h}:${m}`; // Retorna HH:MM limpo
+                const h = parts[0].padStart(2, '0');
+                const m = parts[1].padStart(2, '0');
+                return `${h}:${m}`;
             }
-            return t; // Fallback
+            return t;
         };
 
         // Auth
@@ -472,6 +524,10 @@
         const initSquadSelect = () => {
              const sel = document.getElementById('new-squad');
              sel.innerHTML = SQUADS_OPCOES.map(s => `<option value="${s}">${s}</option>`).join('');
+             
+             // Populate Bulk Edit Squad Select
+             const beSel = document.getElementById('be-squad');
+             beSel.innerHTML = '<option value="">-- Manter Original --</option>' + SQUADS_OPCOES.map(s => `<option value="${s}">${s}</option>`).join('');
         };
 
         // --- AGENTS MANAGEMENT ---
@@ -545,6 +601,55 @@
 
         window.deleteAgent = async (id) => {
             if (await confirmAction()) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); showMessage('Removida.', 'success'); }
+        };
+
+        window.editAgent = (nome) => {
+            const a = currentAgents.find(x => x.nome === nome);
+            if(!a) return;
+            const options = SQUADS_OPCOES.map(s => `<option value="${s}" ${s===a.squadPadrao?'selected':''}>${s}</option>`).join('');
+            const m = document.createElement('div');
+            m.id = 'edit-agent-modal';
+            m.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50';
+            m.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg">
+                    <h3 class="text-lg font-bold mb-4">Editar Scooteira</h3>
+                    <form id="edit-agent-form" class="space-y-4">
+                        <div><label class="block text-xs uppercase text-gray-500">Nome (ID)</label>
+                        <input id="ea-nome" class="w-full p-2 border bg-gray-100 rounded text-gray-500" disabled value="${a.nome}"></div>
+                        <div><label class="block text-xs uppercase text-gray-500">Pseudo</label>
+                        <input id="ea-pseudo" class="w-full p-2 border rounded" value="${a.pseudo}"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-xs uppercase text-gray-500">Squad</label>
+                            <select id="ea-squad" class="w-full p-2 border rounded">${options}</select></div>
+                            <div><label class="block text-xs uppercase text-gray-500">Dias</label>
+                            <input id="ea-dias" class="w-full p-2 border rounded" value="${a.turnoPadrao}"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-xs uppercase text-gray-500">Entrada</label>
+                            <input type="time" id="ea-ent" class="w-full p-2 border rounded" value="${a.entradaPadrao}"></div>
+                            <div><label class="block text-xs uppercase text-gray-500">Saída</label>
+                            <input type="time" id="ea-sai" class="w-full p-2 border rounded" value="${a.saidaPadrao}"></div>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button type="button" class="px-4 py-2 border rounded hover:bg-gray-50" onclick="document.getElementById('edit-agent-modal').remove()">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Salvar</button>
+                        </div>
+                    </form>
+                </div>`;
+            document.body.appendChild(m);
+            document.getElementById('edit-agent-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updateDoc(doc(db, agentsCol, nome), {
+                    pseudo: document.getElementById('ea-pseudo').value,
+                    squadPadrao: document.getElementById('ea-squad').value,
+                    turnoPadrao: document.getElementById('ea-dias').value,
+                    entradaPadrao: document.getElementById('ea-ent').value,
+                    saidaPadrao: document.getElementById('ea-sai').value
+                });
+                showMessage('Dados atualizados.', 'success');
+                document.getElementById('edit-agent-modal').remove();
+                loadAgents();
+            });
         };
 
         // --- REGISTRO DIÁRIO ---
@@ -621,26 +726,33 @@
             window.loadHistorico();
         });
 
-        // --- HISTÓRICO ---
+        // --- HISTÓRICO E AÇÕES EM MASSA ---
+        
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
             
             const tbody = document.getElementById('historico-body');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Carregando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Carregando...</td></tr>';
+            
+            // Hide bulk bar on reload
+            window.deselectAll(); 
             
             const q = query(collection(db, logsCol), where("mes", "==", mes));
             const snap = await getDocs(q);
-            currentHistoryList = []; // Limpa lista global
+            currentHistoryList = []; 
             snap.forEach(d => currentHistoryList.push({id: d.id, ...d.data()}));
             currentHistoryList.sort((a,b) => a.data.localeCompare(b.data));
 
-            tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="8" class="text-center py-8">Nenhum registro.</td></tr>';
+            tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
             
             currentHistoryList.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50";
                 tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <input type="checkbox" value="${item.id}" class="history-checkbox w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" onclick="window.updateBulkUI()">
+                    </td>
                     <td class="px-6 py-4">${item.data.split('-').reverse().join('/')}</td>
                     <td class="px-6 py-4 font-bold text-gray-700">${item.scooteira}</td>
                     <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${item.squad}</span></td>
@@ -659,18 +771,118 @@
             updateStats(currentHistoryList);
         };
 
-        // --- FUNÇÕES DE EDIÇÃO (NOVA) ---
+        // --- BULK ACTION LOGIC ---
+        window.toggleSelectAll = () => {
+            const master = document.getElementById('select-all-history');
+            const boxes = document.querySelectorAll('.history-checkbox');
+            boxes.forEach(b => b.checked = master.checked);
+            window.updateBulkUI();
+        };
+
+        window.updateBulkUI = () => {
+            const checked = document.querySelectorAll('.history-checkbox:checked');
+            const bar = document.getElementById('bulk-actions-bar');
+            document.getElementById('bulk-count').innerText = checked.length;
+            
+            if(checked.length > 0) {
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        };
+
+        window.deselectAll = () => {
+            document.getElementById('select-all-history').checked = false;
+            document.querySelectorAll('.history-checkbox').forEach(b => b.checked = false);
+            window.updateBulkUI();
+        };
+
+        window.openBulkEditModal = () => {
+            // Reset fields
+            document.getElementById('be-data').value = "";
+            document.getElementById('be-squad').value = "";
+            document.getElementById('be-ent').value = "";
+            document.getElementById('be-sai').value = "";
+            window.openModal('bulk-edit-modal');
+        };
+        
+        window.confirmBulkEdit = async () => {
+            const checked = document.querySelectorAll('.history-checkbox:checked');
+            const ids = Array.from(checked).map(c => c.value);
+            
+            if(ids.length === 0) return;
+
+            const newData = document.getElementById('be-data').value;
+            const newSquad = document.getElementById('be-squad').value;
+            const newEnt = document.getElementById('be-ent').value;
+            const newSai = document.getElementById('be-sai').value;
+
+            showMessage(`Atualizando ${ids.length} registros...`, 'info');
+            window.closeModal('bulk-edit-modal');
+
+            const batch = writeBatch(db); // Use batch for better performance (though limit is 500)
+            let count = 0;
+
+            for(const id of ids) {
+                const original = currentHistoryList.find(i => i.id === id);
+                if(!original) continue;
+
+                // Determine final values (New OR Original)
+                const ent = newEnt || original.entrada;
+                const sai = newSai || original.saida;
+                const dataStr = newData || original.data;
+                const mes = dataStr.substring(0, 7);
+
+                // Recalculate hours
+                const d1 = new Date(`2000-01-01T${ent}`);
+                const d2 = new Date(`2000-01-01T${sai}`);
+                let diff = (d2 - d1) / 1000 / 60 / 60; 
+                if (diff < 0) diff += 24;
+
+                const updatePayload = {
+                    entrada: ent,
+                    saida: sai,
+                    horas: parseFloat(diff.toFixed(2)),
+                    data: dataStr,
+                    mes: mes
+                };
+
+                if(newSquad) updatePayload.squad = newSquad;
+
+                const docRef = doc(db, logsCol, id);
+                // Firestore batch limit is 500, simple implementation for now
+                await updateDoc(docRef, updatePayload);
+                count++;
+            }
+
+            showMessage(`${count} registros atualizados!`, 'success');
+            window.loadHistorico();
+        };
+
+        window.deleteBulkLogs = async () => {
+            const checked = document.querySelectorAll('.history-checkbox:checked');
+            if(checked.length === 0) return;
+
+            if(confirm(`Tem certeza que deseja EXCLUIR ${checked.length} registros?`)) {
+                showMessage(`Excluindo...`, 'info');
+                for(const box of checked) {
+                    await deleteDoc(doc(db, logsCol, box.value));
+                }
+                showMessage(`Registros excluídos.`, 'success');
+                window.loadHistorico();
+            }
+        };
+
+        // --- INDIVIDUAL EDIT LOGIC ---
         window.editLog = (id) => {
             const item = currentHistoryList.find(i => i.id === id);
             if(!item) return;
-
             document.getElementById('edit-log-id').value = id;
             document.getElementById('edit-log-nome').value = item.scooteira;
             document.getElementById('edit-log-data').value = item.data;
             document.getElementById('edit-log-ent').value = item.entrada;
             document.getElementById('edit-log-sai').value = item.saida;
             document.getElementById('edit-log-squad').value = item.squad;
-
             window.openModal('edit-log-modal');
         };
 
@@ -681,7 +893,6 @@
             const sai = document.getElementById('edit-log-sai').value;
             const sq = document.getElementById('edit-log-squad').value;
 
-            // Recalcular horas
             const d1 = new Date(`2000-01-01T${ent}`);
             const d2 = new Date(`2000-01-01T${sai}`);
             let diff = (d2 - d1) / 1000 / 60 / 60; 
@@ -698,8 +909,6 @@
                 });
                 showMessage('Registro atualizado!', 'success');
                 window.closeModal('edit-log-modal');
-                
-                // Se mudou o mês, ajusta o filtro
                 const novoMes = dataStr.substring(0, 7);
                 if (document.getElementById('mes-select').value !== novoMes) {
                      document.getElementById('mes-select').value = novoMes;
@@ -718,7 +927,7 @@
             }
         };
 
-        // --- IMPORTAÇÃO INTELIGENTE (RESOLVIDO 8:00) ---
+        // --- IMPORTAÇÃO ---
         window.showImportModal = () => window.openModal('import-modal');
 
         window.handleImport = async () => {
@@ -737,7 +946,6 @@
                 if(cols.length >= 8) {
                     const dataBr = cols[0].trim(); 
                     const pseudo = cols[2].trim(); 
-                    // AQUI ESTÁ A CORREÇÃO: normalizeTime
                     const ent = normalizeTime(cols[4]); 
                     const sai = normalizeTime(cols[5]); 
                     const sq = cols[8].trim();     
@@ -788,8 +996,7 @@
             });
         };
 
-        // ... Restante das funções de Relatório e Exportação permanecem iguais ...
-        window.exportToCsv = async () => { /* Mesma lógica anterior */ 
+        window.exportToCsv = async () => { 
              const mes = document.getElementById('mes-select').value;
              if (!mes) return;
              const q = query(collection(db, logsCol), where("mes", "==", mes));
@@ -836,7 +1043,20 @@
              document.getElementById('relatorio-agente-select').innerHTML = '<option value="" disabled selected>Selecione...</option>' + currentAgents.map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
         };
         
-        window.exportIndividualCsv = async () => { /* Lógica anterior */ };
+        window.exportIndividualCsv = async () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            if(!nome || !mes) { showMessage('Selecione uma scooteira e mês.', 'error'); return; }
+            const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
+            const snap = await getDocs(q);
+            if(snap.empty) { showMessage('Sem dados para exportar.', 'error'); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Data,Squad,Entrada,Saida,Horas\n";
+            snap.forEach(doc => { const d = doc.data(); csvContent += `${d.data},${d.squad},${d.entrada},${d.saida},${d.horas}\n`; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `relatorio_${nome.split(' ')[0]}_${mes}.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        };
+        
         window.analyzeMonthlyData = () => { document.getElementById('ai-analysis-content').innerHTML = "<h3>Análise</h3><p>Dados estáveis.</p>"; window.openModal('ai-analysis-modal'); };
         window.analyzeIndividualData = () => { document.getElementById('ai-analysis-content').innerHTML = "<h3>Performance</h3><p>Regular.</p>"; window.openModal('ai-analysis-modal'); };
 
