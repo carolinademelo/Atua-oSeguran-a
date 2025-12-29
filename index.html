@@ -1,4 +1,215 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dash Atuação - Scooto</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚜️</text></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+        .tab-active { border-bottom: 2px solid #4f46e5; color: #4f46e5; background-color: #eef2ff; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
+        .tab-inactive:hover { color: #4f46e5; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #4f46e5; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; font-weight: 600; min-width: 250px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
+
+    <div id="toast-container"></div>
+
+    <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="window.processarExcel(this)">
+
+    <div id="app" class="w-full max-w-full sm:max-w-7xl bg-white rounded-2xl shadow-xl overflow-hidden relative fade-in">
+        
+        <header class="bg-indigo-600 p-6 sm:p-8 text-white shadow-md relative z-10">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl filter drop-shadow-md">⚜️</span>
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Dash Atuação - Scooto</h1>
+                    </div>
+                    <p class="text-indigo-100 text-xs sm:text-sm mt-1 ml-11 opacity-90">Gestão de Horas x Squads</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="loading-indicator" class="hidden"><div class="loader"></div></div>
+                    <div id="auth-status" class="bg-indigo-800/50 border border-indigo-500 py-1 px-3 rounded text-xs font-mono backdrop-blur-sm">Conectando...</div>
+                </div>
+            </div>
+        </header>
+
+        <nav class="flex border-b border-gray-200 bg-gray-50 overflow-x-auto sticky top-0 z-10 scrollbar-hide">
+            <button id="tab-registro" class="flex-1 py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap focus:outline-none" onclick="window.switchTab('registro')">Registro Diário</button>
+            <button id="tab-capacidade" class="flex-1 py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap focus:outline-none" onclick="window.switchTab('capacidade')">Capacidade & Metas</button>
+            <button id="tab-trocas" class="flex-1 py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap focus:outline-none" onclick="window.switchTab('trocas')">Trocas</button>
+            <button id="tab-relatorio" class="flex-1 py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap focus:outline-none" onclick="window.switchTab('relatorio')">Relatórios</button>
+            <button id="tab-cadastro" class="flex-1 py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap focus:outline-none" onclick="window.switchTab('cadastro')">Equipe</button>
+        </nav>
+
+        <div class="p-6 sm:p-8 min-h-[500px] bg-white">
+
+            <div id="content-registro" class="fade-in">
+                <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-6 mb-8 shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">Data Atuação</label>
+                            <input type="date" id="data-atuacao" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm">
+                        </div>
+                        <div class="md:col-span-5">
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">Quem trabalhou?</label>
+                            <button onclick="window.openModal('selection-modal')" class="w-full p-2.5 bg-white border border-gray-300 hover:border-indigo-400 rounded-lg text-left text-sm flex justify-between items-center shadow-sm transition-colors group">
+                                <span id="selected-count-label" class="text-gray-700 group-hover:text-indigo-700">Selecionar Scooteiras...</span>
+                                <i data-lucide="users" class="w-4 h-4 text-gray-400 group-hover:text-indigo-500"></i>
+                            </button>
+                        </div>
+                        <div class="md:col-span-4 flex gap-2">
+                            <button onclick="window.handleEntrySubmission()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4"></i> Lançar
+                            </button>
+                            <button onclick="document.getElementById('file-upload').click()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Importar Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-indigo-500"></i> Histórico</h2>
+                    <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border border-gray-300 rounded-lg p-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                
+                <div id="resumo-squads" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8"></div>
+
+                <div class="overflow-hidden bg-white rounded-xl shadow border border-gray-200">
+                    <div class="overflow-x-auto max-h-[600px]">
+                        <table class="w-full text-sm text-left relative">
+                            <thead class="bg-gray-50 text-gray-500 uppercase text-xs sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="px-6 py-3 font-semibold">Data</th>
+                                    <th class="px-6 py-3 font-semibold">Nome / Pseudo</th>
+                                    <th class="px-6 py-3 font-semibold">Squad</th>
+                                    <th class="px-6 py-3 text-center font-semibold">Horário</th>
+                                    <th class="px-6 py-3 font-bold text-center font-semibold">Total / Contratado</th>
+                                    <th class="px-6 py-3 text-right font-semibold">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historico-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-capacidade" class="hidden fade-in">
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-500 mt-0.5"></i>
+                    <p class="text-sm text-blue-800">Visualização de metas semanais vs horas realizadas por Squad. Clique nas semanas para expandir.</p>
+                </div>
+                <div id="capacity-accordion-container" class="space-y-4"></div>
+            </div>
+
+            <div id="content-trocas" class="hidden fade-in">
+                <div id="trocas-accordion-container" class="space-y-4"></div>
+            </div>
+
+            <div id="content-relatorio" class="hidden fade-in">
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Scooteira</label>
+                            <select id="relatorio-agente-select" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm shadow-sm" onchange="window.loadRelatorioIndividual()"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês</label>
+                            <input type="month" id="relatorio-mes-select" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm shadow-sm" onchange="window.loadRelatorioIndividual()">
+                        </div>
+                    </div>
+                </div>
+                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden"></div>
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                            <tr><th class="px-6 py-3">Data</th><th class="px-6 py-3">Squad</th><th class="px-6 py-3 text-center">Entrada</th><th class="px-6 py-3 text-center">Saída</th><th class="px-6 py-3 font-bold text-center">Total</th></tr>
+                        </thead>
+                        <tbody id="relatorio-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-cadastro" class="hidden fade-in">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+                    <h3 class="font-bold text-lg mb-4 text-gray-800">Adicionar Nova Scooteira</h3>
+                    <form id="add-agent-form" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <input type="text" id="new-nome" placeholder="Nome Completo" class="p-2 border rounded text-sm w-full" required>
+                        <input type="text" id="new-pseudo" placeholder="Pseudo (Ex: Ana S)" class="p-2 border rounded text-sm w-full" required>
+                        <select id="new-squad" class="p-2 border rounded text-sm w-full bg-white"></select>
+                        <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="p-2 border rounded text-sm w-full">
+                        <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm w-full">
+                        <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm w-full">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 transition-colors text-white py-2 rounded font-bold lg:col-span-6 shadow-sm flex justify-center items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Salvar Cadastro
+                        </button>
+                    </form>
+                </div>
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200 max-h-[600px]">
+                    <table class="w-full text-sm text-left relative">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0 z-10 shadow-sm">
+                            <tr><th class="px-6 py-3">Nome / Pseudo</th><th class="px-6 py-3 text-center">Status</th><th class="px-6 py-3 text-right">Ações</th></tr>
+                        </thead>
+                        <tbody id="cadastro-list-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl transform scale-100 transition-transform">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">Selecionar Equipe</h3>
+                <button onclick="window.closeModal('selection-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="text" id="search-agent" placeholder="Buscar nome..." class="w-full p-2 mb-3 border rounded text-sm" onkeyup="window.filterSelectionList()">
+            <div id="agentes-checkbox-list" class="space-y-1 max-h-80 overflow-y-auto mb-6 pr-2"></div>
+            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition-colors">Confirmar Seleção</button>
+        </div>
+    </div>
+
+    <div id="details-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 bg-indigo-600 text-white font-bold flex justify-between items-center">
+                <span class="text-lg flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5"></i> Confirmar Lançamentos</span>
+                <button onclick="window.closeModal('details-modal')" class="hover:bg-indigo-700 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1 bg-gray-50">
+                <div class="text-xs uppercase font-bold text-gray-500 mb-2">Ajuste os horários individuais se necessário:</div>
+                <div id="agentes-detalhes-container" class="grid grid-cols-1 gap-4"></div>
+            </form>
+            <div class="p-4 bg-white border-t flex justify-end gap-3">
+                <button onclick="window.closeModal('details-modal')" class="px-6 py-2 text-gray-600 font-semibold hover:bg-gray-100 rounded-lg">Cancelar</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2 rounded-lg font-bold shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Tudo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -254,6 +465,7 @@
                     state.history.push(item);
                 });
                 
+                // ORDENAÇÃO: Data Recente (Topo) -> Data Antiga, Hora 14h -> Hora 08h
                 state.history.sort((a,b) => 
                     b.data.localeCompare(a.data) ||       
                     b.entrada.localeCompare(a.entrada) || 
@@ -418,7 +630,7 @@
             btnLabel.classList.add('text-indigo-600', 'font-bold');
         };
 
-        // --- SALVAMENTO MANUAL ---
+        // --- SALVAMENTO COM TRAVA DE DUPLICIDADE ---
         document.getElementById('details-form').onsubmit = async (e) => {
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
@@ -429,6 +641,7 @@
             setLoading(true);
 
             try {
+                // 1. Busca todos os registros QUE JÁ EXISTEM para essa data
                 const qCheck = query(collection(db, COLLECTIONS.LOGS), where("data", "==", dataStr));
                 const snapCheck = await getDocs(qCheck);
                 
@@ -443,6 +656,7 @@
 
                 for (const row of rows) {
                     const nome = row.dataset.nome;
+                    
                     if (nomesJaRegistrados.has(nome)) {
                         duplicados.push(nome); 
                         continue; 
@@ -472,7 +686,7 @@
                 }
                 
                 if (duplicados.length > 0) {
-                    alert(`⚠️ ATENÇÃO: Os seguintes nomes JÁ TÊM registro no dia ${dataStr.split('-').reverse().join('/')}:\n\n${duplicados.join(', ')}\n\nNenhum registro foi salvo.`);
+                    alert(`⚠️ ATENÇÃO: Os seguintes nomes JÁ TÊM registro no dia ${dataStr.split('-').reverse().join('/')}:\n\n${duplicados.join(', ')}\n\nNenhum registro foi salvo. Remova as duplicatas da lista e tente novamente.`);
                     setLoading(false);
                     return; 
                 }
@@ -487,6 +701,7 @@
                 document.getElementById('selected-count-label').innerText = "Selecionar Scooteiras...";
                 document.getElementById('selected-count-label').classList.remove('text-indigo-600', 'font-bold');
                 document.querySelectorAll('.agent-checkbox').forEach(cb => cb.checked = false);
+                
                 window.closeModal('details-modal');
 
             } catch(error) {
@@ -605,7 +820,7 @@
             lucide.createIcons();
         };
 
-        // --- ATUALIZAÇÃO DA LÓGICA DE TROCAS ---
+        // --- CORREÇÃO DE DUPLICAÇÃO NAS TROCAS ---
         window.renderTrocasAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -636,15 +851,12 @@
                 content.id = weekId;
                 content.className = "hidden mb-4 p-4 bg-white border border-t-0 rounded-b-lg shadow-inner";
                 let trocasHtml = "";
-                
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
                     const logsDia = dailyLogs[dateKey] || [];
                     const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase().replace('.',''); 
                     
-                    // LÓGICA DE "EXTRA":
-                    // 1. Trabalha em dia diferente do turno padrão
-                    // 2. OU Trabalha no dia certo, mas em horário muito diferente (> 2h de diferença no início)
+                    // --- NOVA LÓGICA DE EXTRA ---
                     const extras = logsDia.filter(l => {
                         const a = state.agents.find(ag => ag.nome === l.scooteira || ag.pseudo === l.scooteira);
                         if (!a) return false;
@@ -652,47 +864,42 @@
                         const turno = a.turnoPadrao.toLowerCase();
                         const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
                         
-                        // Verifica se o horário é diferente
                         let horarioDiferente = false;
                         if(ehDiaDeTrabalho) {
                             const entradaPadrao = parseInt(a.entradaPadrao.split(':')[0]);
                             const entradaReal = parseInt(l.entrada.split(':')[0]);
-                            // Se a diferença for maior que 2 horas, considera cobertura de outro turno
+                            // Se diferença for maior que 2h, considera extra (cobrindo turno diferente)
                             if(Math.abs(entradaReal - entradaPadrao) > 2) {
                                 horarioDiferente = true;
                             }
                         }
 
-                        // É Extra se: NÃO é dia de trabalho OU (É dia de trabalho MAS horário é diferente)
+                        // É Extra se não for dia de trabalho OU se for dia mas horário muito diferente
                         return !ehDiaDeTrabalho || horarioDiferente;
                     });
-                    
-                    // LÓGICA DE "AUSENTE":
-                    // Deveria trabalhar hoje mas não tem registro
+
+                    // Lista de ausentes (mutável)
                     const ausentes = state.agents.filter(a => {
                         if (a.status === 'Distrato') return false;
                         const turno = a.turnoPadrao.toLowerCase();
                         const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
                         const trabalhou = logsDia.some(l => l.scooteira === a.nome || l.scooteira === a.pseudo);
-                        
-                        // Se deveria trabalhar e não trabalhou, está ausente
                         return ehDiaDeTrabalho && !trabalhou;
                     });
 
                     if(extras.length > 0 && ausentes.length > 0) {
                         let diaHtml = "";
-                        
                         extras.forEach(ex => {
                             const exSq = normalizarSquad(ex.squad);
                             
-                            // Procura alguém ausente DO MESMO SQUAD
+                            // Procura índice de ausente do mesmo squad
                             const indexPar = ausentes.findIndex(au => normalizarSquad(au.squadPadrao) === exSq);
                             
                             const agentEx = state.agents.find(ag => ag.nome === ex.scooteira || ag.pseudo === ex.scooteira);
                             const nomeEx = agentEx ? agentEx.nome.split(' ')[0] : ex.scooteira.split(' ')[0];
 
                             if(indexPar !== -1) {
-                                const par = ausentes[indexPar]; // Pega a pessoa
+                                const par = ausentes[indexPar];
                                 const nomePar = par.nome.split(' ')[0];
 
                                 diaHtml += `
@@ -706,11 +913,10 @@
                                     </div>
                                 </div>`;
                                 
-                                // REMOVE A PESSOA DA LISTA DE AUSENTES PARA NÃO SER COBERTA DE NOVO
+                                // REMOVE ausente para não ser duplicado na próxima iteração
                                 ausentes.splice(indexPar, 1);
                             }
                         });
-                        
                         if(diaHtml) trocasHtml += `<div class="mb-4"><h4 class="font-bold text-xs text-gray-400 uppercase mb-2 border-b pb-1">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${dateObj.toLocaleDateString('pt-BR', {weekday:'long'})}</h4>${diaHtml}</div>`;
                     }
                 });
@@ -819,3 +1025,5 @@
 
         lucide.createIcons();
     </script>
+</body>
+</html>
