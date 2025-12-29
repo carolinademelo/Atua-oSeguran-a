@@ -418,7 +418,10 @@
             tbody.innerHTML = state.history.map(item => {
                 const agente = state.agents.find(a => a.nome === item.scooteira || a.pseudo === item.scooteira);
                 let contratado = 0;
-                let pseudo = agente ? agente.pseudo : "";
+                
+                // CORREÇÃO 1: Pseudo só aparece se for diferente do nome
+                const nomeExibicao = agente ? agente.nome : item.scooteira;
+                const pseudoExibicao = (agente && agente.pseudo && agente.pseudo !== agente.nome) ? agente.pseudo : "";
 
                 if (agente) {
                     const h1 = new Date(`2000-01-01T${agente.entradaPadrao}`);
@@ -439,8 +442,8 @@
                 <tr class="hover:bg-gray-50 border-b transition-colors">
                     <td class="px-6 py-4 text-gray-600 font-mono text-xs">${item.data.split('-').reverse().join('/')}</td>
                     <td class="px-6 py-4">
-                        <div class="font-bold text-gray-700">${item.scooteira}</div>
-                        <div class="text-xs text-gray-400 font-normal">${pseudo}</div>
+                        <div class="font-bold text-gray-700">${nomeExibicao}</div>
+                        ${pseudoExibicao ? `<div class="text-xs text-gray-400 font-normal">${pseudoExibicao}</div>` : ''}
                     </td>
                     <td class="px-6 py-4">
                         <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-${colorName}-100 text-${colorName}-700 border border-${colorName}-200">
@@ -808,9 +811,11 @@
                         let diaHtml = "";
                         extras.forEach(ex => {
                             const exSq = normalizarSquad(ex.squad);
-                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq) || ausentes[0]; 
                             
-                            // BUSCA O AGENTE NO REGISTRO PARA GARANTIR QUE VAMOS USAR O NOME OFICIAL, E NÃO O QUE TÁ NO LOG
+                            // CORREÇÃO 2: Só considera ausente se for do MESMO squad do extra (troca intra-squad)
+                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq);
+                            
+                            // BUSCA O AGENTE NO REGISTRO PARA GARANTIR QUE VAMOS USAR O NOME OFICIAL
                             const agentEx = state.agents.find(ag => ag.nome === ex.scooteira || ag.pseudo === ex.scooteira);
                             
                             // SE ACHOU O AGENTE, PEGA O NOME DELE. SE NÃO, USA O QUE TÁ NO LOG MESMO.
