@@ -16,21 +16,22 @@
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         .tab-active { border-bottom: 2px solid #4f46e5; color: #4f46e5; background-color: #eef2ff; }
         .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
-        .tab-inactive:hover { color: #334155; border-bottom: 2px solid #cbd5e1; }
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Estilos da Tabela de Capacidade */
-        .cap-cell { font-size: 0.75rem; padding: 6px; text-align: center; border: 1px solid #e2e8f0; vertical-align: middle; }
-        .cap-header { font-size: 0.75rem; font-weight: 700; background-color: #f8fafc; text-transform: uppercase; padding: 8px; border: 1px solid #e2e8f0; color: #64748b; }
-        .cap-warn-low { background-color: #fee2e2; color: #991b1b; font-weight: 600; } /* Vermelho */
-        .cap-warn-high { background-color: #ffedd5; color: #9a3412; font-weight: 600; } /* Laranja */
-        .cap-ok { background-color: #dcfce7; color: #166534; } /* Verde */
-        .cap-weekly-row { background-color: #e0e7ff; font-weight: bold; border-top: 2px solid #6366f1; color: #3730a3; }
-        .cap-date-col { font-weight: 600; color: #1e293b; background-color: #f8fafc; }
+        /* Capacidade Estilos */
+        .cap-cell { font-size: 0.75rem; padding: 8px; text-align: center; border: 1px solid #e2e8f0; }
+        .cap-header { font-size: 0.75rem; font-weight: 700; background-color: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; color: #64748b; }
+        .cap-warn-low { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
+        .cap-warn-high { background-color: #ffedd5; color: #9a3412; font-weight: 600; }
+        .cap-ok { background-color: #dcfce7; color: #166534; }
+        .week-group-header { cursor: pointer; background: #4f46e5; color: white; padding: 12px; border-radius: 8px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .week-group-header:hover { background: #4338ca; }
+        .week-content { display: none; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; overflow: hidden; }
+        .week-content.active { display: block; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
@@ -41,646 +42,231 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto</h1>
-                    <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
+                    <p class="text-indigo-100 text-sm mt-1">Gestão de Capacity e Squads</p>
                 </div>
-                <div class="hidden md:block text-right">
-                    <p id="auth-status" class="text-xs text-indigo-200 font-mono bg-indigo-800 py-1 px-2 rounded">Conectando...</p>
-                </div>
+                <div id="auth-status" class="bg-indigo-800 py-1 px-3 rounded text-xs font-mono">Conectando...</div>
             </div>
         </header>
 
         <div class="flex border-b border-gray-200 bg-gray-50 px-6 overflow-x-auto">
-            <button id="tab-registro" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-active whitespace-nowrap" onclick="window.switchTab('registro')">
-                <span class="flex items-center"><i data-lucide="calendar-check" class="w-4 h-4 mr-2"></i> Registro Diário</span>
-            </button>
-            <button id="tab-capacidade" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('capacidade')">
-                <span class="flex items-center"><i data-lucide="bar-chart-2" class="w-4 h-4 mr-2"></i> Capacidade & Metas</span>
-            </button>
-            <button id="tab-relatorio" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('relatorio')">
-                <span class="flex items-center"><i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i> Relatórios</span>
-            </button>
-            <button id="tab-cadastro" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('cadastro')">
-                <span class="flex items-center"><i data-lucide="users" class="w-4 h-4 mr-2"></i> Equipe</span>
-            </button>
+            <button id="tab-registro" class="py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap" onclick="window.switchTab('registro')">Registro Diário</button>
+            <button id="tab-capacidade" class="py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('capacidade')">Capacidade & Metas</button>
+            <button id="tab-relatorio" class="py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('relatorio')">Relatórios</button>
+            <button id="tab-cadastro" class="py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('cadastro')">Equipe</button>
         </div>
 
-        <div id="message-box" class="hidden mx-6 mt-6 p-4 text-sm rounded-lg shadow-sm border-l-4 transition-all" role="alert"></div>
+        <div id="message-box" class="hidden mx-6 mt-6 p-4 text-sm rounded-lg shadow-sm border-l-4"></div>
 
         <div class="p-6 sm:p-8 min-h-[500px]">
 
             <div id="content-registro" class="animate-fade-in">
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8 shadow-sm">
-                    <h2 class="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
-                        <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Novo Lançamento
-                    </h2>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div class="md:col-span-3">
-                            <label class="block text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Data</label>
-                            <input type="date" id="data-atuacao" class="w-full p-2.5 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Data</label>
+                            <input type="date" id="data-atuacao" class="w-full p-2.5 border-gray-300 rounded-lg text-sm">
                         </div>
                         <div class="md:col-span-6">
-                            <label class="block text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Scooteira(s)</label>
-                            <input type="hidden" id="selected-agents-input">
-                            <button type="button" id="agentes-selection-display" onclick="window.showSelectionModal()" 
-                                    class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-left text-gray-500 hover:border-indigo-400 transition shadow-sm flex items-center justify-between text-sm">
-                                <span>Clique para selecionar...</span>
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Scooteiras</label>
+                            <button onclick="window.showSelectionModal()" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-left text-sm flex justify-between">
+                                <span>Selecionar equipe...</span>
                                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
                             </button>
                         </div>
                         <div class="md:col-span-3">
-                            <button id="btn-registrar" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg font-medium shadow-md transition flex items-center justify-center" onclick="window.handleEntrySubmission()">
-                                <span>Registrar</span>
-                            </button>
+                            <button onclick="window.handleEntrySubmission()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold">Registrar</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-4 gap-4">
-                    <h2 class="text-xl font-semibold text-gray-800">Painel de Controle</h2>
-                    <div class="flex items-center space-x-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                        <label for="mes-select" class="text-sm font-medium text-gray-600">Mês:</label>
-                        <input type="month" id="mes-select" class="bg-white border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500 py-1" onchange="window.loadHistorico()">
-                        <div class="h-4 w-px bg-gray-300 mx-2"></div>
-                        <button class="text-gray-600 hover:text-indigo-600 text-sm font-medium flex items-center transition" onclick="window.exportToCsv()">
-                             <i data-lucide="download" class="w-4 h-4 mr-1"></i> CSV
-                        </button>
-                        <button class="text-gray-600 hover:text-blue-600 text-sm font-medium flex items-center transition ml-3" onclick="window.showImportModal()">
-                             <i data-lucide="upload" class="w-4 h-4 mr-1"></i> Importar
-                        </button>
-                    </div>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Lançamentos</h2>
+                    <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border-gray-300 rounded-md text-sm">
                 </div>
 
-                <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+                <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"></div>
 
-                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Histórico Detalhado</h3>
-                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200 mb-12">
-                    <table class="w-full text-sm text-left text-gray-600">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
                             <tr>
-                                <th class="px-6 py-3 w-4">
-                                    <input type="checkbox" id="select-all-history" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" onclick="window.toggleSelectAll()">
-                                </th>
-                                <th class="px-6 py-3 font-medium">Data</th>
-                                <th class="px-6 py-3 font-medium">Nome</th>
-                                <th class="px-6 py-3 font-medium">Pseudo</th>
-                                <th class="px-6 py-3 font-medium">Squad</th>
-                                <th class="px-6 py-3 font-medium">Entrada</th>
-                                <th class="px-6 py-3 font-medium">Saída</th>
-                                <th class="px-6 py-3 font-medium">Duração</th>
-                                <th class="px-6 py-3 font-medium text-right">Ações</th>
+                                <th class="px-6 py-3"><input type="checkbox" id="select-all-history" onclick="window.toggleSelectAll()"></th>
+                                <th class="px-6 py-3">Data</th>
+                                <th class="px-6 py-3">Nome</th>
+                                <th class="px-6 py-3">Squad</th>
+                                <th class="px-6 py-3">Horário</th>
+                                <th class="px-6 py-3">Total</th>
+                                <th class="px-6 py-3 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="historico-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Carregando dados...</td></tr>
-                        </tbody>
+                        <tbody id="historico-body" class="divide-y divide-gray-100"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="content-capacidade" class="hidden animate-fade-in">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Capacidade & Metas</h2>
-                    <span class="text-sm text-gray-500">Visualização consolidada do mês selecionado</span>
+                <div class="mb-6 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Análise de Capacidade por Semana</h2>
+                    <p class="text-xs text-gray-500">Clique na semana para expandir os dias</p>
                 </div>
-                
-                <div id="capacity-container" class="mb-8 overflow-x-auto border border-gray-200 rounded-xl shadow-sm bg-white">
-                    <div class="bg-gray-100 p-3 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-700 uppercase flex items-center">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-500"></i>
-                            Acompanhamento Diário
-                        </h3>
+                <div id="capacity-accordion-container" class="space-y-4">
                     </div>
-                    <div class="p-0">
-                        <table class="w-full border-collapse" id="capacity-table">
-                            <tr><td class="p-8 text-center text-gray-400">Carregando dados...</td></tr>
-                        </table>
-                    </div>
-                </div>
             </div>
 
-            <div id="content-relatorio" class="hidden animate-fade-in">
-                <h2 class="text-xl font-bold text-gray-800 mb-6">Relatório Individual</h2>
-                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Scooteira</label>
-                            <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" onchange="window.loadRelatorioIndividual()">
-                                <option value="" disabled selected>Selecione...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Mês</label>
-                            <input type="month" id="relatorio-mes-select" class="w-full p-2.5 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" onchange="window.loadRelatorioIndividual()">
-                        </div>
-                        <div class="flex items-end space-x-2">
-                             <button class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-lg font-medium shadow-sm transition flex items-center justify-center" onclick="window.exportIndividualCsv()">
-                                 <i data-lucide="file-down" class="w-4 h-4 mr-2"></i> CSV
-                             </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Dias Trabalhados</span>
-                        <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-dias">-</span>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas</span>
-                        <span class="text-3xl font-bold text-indigo-600 mt-1" id="resumo-total-horas">-</span>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:col-span-2">
-                        <span class="text-xs text-gray-500 uppercase font-medium mb-3">Total por Squad</span>
-                        <div id="resumo-squads-list" class="flex flex-wrap gap-2 content-start"></div>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
-                    <table class="w-full text-sm text-left text-gray-600">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th class="px-6 py-3 font-medium">Data</th>
-                                <th class="px-6 py-3 font-medium">Squad</th>
-                                <th class="px-6 py-3 font-medium">Entrada</th>
-                                <th class="px-6 py-3 font-medium">Saída</th>
-                                <th class="px-6 py-3 font-medium">Duração</th>
-                            </tr>
-                        </thead>
-                        <tbody id="relatorio-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="5" class="text-center py-8 text-gray-400">Selecione os filtros acima.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
+            <div id="content-relatorio" class="hidden animate-fade-in"> Conteúdo de Relatórios... </div>
             <div id="content-cadastro" class="hidden animate-fade-in">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
-                    <button onclick="window.seedDatabase()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium text-xs flex items-center shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Forçar Atualização
-                    </button>
-                </div>
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
-                    <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide border-b pb-2">Adicionar Nova Scooteira</h3>
-                    <form id="add-agent-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Nome Completo</label>
-                            <input type="text" id="new-nome" placeholder="Nome Completo" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Pseudo (Apelido)</label>
-                            <input type="text" id="new-pseudo" placeholder="Ex: Ana C." class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Squad Padrão</label>
-                            <select id="new-squad" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm"></select>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Dias Padrão</label>
-                            <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Entrada</label>
-                            <input type="time" id="new-entrada" value="08:00" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Saída</label>
-                            <input type="time" id="new-saida" value="14:00" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 text-sm" required>
-                        </div>
-                        <div class="md:col-span-6 flex justify-end mt-2">
-                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-6 rounded-lg font-medium shadow-sm transition text-sm"> + Adicionar </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
-                    <table class="w-full text-sm text-left text-gray-600">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th class="px-6 py-3 font-medium">Nome (Pseudo)</th>
-                                <th class="px-6 py-3 font-medium">Squad</th>
-                                <th class="px-6 py-3 font-medium">Dias</th>
-                                <th class="px-6 py-3 font-medium">Horário</th>
-                                <th class="px-6 py-3 font-medium text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cadastro-list-body" class="divide-y divide-gray-100"></tbody>
-                    </table>
-                </div>
+                 <div id="cadastro-form-container"></div>
+                 <table class="w-full mt-8 text-sm"><tbody id="cadastro-list-body"></tbody></table>
             </div>
         </div>
     </div>
 
-    <div id="bulk-actions-bar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-6 z-40 hidden slide-up">
-        <span class="text-sm font-medium"><span id="bulk-count">0</span> selecionados</span>
-        <div class="h-4 w-px bg-gray-600"></div>
-        <button class="flex items-center space-x-2 text-indigo-300 hover:text-white transition" onclick="window.openBulkEditModal()">
-            <i data-lucide="pencil" class="w-4 h-4"></i>
-            <span class="text-sm font-medium">Editar Selecionados</span>
-        </button>
-        <button class="flex items-center space-x-2 text-red-400 hover:text-red-200 transition" onclick="window.deleteBulkLogs()">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-            <span class="text-sm font-medium">Excluir</span>
-        </button>
-        <button class="ml-4 text-gray-500 hover:text-gray-300" onclick="window.deselectAll()">
-            <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-    </div>
-
-    <div id="bulk-edit-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div class="bg-indigo-600 px-6 py-4 text-white">
-                <h3 class="text-lg font-bold">Edição em Massa</h3>
-                <p class="text-indigo-100 text-xs mt-1">Preencha APENAS o que deseja alterar.</p>
-            </div>
-            <div class="p-6 space-y-4">
-                <div><label class="block text-xs uppercase text-gray-500 mb-1">Nova Data</label><input type="date" id="be-data" class="w-full p-2 border rounded bg-gray-50"></div>
-                <div><label class="block text-xs uppercase text-gray-500 mb-1">Novo Squad</label><select id="be-squad" class="w-full p-2 border rounded bg-gray-50"></select></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Nova Entrada</label><input type="time" id="be-ent" class="w-full p-2 border rounded bg-gray-50"></div>
-                    <div><label class="block text-xs uppercase text-gray-500 mb-1">Nova Saída</label><input type="time" id="be-sai" class="w-full p-2 border rounded bg-gray-50"></div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded" onclick="window.closeModal('bulk-edit-modal')">Cancelar</button>
-                <button class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onclick="window.confirmBulkEdit()">Aplicar Mudanças</button>
-            </div>
+    <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 class="font-bold mb-4">Selecionar Equipe</h3>
+            <div id="agentes-checkbox-list" class="space-y-2 max-h-96 overflow-y-auto mb-4"></div>
+            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-2 rounded-lg">Fechar</button>
         </div>
     </div>
 
-    <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"><div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center"><h3 class="text-lg font-bold text-gray-800">Selecionar Scooteiras</h3><button onclick="window.closeModal('selection-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button></div><div id="agentes-checkbox-list" class="p-4 space-y-2 max-h-[60vh] overflow-y-auto"></div><div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end"><button class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-medium text-sm" onclick="window.closeModal('selection-modal')">Concluído</button></div></div>
-    </div>
-
-    <div id="details-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div class="bg-indigo-600 px-6 py-4 text-white">
-                <h3 class="text-lg font-bold">Confirmar Lançamento</h3>
-                <p class="text-indigo-100 text-xs mt-1">Verifique os horários. Use a lixeira para remover.</p>
-            </div>
-            <form id="details-form" class="flex-1 overflow-hidden flex flex-col">
-                <div id="agentes-detalhes-container" class="p-6 space-y-6 overflow-y-auto flex-1"></div>
-                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                    <button type="button" class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium transition" onclick="window.closeModal('details-modal')">Cancelar</button>
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition">Confirmar e Salvar</button>
-                </div>
+    <div id="details-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div class="p-6 bg-indigo-600 text-white font-bold rounded-t-xl">Ajuste de Detalhes</div>
+            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1">
+                <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
+            <div class="p-4 bg-gray-50 flex justify-end space-x-3 rounded-b-xl">
+                <button onclick="window.closeModal('details-modal')" class="px-4 py-2">Cancelar</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold">Salvar Tudo</button>
+            </div>
         </div>
-    </div>
-    
-    <div id="edit-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"><div class="bg-blue-600 px-6 py-4 text-white flex justify-between"><h3 class="text-lg font-bold">Editar Registro</h3><button onclick="window.closeModal('edit-log-modal')" class="text-blue-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="p-6 space-y-4"><input type="hidden" id="edit-log-id"><div><label class="block text-xs uppercase text-gray-500 mb-1">Scooteira</label><input id="edit-log-nome" class="w-full p-2 border bg-gray-100 rounded text-gray-500" disabled></div><div><label class="block text-xs uppercase text-gray-500 mb-1">Data</label><input type="date" id="edit-log-data" class="w-full p-2 border rounded"></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-xs uppercase text-gray-500 mb-1">Entrada</label><input type="time" id="edit-log-ent" class="w-full p-2 border rounded"></div><div><label class="block text-xs uppercase text-gray-500 mb-1">Saída</label><input type="time" id="edit-log-sai" class="w-full p-2 border rounded"></div></div><div><label class="block text-xs uppercase text-gray-500 mb-1">Squad</label><input type="text" id="edit-log-squad" class="w-full p-2 border rounded"></div></div><div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3"><button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded" onclick="window.closeModal('edit-log-modal')">Cancelar</button><button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="window.saveEditedLog()">Salvar Alterações</button></div></div>
-    </div>
-
-    <div id="import-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden"><div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center"><h3 class="text-lg font-bold text-gray-800 flex items-center"><i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-blue-600"></i> Importar do Excel</h3><button onclick="window.closeModal('import-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button></div><div class="p-6"><p class="text-sm text-gray-600 mb-2">Cole os dados copiados diretamente da planilha (com cabeçalho ou sem):</p><textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Data..."></textarea><p class="text-xs text-gray-400 mt-2">O sistema mapeia automaticamente os Pseudos para os Nomes Cadastrados.</p></div><div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3"><button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="window.handleImport()">Processar Dados</button></div></div>
-    </div>
-
-    <div id="confirmation-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 text-center"><h3 class="text-lg font-bold text-gray-900 mb-2">Confirmar Exclusão?</h3><p class="text-sm text-gray-500 mb-6">Essa ação não pode ser desfeita.</p><div class="flex justify-center space-x-3"><button class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50" onclick="window.resolveConfirmation(false)">Cancelar</button><button class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700" onclick="window.resolveConfirmation(true)">Sim, Excluir</button></div></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DAS METAS DIÁRIAS (EDITE AQUI)
-        // Vendas, Hunter e Coraliados removidos
-        const METAS_SQUAD = {
-            "CB": 50,          
-            "SC": 40,          
-            "Rec. Crédito": 30,
-            "Monitoria": 10,
-            "OJR": 10,
-            "Outro": 0
-        };
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
-            authDomain: "atuacao2026.firebaseapp.com",
-            projectId: "atuacao2026",
-            storageBucket: "atuacao2026.firebasestorage.app",
-            messagingSenderId: "563632231622",
-            appId: "1:563632231622:web:ce3e04e43cc647614214f5"
-        };
-        const appId = "atuacao2026";
+        // --- CONFIGURAÇÃO DE SQUADS ---
+        const SQUADS_ATIVAS = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR"];
         
-        // Vendas, Hunter e Coraliados removidos da lista de opções
-        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR", "Outro"];
+        // --- METAS DIFERENCIADAS POR DIA ---
+        // 0: Dom, 1: Seg, 2: Ter, 3: Qua, 4: Qui, 5: Sex, 6: Sab
+        const METAS_POR_DIA = {
+            "CB":           { 1: 50, 2: 50, 3: 50, 4: 50, 5: 50, 6: 20, 0: 10 },
+            "SC":           { 1: 40, 2: 40, 3: 40, 4: 40, 5: 40, 6: 15, 0: 5  },
+            "Rec. Crédito": { 1: 30, 2: 30, 3: 30, 4: 30, 5: 30, 6: 0,  0: 0  },
+            "OJR":          { 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 5,  0: 0  }
+            // Monitoria não tem meta (calcula apenas soma)
+        };
 
+        const firebaseConfig = { apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", authDomain: "atuacao2026.firebaseapp.com", projectId: "atuacao2026", storageBucket: "atuacao2026.firebasestorage.app", messagingSenderId: "563632231622", appId: "1:563632231622:web:ce3e04e43cc647614214f5" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
+        const appId = "atuacao2026";
         const logsCol = `artifacts/${appId}/public/data/scooteiras_atividades`;
         const agentsCol = `artifacts/${appId}/public/data/scooteiras_cadastro`;
 
         let currentAgents = [];
         let currentHistoryList = [];
-        
-        const getSquadColor = (squad) => {
-            const map = { 'CB': 'indigo', 'SC': 'emerald', 'Rec. Crédito': 'amber', 'Monitoria': 'cyan', 'OJR': 'purple', 'Outro': 'slate' };
-            return map[squad] || 'gray';
+
+        // --- UNIFICAÇÃO DE SQUAD (REC) ---
+        const normalizarSquad = (s) => {
+            if (!s) return "Outro";
+            const upper = s.toUpperCase().trim();
+            if (upper.includes("REC") || upper.includes("CRED")) return "Rec. Crédito";
+            return s;
         };
 
-        const timeToMinutes = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-        const normalizeTime = (t) => { if(!t) return ""; t = t.trim(); const parts = t.split(':'); if (parts.length >= 2) return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`; return t; };
-
-        // --- TRAVA DE SOBREPOSIÇÃO MELHORADA ---
-        const verificarSobreposicao = async (scooteira, data, ent, sai, excludeId = null) => {
-            const q = query(collection(db, logsCol), where("scooteira", "==", scooteira), where("data", "==", data));
-            const snap = await getDocs(q);
-            const newStart = timeToMinutes(ent);
-            const newEnd = timeToMinutes(sai);
-            
-            for (const d of snap.docs) {
-                if (excludeId && d.id === excludeId) continue; 
-                const existing = d.data();
-                const existStart = timeToMinutes(existing.entrada);
-                const existEnd = timeToMinutes(existing.saida);
-                
-                if (newStart < existEnd && newEnd > existStart) {
-                    return { found: true, details: existing }; 
-                }
-            }
-            return { found: false };
-        };
-
-        // --- FUNÇÕES DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
-        const updateStats = (list) => {
-            const squads = {};
-            list.forEach(i => { if(!squads[i.squad]) squads[i.squad] = 0; squads[i.squad] += i.horas; });
-            document.getElementById('resumo-squads').innerHTML = Object.keys(squads).map(s => { 
-                const color = getSquadColor(s); 
-                return `<div class="bg-white p-4 rounded-lg border-l-4 border-${color}-500 shadow-sm flex justify-between items-center transition hover:shadow-md">
-                            <div>
-                                <span class="text-xs font-bold text-${color}-600 uppercase tracking-wider">${s}</span>
-                                <p class="text-2xl font-bold text-gray-700">${squads[s].toFixed(1)}h</p>
-                            </div>
-                            <i data-lucide="pie-chart" class="w-6 h-6 text-${color}-200"></i>
-                        </div>`; 
-            }).join('');
-            lucide.createIcons();
-        };
-
-        const renderCapacityTable = () => {
-            const mes = document.getElementById('mes-select').value;
-            // Se não tiver mês ou a lista estiver vazia, esconde
-            if(!mes) { return; }
-
-            const [ano, mesNum] = mes.split('-').map(Number);
-            const daysInMonth = new Date(ano, mesNum, 0).getDate();
-            
-            const dataMap = {};
-            currentHistoryList.forEach(log => {
-                if(!dataMap[log.data]) dataMap[log.data] = {};
-                if(!dataMap[log.data][log.squad]) dataMap[log.data][log.squad] = 0;
-                dataMap[log.data][log.squad] += log.horas;
-            });
-
-            let html = `<thead><tr><th class="cap-header text-left cap-date-col">Data</th>`;
-            SQUADS_OPCOES.forEach(s => html += `<th class="cap-header">${s}</th>`);
-            html += `</tr></thead><tbody>`;
-
-            const weekTotals = {}; 
-            SQUADS_OPCOES.forEach(s => weekTotals[s] = 0);
-
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dayStr = String(i).padStart(2, '0');
-                const fullDate = `${mes}-${dayStr}`;
-                const dateObj = new Date(ano, mesNum - 1, i);
-                const dayOfWeek = dateObj.getDay(); 
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-                html += `<tr class="${isWeekend ? 'bg-gray-50' : 'bg-white'} border-b border-gray-100 hover:bg-gray-50">
-                    <td class="cap-cell font-bold text-left whitespace-nowrap cap-date-col">${dayStr}/${String(mesNum).padStart(2,'0')}</td>`;
-
-                SQUADS_OPCOES.forEach(squad => {
-                    const actual = (dataMap[fullDate] && dataMap[fullDate][squad]) ? dataMap[fullDate][squad] : 0;
-                    const target = METAS_SQUAD[squad] || 0;
-                    weekTotals[squad] += actual;
-                    
-                    let cellClass = "cap-cell";
-                    let content = actual > 0 ? actual.toFixed(1) + 'h' : '-';
-                    
-                    if (target > 0) {
-                        if (actual < target) {
-                            cellClass += " cap-warn-low"; 
-                            content += `<br><span class="text-[9px] opacity-75">Faltam ${(target - actual).toFixed(1)}</span>`;
-                        } else if (actual > target) {
-                            cellClass += " cap-warn-high"; 
-                            content += `<br><span class="text-[9px] opacity-75">+${(actual - target).toFixed(1)}</span>`;
-                        } else {
-                             cellClass += " cap-ok";
-                        }
-                    }
-
-                    html += `<td class="${cellClass}">${content}</td>`;
-                });
-                html += `</tr>`;
-
-                if (dayOfWeek === 6 || i === daysInMonth) {
-                    html += `<tr class="cap-weekly-row"><td class="cap-cell text-left">TOTAL SEMANA</td>`;
-                    SQUADS_OPCOES.forEach(s => {
-                         html += `<td class="cap-cell">${weekTotals[s].toFixed(1)}h</td>`;
-                         weekTotals[s] = 0; 
-                    });
-                    html += `</tr>`;
-                }
-            }
-            html += `</tbody>`;
-            
-            document.getElementById('capacity-table').innerHTML = html;
-        };
-
-        // --- AUTH & INIT ---
+        // --- FIREBASE INIT ---
         signInAnonymously(auth).then(() => {
-            document.getElementById('auth-status').innerText = "Conectado";
-            document.getElementById('auth-status').classList.remove('bg-indigo-800');
-            document.getElementById('auth-status').classList.add('bg-emerald-600');
-            initSquadSelect();
-            loadAgents(); 
-            loadHistorico();
+            document.getElementById('auth-status').innerText = "ONLINE";
+            document.getElementById('auth-status').className = "bg-emerald-600 py-1 px-3 rounded text-xs font-mono text-white";
+            loadInitialData();
         });
 
-        // UI Helpers
+        async function loadInitialData() {
+            const d = new Date();
+            document.getElementById('mes-select').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            await loadAgents();
+            await loadHistorico();
+        }
+
         window.switchTab = (tabId) => {
-            ['registro', 'relatorio', 'cadastro', 'capacidade'].forEach(t => {
-                const elContent = document.getElementById(`content-${t}`);
-                const elTab = document.getElementById(`tab-${t}`);
-                if(elContent) elContent.classList.add('hidden');
-                if(elTab) elTab.classList.replace('tab-active', 'tab-inactive');
+            ['registro', 'capacidade', 'relatorio', 'cadastro'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap";
             });
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabId}`).classList.replace('tab-inactive', 'tab-active');
-        };
-
-        const showMessage = (msg, type='info') => {
-            const el = document.getElementById('message-box');
-            el.innerText = msg;
-            el.className = `mx-6 mt-6 p-4 text-sm rounded-lg shadow-sm border-l-4 transition-all block ${type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-red-50 border-red-500 text-red-700'}`;
-            setTimeout(() => el.classList.add('hidden'), 4000);
-        };
-
-        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
-
-        const initSquadSelect = () => {
-             const sel = document.getElementById('new-squad');
-             sel.innerHTML = SQUADS_OPCOES.map(s => `<option value="${s}">${s}</option>`).join('');
-             const beSel = document.getElementById('be-squad');
-             beSel.innerHTML = '<option value="">-- Manter Original --</option>' + SQUADS_OPCOES.map(s => `<option value="${s}">${s}</option>`).join('');
+            document.getElementById(`tab-${tabId}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap";
+            if (tabId === 'capacidade') renderCapacityAccordion();
         };
 
         const loadAgents = async () => {
-            const q = query(collection(db, agentsCol));
-            const snap = await getDocs(q);
-            if (snap.empty) { await seedDatabase(true); return; }
+            const snap = await getDocs(collection(db, agentsCol));
             currentAgents = [];
-            
-            // FILTRANDO SCOOTEIRAS DAS SQUADS REMOVIDAS
             snap.forEach(d => {
-                const data = d.data();
-                if(SQUADS_OPCOES.includes(data.squadPadrao) || !data.squadPadrao) {
-                    currentAgents.push(data);
-                }
+                const a = d.data();
+                a.squadPadrao = normalizarSquad(a.squadPadrao);
+                if (SQUADS_ATIVAS.includes(a.squadPadrao)) currentAgents.push(a);
             });
-            
-            renderAgentsTable();
             renderSelectionList();
-            renderRelatorioSelect();
         };
 
-        const renderAgentsTable = () => {
-            const tbody = document.getElementById('cadastro-list-body');
-            tbody.innerHTML = '';
-            currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
-            currentAgents.forEach(a => {
-                const color = getSquadColor(a.squadPadrao);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 border-l-4 border-${color}-500 font-medium text-gray-900">${a.nome} <span class="text-gray-400 font-normal">(${a.pseudo})</span></td>
-                    <td class="px-6 py-4"><span class="bg-${color}-100 text-${color}-800 text-xs px-2 py-1 rounded-full border border-${color}-200">${a.squadPadrao || '-'}</span></td>
-                    <td class="px-6 py-4">${a.turnoPadrao || '-'}</td>
-                    <td class="px-6 py-4 font-mono text-xs">${a.entradaPadrao} - ${a.saidaPadrao}</td>
-                    <td class="px-6 py-4 text-right space-x-2">
-                        <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editAgent('${a.nome}')"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button class="text-red-400 hover:text-red-700" onclick="window.deleteAgent('${a.nome}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>`;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons();
-        };
-
-        window.seedDatabase = async (silent) => { 
-            if(!silent && !confirm("Reenviar lista padrão?")) return;
-            if(!silent) showMessage("Feito", "success"); 
-            loadAgents(); 
-        };
-        
-        document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nome = document.getElementById('new-nome').value.trim();
-            await setDoc(doc(db, agentsCol, nome), { nome: nome, pseudo: document.getElementById('new-pseudo').value, squadPadrao: document.getElementById('new-squad').value, turnoPadrao: document.getElementById('new-turno').value, entradaPadrao: document.getElementById('new-entrada').value, saidaPadrao: document.getElementById('new-saida').value });
-            showMessage('Salvo!', 'success'); loadAgents();
-        });
-        
-        window.deleteAgent = async(id) => { if(await confirmAction()) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); }};
-        window.editAgent = (nome) => { /* Lógica de modal de edição simplificada */ };
-        
-        window.showSelectionModal = () => { renderSelectionList(); window.openModal('selection-modal'); };
         const renderSelectionList = () => {
-             document.getElementById('agentes-checkbox-list').innerHTML = currentAgents.map(a => `<label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-indigo-50 cursor-pointer"><input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded"><div><span class="font-medium text-gray-800">${a.nome}</span> <span class="text-xs text-gray-500">(${a.pseudo})</span></div></label>`).join('');
-        };
-        
-        window.removeConfirmationRow = (button) => {
-            button.closest('.confirm-row').remove();
+            currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
+            document.getElementById('agentes-checkbox-list').innerHTML = currentAgents.map(a => `
+                <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600">
+                    <span class="text-sm">${a.nome} <small class="text-gray-400">(${a.squadPadrao})</small></span>
+                </label>
+            `).join('');
         };
 
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
-            const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
-            if (!data || selectedBoxes.length === 0) { showMessage('Selecione data e scooteira.', 'error'); return; }
-            
+            const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
+            if (!data || selected.length === 0) return alert("Selecione data e equipe");
+
             const container = document.getElementById('agentes-detalhes-container');
-            container.innerHTML = '';
-            
-            selectedBoxes.forEach(box => {
-                const nome = box.value;
+            container.innerHTML = selected.map(nome => {
                 const agent = currentAgents.find(a => a.nome === nome);
-                
-                if (!agent) return;
-
-                const squadOptions = SQUADS_OPCOES.map(s => 
-                    `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`
-                ).join('');
-
-                container.innerHTML += `
-                    <div class="p-4 border rounded-lg bg-gray-50 confirm-row relative" data-nome="${agent.nome}">
-                        <div class="absolute top-2 right-2">
-                            <button type="button" onclick="window.removeConfirmationRow(this)" class="text-gray-400 hover:text-red-500 transition">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        <h4 class="font-bold text-indigo-900 mb-2 pr-8">${agent.nome}</h4>
+                return `
+                    <div class="confirm-row p-4 border rounded-lg bg-white relative" data-nome="${agent.nome}">
+                        <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <div class="font-bold text-indigo-600 mb-3">${agent.nome}</div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div>
-                                <label class="text-xs font-semibold text-gray-500">Entrada</label>
-                                <input type="time" value="${agent.entradaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-ent">
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-gray-500">Saída</label>
-                                <input type="time" value="${agent.saidaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-sai">
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-gray-500">Squad do Dia</label>
-                                <select class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 bg-white confirm-squad">
-                                    ${squadOptions}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-xs font-semibold text-gray-500">Turno</label>
-                                <input type="text" value="${agent.turnoPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-turno">
-                            </div>
+                            <input type="time" value="${agent.entradaPadrao}" class="confirm-ent border p-1 rounded text-sm">
+                            <input type="time" value="${agent.saidaPadrao}" class="confirm-sai border p-1 rounded text-sm">
+                            <select class="confirm-squad border p-1 rounded text-sm">
+                                ${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}
+                            </select>
+                            <input type="text" value="${agent.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm">
                         </div>
-                    </div>`;
-            });
+                    </div>
+                `;
+            }).join('');
             window.openModal('details-modal');
-            lucide.createIcons(); 
+            lucide.createIcons();
         };
 
-        document.getElementById('details-form').addEventListener('submit', async (e) => {
+        document.getElementById('details-form').onsubmit = async (e) => {
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const rows = document.querySelectorAll('.confirm-row');
             
-            let successCount = 0;
-            let errorMessages = [];
-
-            if (rows.length === 0) {
-                 window.closeModal('details-modal');
-                 return;
-            }
-
             for (const row of rows) {
-                const nome = row.getAttribute('data-nome');
+                const nome = row.dataset.nome;
                 const ent = row.querySelector('.confirm-ent').value;
                 const sai = row.querySelector('.confirm-sai').value;
                 const sq = row.querySelector('.confirm-squad').value;
-                const trn = row.querySelector('.confirm-turno').value;
                 
-                const check = await verificarSobreposicao(nome, dataStr, ent, sai);
-                
-                if (check.found) {
-                    errorMessages.push(`❌ ${nome}: Conflito com registro existente (${check.details.entrada} - ${check.details.saida} | Squad ${check.details.squad})`);
-                    continue; 
-                }
-
                 const d1 = new Date(`2000-01-01T${ent}`);
                 const d2 = new Date(`2000-01-01T${sai}`);
-                let diff = (d2 - d1) / 1000 / 60 / 60; 
+                let diff = (d2 - d1) / 3600000;
                 if (diff < 0) diff += 24;
-                
+
                 await addDoc(collection(db, logsCol), {
                     data: dataStr,
                     mes: dataStr.substring(0, 7),
@@ -688,276 +274,164 @@
                     squad: sq,
                     entrada: ent,
                     saida: sai,
-                    turno: trn,
                     horas: parseFloat(diff.toFixed(2)),
                     timestamp: new Date()
                 });
-                successCount++;
             }
-            
             window.closeModal('details-modal');
-            
-            if (errorMessages.length > 0) {
-                 alert(`Resumo do Lançamento:\n\n✅ ${successCount} salvos com sucesso.\n\n⚠️ Erros:\n${errorMessages.join('\n')}`);
-            } else {
-                 showMessage(`${successCount} registros salvos com sucesso!`, 'success');
-            }
-            
-            window.loadHistorico();
-        });
-
-        window.showImportModal = () => window.openModal('import-modal');
-        window.handleImport = async () => {
-            const text = document.getElementById('import-data-json').value;
-            if(!text.trim()) { showMessage('Cole os dados.', 'error'); return; }
-            const lines = text.split('\n');
-            let successCount = 0; let skippedCount = 0;
-            
-            for(let line of lines) {
-                let cols = line.split('\t');
-                if(cols.length < 5) cols = line.split(',');
-                if(cols.length >= 8 && !cols[0].includes('Data')) {
-                    const dataBr = cols[0].trim();
-                    const importedPseudo = cols[2].trim();
-                    const ent = normalizeTime(cols[4]);
-                    const sai = normalizeTime(cols[5]);
-                    const sq = cols[8].trim();
-                    const turno = cols[3] || "Importado";
-
-                    if(!dataBr || !importedPseudo) continue;
-                    
-                    let finalName = importedPseudo;
-                    const foundAgent = currentAgents.find(a => a.pseudo.toLowerCase() === importedPseudo.toLowerCase());
-                    if (foundAgent) {
-                        finalName = foundAgent.nome; 
-                    }
-
-                    const parts = dataBr.split('/');
-                    const dataIso = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    
-                    const check = await verificarSobreposicao(finalName, dataIso, ent, sai);
-                    if (check.found) { skippedCount++; continue; }
-
-                    const d1 = new Date(`2000-01-01T${ent}`);
-                    const d2 = new Date(`2000-01-01T${sai}`);
-                    let diff = (d2 - d1) / 1000 / 60 / 60; 
-                    if (diff < 0) diff += 24;
-
-                    await addDoc(collection(db, logsCol), {
-                        data: dataIso, mes: dataIso.substring(0, 7),
-                        scooteira: finalName, 
-                        squad: sq, entrada: ent, saida: sai, turno: turno, horas: parseFloat(diff.toFixed(2))
-                    });
-                    successCount++;
-                }
-            }
-            showMessage(`${successCount} importados. ${skippedCount} pulados (duplicados).`, 'success');
-            window.closeModal('import-modal');
-            window.loadHistorico();
+            loadHistorico();
         };
 
-        // --- FUNÇÃO DE CARREGAMENTO BLINDADA ---
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
-            if(!mes) return;
+            const q = query(collection(db, logsCol), where("mes", "==", mes));
+            const snap = await getDocs(q);
+            currentHistoryList = [];
+            snap.forEach(d => {
+                const item = { id: d.id, ...d.data() };
+                item.squad = normalizarSquad(item.squad);
+                if (SQUADS_ATIVAS.includes(item.squad)) currentHistoryList.push(item);
+            });
+
+            // --- ORDENAÇÃO SOLICITADA ---
+            // 1. Data (Desc), 2. Entrada (Desc), 3. Squad (Asc), 4. Nome (Asc)
+            currentHistoryList.sort((a,b) => {
+                if (b.data !== a.data) return b.data.localeCompare(a.data);
+                if (b.entrada !== a.entrada) return b.entrada.localeCompare(a.entrada);
+                if (a.squad !== b.squad) return a.squad.localeCompare(b.squad);
+                return a.scooteira.localeCompare(b.scooteira);
+            });
+
             const tbody = document.getElementById('historico-body');
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Carregando...</td></tr>';
-            window.deselectAll(); 
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
-            currentHistoryList = []; 
-            
-            // FILTRANDO HISTÓRICO PARA REMOVER SQUADS EXCLUÍDAS
-            snap.forEach(d => {
-                const data = d.data();
-                if(SQUADS_OPCOES.includes(data.squad)) {
-                     currentHistoryList.push({id: d.id, ...data});
-                }
-            });
-            
-            // NOVA ORDENAÇÃO: 1. Data Desc, 2. Hora Desc, 3. Squad Asc, 4. Nome Asc
-            currentHistoryList.sort((a, b) => {
-                const dataA = a.data || "";
-                const dataB = b.data || "";
-                if (dataA !== dataB) return dataB.localeCompare(dataA); // Data (Mais recente primeiro)
-
-                const entA = a.entrada || "";
-                const entB = b.entrada || "";
-                if (entA !== entB) return entB.localeCompare(entA); // Hora (Mais tarde primeiro)
-
-                const squadA = a.squad || "";
-                const squadB = b.squad || "";
-                if (squadA !== squadB) return squadA.localeCompare(squadB); // Squad (A-Z)
-
-                const nomeA = a.scooteira || "";
-                const nomeB = b.scooteira || "";
-                return nomeA.localeCompare(nomeB); // Nome (A-Z)
-            });
-            
-            tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
-            
-            currentHistoryList.forEach(item => {
-                const color = getSquadColor(item.squad);
-
-                let agent = currentAgents.find(a => a.nome === item.scooteira);
-                if (!agent) {
-                    agent = currentAgents.find(a => a.pseudo === item.scooteira);
-                }
-                
-                const displayAgent = agent || { nome: item.scooteira, pseudo: '-' };
-                const firstName = displayAgent.nome.split(' ')[0]; 
-                
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="px-6 py-4"><input type="checkbox" value="${item.id}" class="history-checkbox w-4 h-4 text-indigo-600 rounded" onclick="window.updateBulkUI()"></td>
+            tbody.innerHTML = currentHistoryList.map(item => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4"><input type="checkbox" value="${item.id}" class="history-checkbox"></td>
                     <td class="px-6 py-4">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4 font-bold text-gray-800">${firstName}</td>
-                    <td class="px-6 py-4 text-gray-500 text-xs">${displayAgent.pseudo}</td>
-                    <td class="px-6 py-4"><span class="text-${color}-700 bg-${color}-50 border border-${color}-200 px-2 py-1 rounded text-xs font-semibold">${item.squad}</span></td>
-                    <td class="px-6 py-4">${item.entrada}</td>
-                    <td class="px-6 py-4">${item.saida}</td>
-                    <td class="px-6 py-4">${item.horas}h</td>
-                    <td class="px-6 py-4 text-right flex justify-end space-x-3">
-                        <button class="text-blue-500 hover:text-blue-700" onclick="window.editLog('${item.id}')"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                        <button class="text-red-500 hover:text-red-700" onclick="window.deleteLog('${item.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>`;
-                tbody.appendChild(tr);
-            });
+                    <td class="px-6 py-4 font-bold">${item.scooteira.split(' ')[0]}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold">${item.squad}</span></td>
+                    <td class="px-6 py-4 text-xs">${item.entrada} - ${item.saida}</td>
+                    <td class="px-6 py-4 font-bold">${item.horas}h</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="window.deleteLog('${item.id}')" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
             lucide.createIcons();
-            
-            // Atualiza os cartões e a tabela de metas APÓS carregar os dados
-            updateStats(currentHistoryList);
-            renderCapacityTable(); 
+            updateStats();
         };
 
-        window.loadRelatorioIndividual = async () => {
-            const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
-            const mes = document.getElementById('relatorio-mes-select').value;
-            if(!nomeSelecionado || !mes) return;
-
-            const agente = currentAgents.find(a => a.nome === nomeSelecionado);
-            const pseudo = agente ? agente.pseudo : "";
-
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
-            
-            const list = [];
-            snap.forEach(d => {
-                const item = d.data();
-                if ((item.scooteira === nomeSelecionado || item.scooteira === pseudo) && SQUADS_OPCOES.includes(item.squad)) {
-                    list.push(item);
-                }
-            });
-            
-            list.sort((a,b) => a.data.localeCompare(b.data));
-            
-            const tbody = document.getElementById('relatorio-body');
-            tbody.innerHTML = '';
-            let totalH = 0;
-            let squadStats = {}; 
-
-            list.forEach(i => {
-                totalH += i.horas;
-                if(!squadStats[i.squad]) squadStats[i.squad] = 0;
-                squadStats[i.squad] += i.horas;
-                tbody.innerHTML += `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4">${i.entrada}</td><td class="px-6 py-4">${i.saida}</td><td class="px-6 py-4">${i.horas}h</td></tr>`;
-            });
-            
-            document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
-            document.getElementById('resumo-total-dias').innerText = list.length;
-            document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
-            
-            const statsContainer = document.getElementById('resumo-squads-list');
-            statsContainer.innerHTML = Object.keys(squadStats).map(s => {
-                const color = getSquadColor(s);
-                return `<span class="px-3 py-1 text-xs font-bold text-${color}-700 bg-${color}-50 border border-${color}-200 rounded-full mb-2 mr-2">${s}: ${squadStats[s].toFixed(1)}h</span>`;
-            }).join('');
+        const updateStats = () => {
+            const totals = {};
+            currentHistoryList.forEach(i => { totals[i.squad] = (totals[i.squad] || 0) + i.horas; });
+            document.getElementById('resumo-squads').innerHTML = Object.keys(totals).map(s => `
+                <div class="bg-white p-4 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                    <div class="text-xs text-gray-500 uppercase font-bold">${s}</div>
+                    <div class="text-2xl font-bold">${totals[s].toFixed(1)}h</div>
+                </div>
+            `).join('');
         };
 
-        const confirmAction = () => new Promise(r => { window.openModal('confirmation-modal'); window.resolveConfirmation = (v) => { window.closeModal('confirmation-modal'); r(v); }});
-        window.toggleSelectAll = () => { const m = document.getElementById('select-all-history'); document.querySelectorAll('.history-checkbox').forEach(b => b.checked = m.checked); window.updateBulkUI(); };
-        window.updateBulkUI = () => { const c = document.querySelectorAll('.history-checkbox:checked'); const b = document.getElementById('bulk-actions-bar'); document.getElementById('bulk-count').innerText = c.length; if(c.length > 0) b.classList.remove('hidden'); else b.classList.add('hidden'); };
-        window.deselectAll = () => { document.getElementById('select-all-history').checked = false; document.querySelectorAll('.history-checkbox').forEach(b => b.checked = false); window.updateBulkUI(); };
-        window.openBulkEditModal = () => { document.getElementById('be-data').value = ""; document.getElementById('be-squad').value = ""; document.getElementById('be-ent').value = ""; document.getElementById('be-sai').value = ""; window.openModal('bulk-edit-modal'); };
-        window.confirmBulkEdit = async () => { 
-            const checked = document.querySelectorAll('.history-checkbox:checked');
-            const ids = Array.from(checked).map(c => c.value);
-            if(ids.length === 0) return;
-            const newData = document.getElementById('be-data').value;
-            const newSquad = document.getElementById('be-squad').value;
-            const newEnt = document.getElementById('be-ent').value;
-            const newSai = document.getElementById('be-sai').value;
-            window.closeModal('bulk-edit-modal');
-            showMessage(`Atualizando ${ids.length}...`, 'info');
+        // --- LÓGICA DO ACORDEÃO DE CAPACIDADE ---
+        const renderCapacityAccordion = () => {
+            const mes = document.getElementById('mes-select').value;
+            if(!mes) return;
+            const [ano, mesNum] = mes.split('-').map(Number);
+            const daysInMonth = new Date(ano, mesNum, 0).getDate();
+            const container = document.getElementById('capacity-accordion-container');
+            container.innerHTML = "";
 
-            for(const id of ids) {
-                const original = currentHistoryList.find(i => i.id === id);
-                if(!original) continue;
-                const ent = newEnt || original.entrada;
-                const sai = newSai || original.saida;
-                const dataStr = newData || original.data;
-                const mes = dataStr.substring(0, 7);
+            // Organiza dados por Data
+            const dataMap = {};
+            currentHistoryList.forEach(log => {
+                if(!dataMap[log.data]) dataMap[log.data] = {};
+                dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
+            });
+
+            // Agrupa por Semanas
+            const weeks = {};
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateObj = new Date(ano, mesNum - 1, i);
+                const weekNum = getWeekOfMonth(dateObj);
+                if (!weeks[weekNum]) weeks[weekNum] = [];
+                weeks[weekNum].push(i);
+            }
+
+            Object.keys(weeks).forEach(wNum => {
+                const days = weeks[wNum];
+                const weekId = `week-${wNum}`;
                 
-                const check = await verificarSobreposicao(original.scooteira, dataStr, ent, sai, id);
-                if ((newData || newEnt || newSai) && check.found) continue;
+                // Calcula Total da Semana
+                let weekTotalHours = 0;
+                days.forEach(d => {
+                    const dateKey = `${mes}-${String(d).padStart(2,'0')}`;
+                    if (dataMap[dateKey]) {
+                        Object.values(dataMap[dateKey]).forEach(h => weekTotalHours += h);
+                    }
+                });
 
-                const d1 = new Date(`2000-01-01T${ent}`);
-                const d2 = new Date(`2000-01-01T${sai}`);
-                let diff = (d2 - d1) / 1000 / 60 / 60; if (diff < 0) diff += 24;
-                const updatePayload = { entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), data: dataStr, mes: mes };
-                if(newSquad) updatePayload.squad = newSquad;
-                await updateDoc(doc(db, logsCol, id), updatePayload);
-            }
-            showMessage(`Concluído!`, 'success');
-            window.loadHistorico();
-        }; 
-        window.deleteBulkLogs = async () => { 
-            const checked = document.querySelectorAll('.history-checkbox:checked');
-            if(checked.length === 0) return;
-            if(confirm(`Excluir ${checked.length} registros?`)) {
-                for(const box of checked) await deleteDoc(doc(db, logsCol, box.value));
-                showMessage("Excluídos.", "success");
-                window.loadHistorico();
-            }
+                // Cabeçalho do Acordeão
+                const header = document.createElement('div');
+                header.className = "week-group-header";
+                header.innerHTML = `<span>Semana ${wNum}</span> <span class="text-sm font-normal">Total: ${weekTotalHours.toFixed(1)}h</span>`;
+                header.onclick = () => {
+                    document.getElementById(weekId).classList.toggle('active');
+                };
+
+                // Conteúdo da Tabela
+                const content = document.createElement('div');
+                content.id = weekId;
+                content.className = "week-content";
+
+                let tableHtml = `<table class="w-full border-collapse"><thead><tr><th class="cap-header text-left">Dia</th>`;
+                SQUADS_ATIVAS.forEach(s => tableHtml += `<th class="cap-header">${s}</th>`);
+                tableHtml += `</tr></thead><tbody>`;
+
+                days.forEach(day => {
+                    const dayStr = String(day).padStart(2,'0');
+                    const fullDate = `${mes}-${dayStr}`;
+                    const dateObj = new Date(ano, mesNum - 1, day);
+                    const dow = dateObj.getDay();
+
+                    tableHtml += `<tr><td class="cap-cell cap-date-col font-bold">${dayStr}/${mesNum}</td>`;
+                    
+                    SQUADS_ATIVAS.forEach(squad => {
+                        const actual = (dataMap[fullDate] && dataMap[fullDate][squad]) ? dataMap[fullDate][squad] : 0;
+                        let cellClass = "cap-cell";
+                        let content = actual > 0 ? actual.toFixed(1) + 'h' : '-';
+
+                        // Apenas valida se não for Monitoria
+                        if (squad !== "Monitoria") {
+                            const target = (METAS_POR_DIA[squad] && METAS_POR_DIA[squad][dow]) ? METAS_POR_DIA[squad][dow] : 0;
+                            if (target > 0) {
+                                if (actual < target) cellClass += " cap-warn-low";
+                                else if (actual > target) cellClass += " cap-warn-high";
+                                else cellClass += " cap-ok";
+                            }
+                        }
+
+                        tableHtml += `<td class="${cellClass}">${content}</td>`;
+                    });
+                    tableHtml += `</tr>`;
+                });
+
+                tableHtml += `</tbody></table>`;
+                content.innerHTML = tableHtml;
+
+                container.appendChild(header);
+                container.appendChild(content);
+            });
         };
-        window.editLog = (id) => { const i = currentHistoryList.find(x => x.id === id); document.getElementById('edit-log-id').value = id; document.getElementById('edit-log-nome').value = i.scooteira; document.getElementById('edit-log-data').value = i.data; document.getElementById('edit-log-ent').value = i.entrada; document.getElementById('edit-log-sai').value = i.saida; document.getElementById('edit-log-squad').value = i.squad; window.openModal('edit-log-modal'); };
-        window.saveEditedLog = async () => { 
-            const id = document.getElementById('edit-log-id').value;
-            const ent = document.getElementById('edit-log-ent').value;
-            const sai = document.getElementById('edit-log-sai').value;
-            const dataStr = document.getElementById('edit-log-data').value;
-            const nome = document.getElementById('edit-log-nome').value;
-            const sq = document.getElementById('edit-log-squad').value;
 
-            const check = await verificarSobreposicao(nome, dataStr, ent, sai, id);
-            if(check.found) { alert(`Conflito com registro existente: ${check.details.entrada} - ${check.details.saida}`); return; }
+        function getWeekOfMonth(date) {
+            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+            return Math.ceil((date.getDate() + firstDay) / 7);
+        }
 
-            const d1 = new Date(`2000-01-01T${ent}`);
-            const d2 = new Date(`2000-01-01T${sai}`);
-            let diff = (d2 - d1) / 1000 / 60 / 60; if (diff < 0) diff += 24;
+        // Helpers de Janela
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
 
-            await updateDoc(doc(db, logsCol, id), { data: dataStr, mes: dataStr.substring(0, 7), entrada: ent, saida: sai, squad: sq, horas: parseFloat(diff.toFixed(2)) });
-            window.closeModal('edit-log-modal'); window.loadHistorico(); 
-        };
-        window.deleteLog = async (id) => { if(await confirmAction()) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); }};
-        window.exportToCsv = async () => { 
-                const mes = document.getElementById('mes-select').value;
-                if (!mes) return;
-                const q = query(collection(db, logsCol), where("mes", "==", mes));
-                const snap = await getDocs(q);
-                let csv = "data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas\n";
-                snap.forEach(d => { const i = d.data(); csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; });
-                const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `atuacao_${mes}.csv`;
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        };
-
-        window.onload = () => {
-            const d = new Date();
-            const m = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            document.getElementById('mes-select').value = m;
-            document.getElementById('relatorio-mes-select').value = m;
-        };
     </script>
 </body>
 </html>
