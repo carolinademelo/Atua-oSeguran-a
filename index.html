@@ -28,8 +28,7 @@
         
         .squad-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; border: 1px solid currentColor; }
         .exchange-card { border-left: 4px solid #4f46e5; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-left-width: 4px; }
-        .exchange-text { font-size: 0.85rem; line-height: 1.4; color: #1e293b; }
-        
+        .exchange-text { font-size: 0.85rem; line-height: 1.4; }
         .status-active { color: #166534; background: #dcfce7; }
         .status-inactive { color: #991b1b; background: #fee2e2; }
     </style>
@@ -118,7 +117,7 @@
                             <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg text-sm" onchange="window.loadRelatorioIndividual()"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês de Referência</label>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês</label>
                             <input type="month" id="relatorio-mes-select" class="w-full p-2.5 border-gray-300 rounded-lg text-sm" onchange="window.loadRelatorioIndividual()">
                         </div>
                     </div>
@@ -143,7 +142,7 @@
                         <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="p-2 border rounded text-sm">
                         <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
                         <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
-                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Cadastrar</button>
+                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Salvar</button>
                     </form>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
@@ -295,7 +294,7 @@
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
-            if (!data || selected.length === 0) return alert("Selecione data e scooteiras.");
+            if (!data || selected.length === 0) return alert("Selecione data e equipe.");
             document.getElementById('agentes-detalhes-container').innerHTML = selected.map(nome => {
                 const a = currentAgents.find(x => x.nome === nome);
                 return `<div class="confirm-row p-4 border rounded-lg bg-white relative" data-nome="${a.nome}"><button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button><div class="font-bold text-indigo-600 mb-2">${a.nome}</div><div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><input type="time" value="${a.entradaPadrao}" class="confirm-ent border p-1 rounded text-sm"><input type="time" value="${a.saidaPadrao}" class="confirm-sai border p-1 rounded text-sm"><select class="confirm-squad border p-1 rounded text-sm">${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === a.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}</select><input type="text" value="${a.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm"></div></div>`;
@@ -335,7 +334,7 @@
             currentHistoryList.sort((a,b) => b.data.localeCompare(a.data) || b.entrada.localeCompare(a.entrada));
             
             document.getElementById('historico-body').innerHTML = currentHistoryList.map(item => {
-                const agente = currentAgents.find(a => a.nome === item.scooteira);
+                const agente = currentAgents.find(a => a.nome === item.scooteira || a.pseudo === item.scooteira);
                 let contratado = 0;
                 if (agente) {
                     const h1 = new Date(`2000-01-01T${agente.entradaPadrao}`);
@@ -363,7 +362,10 @@
             const container = document.getElementById('capacity-accordion-container');
             container.innerHTML = "";
             const dataMap = {};
-            currentHistoryList.forEach(log => { if(!dataMap[log.data]) dataMap[log.data] = {}; dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas; });
+            currentHistoryList.forEach(log => {
+                if(!dataMap[log.data]) dataMap[log.data] = {};
+                dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
+            });
             const weeks = {};
             const first = new Date(ano, mesNum - 1, 1);
             const last = new Date(ano, mesNum, 0);
@@ -435,12 +437,12 @@
                     const logsDia = dailyLogs[dateKey] || [];
                     const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
                     const extras = logsDia.filter(l => {
-                        const a = currentAgents.find(ag => ag.nome === l.scooteira);
+                        const a = currentAgents.find(ag => ag.nome === l.scooteira || ag.pseudo === l.scooteira);
                         return a && !(a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
                     });
                     const ausentes = currentAgents.filter(a => {
                         const devia = a.status !== 'Distrato' && (a.turnoPadrao.toLowerCase().includes(diaSeman) || a.turnoPadrao.toLowerCase().includes("seg-sex"));
-                        const estava = logsDia.some(l => l.scooteira === a.nome);
+                        const estava = logsDia.some(l => l.scooteira === a.nome || l.scooteira === a.pseudo);
                         return devia && !estava;
                     });
                     if(extras.length > 0 && ausentes.length > 0) {
@@ -467,16 +469,20 @@
             const cards = document.getElementById('relatorio-resumo-cards');
             if(!nome || !mes) return;
             table.innerHTML = '<tr><td colspan="5" class="text-center py-4">Buscando...</td></tr>';
-            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome)));
+            const agente = currentAgents.find(a => a.nome === nome);
+            const pseudo = agente ? agente.pseudo : "";
+            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
             const list = [];
             let total = 0;
             const sqTotal = {};
             snap.forEach(d => {
                 const data = d.data();
-                const sq = normalizarSquad(data.squad);
-                list.push({ ...data, squad: sq });
-                total += data.horas;
-                sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
+                if(data.scooteira === nome || data.scooteira === pseudo) {
+                    const sq = normalizarSquad(data.squad);
+                    list.push({ ...data, squad: sq });
+                    total += data.horas;
+                    sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
+                }
             });
             list.sort((a,b) => b.data.localeCompare(a.data));
             cards.classList.remove('hidden');
