@@ -810,8 +810,11 @@
                             const exSq = normalizarSquad(ex.squad);
                             const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSq) || ausentes[0]; 
                             
-                            // EXTRAIR APENAS O PRIMEIRO NOME E O HORÁRIO
-                            const nomeEx = ex.scooteira.split(' ')[0];
+                            // BUSCA O AGENTE NO REGISTRO PARA GARANTIR QUE VAMOS USAR O NOME OFICIAL, E NÃO O QUE TÁ NO LOG
+                            const agentEx = state.agents.find(ag => ag.nome === ex.scooteira || ag.pseudo === ex.scooteira);
+                            
+                            // SE ACHOU O AGENTE, PEGA O NOME DELE. SE NÃO, USA O QUE TÁ NO LOG MESMO.
+                            const nomeEx = agentEx ? agentEx.nome.split(' ')[0] : ex.scooteira.split(' ')[0];
                             const nomePar = par ? par.nome.split(' ')[0] : 'Alguém';
                             
                             if(par) {
