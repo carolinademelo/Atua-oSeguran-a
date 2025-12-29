@@ -28,7 +28,7 @@
         
         .squad-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; border: 1px solid currentColor; }
         
-        .exchange-card { border-left: 4px solid #f59e0b; background: #fffbeb; padding: 12px; border-radius: 8px; margin-bottom: 8px; }
+        .exchange-card { border-left: 4px solid #4f46e5; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-left-width: 4px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
@@ -79,14 +79,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Histórico Mensal</h2>
                     <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border-gray-300 rounded-md text-sm">
                 </div>
-
                 <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
-
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
@@ -111,8 +108,8 @@
 
             <div id="content-trocas" class="hidden animate-fade-in">
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Trocas e Substituições</h2>
-                    <p class="text-sm text-gray-500">Cruzamento de quem cobriu horários de outras scooteiras ausentes.</p>
+                    <h2 class="text-2xl font-bold text-gray-800">Trocas Respeitando Squads</h2>
+                    <p class="text-sm text-gray-500">Identifica quem cobriu quem dentro da mesma squad (Executado vs Planejado).</p>
                 </div>
                 <div id="trocas-accordion-container" class="space-y-4"></div>
             </div>
@@ -153,10 +150,10 @@
                         <input type="text" id="new-nome" placeholder="Nome Completo" class="p-2 border rounded text-sm" required>
                         <input type="text" id="new-pseudo" placeholder="Pseudo" class="p-2 border rounded text-sm" required>
                         <select id="new-squad" class="p-2 border rounded text-sm"></select>
-                        <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="p-2 border rounded text-sm">
+                        <input type="text" id="new-turno" placeholder="Turno (Ex: Seg-Sex)" class="p-2 border rounded text-sm">
                         <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
                         <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
-                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Adicionar à Equipe</button>
+                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Salvar</button>
                     </form>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
@@ -168,7 +165,6 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -183,7 +179,7 @@
     <div id="details-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div class="p-6 bg-indigo-600 text-white font-bold flex justify-between">
-                <span>Confirmar Lançamento</span>
+                <span>Confirmar Dados</span>
                 <button onclick="window.closeModal('details-modal')"><i data-lucide="x"></i></button>
             </div>
             <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1 bg-gray-50">
@@ -198,12 +194,13 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore as fs, collection as fsCol, query as fsQuery, where as fsWhere, getDocs as fsGet, deleteDoc as fsDel, addDoc as fsAdd, doc as fsDoc, setDoc as fsSet } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", authDomain: "atuacao2026.firebaseapp.com", projectId: "atuacao2026", storageBucket: "atuacao2026.firebasestorage.app", messagingSenderId: "563632231622", appId: "1:563632231622:web:ce3e04e43cc647614214f5" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        const db = fs(app);
         const logsCol = `artifacts/atuacao2026/public/data/scooteiras_atividades`;
         const agentsCol = `artifacts/atuacao2026/public/data/scooteiras_cadastro`;
 
@@ -260,7 +257,7 @@
         };
 
         const loadAgents = async () => {
-            const snap = await getDocs(collection(db, agentsCol));
+            const snap = await fsGet(fsCol(db, agentsCol));
             currentAgents = [];
             snap.forEach(d => {
                 const a = d.data();
@@ -335,7 +332,7 @@
                 const d2 = new Date(`2000-01-01T${sai}`);
                 let diff = (d2 - d1) / 3600000;
                 if (diff < 0) diff += 24;
-                await addDoc(collection(db, logsCol), { data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
+                await fsAdd(fsCol(db, logsCol), { data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
             }
             window.closeModal('details-modal');
             loadHistorico();
@@ -343,7 +340,7 @@
 
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
-            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
+            const snap = await fsGet(fsQuery(fsCol(db, logsCol), fsWhere("mes", "==", mes)));
             currentHistoryList = [];
             snap.forEach(d => {
                 const item = { id: d.id, ...d.data() };
@@ -384,8 +381,8 @@
             if(!nomeSelecionado || !mes) return;
             const agente = currentAgents.find(a => a.nome === nomeSelecionado);
             const pseudo = agente ? agente.pseudo : "";
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
+            const q = fsQuery(fsCol(db, logsCol), fsWhere("mes", "==", mes));
+            const snap = await fsGet(q);
             const list = [];
             let totalGeral = 0;
             const horasPorSquad = {};
@@ -429,101 +426,87 @@
                 </tr>`).join('');
         };
 
-        // LÓGICA DE TROCAS (NOVA)
+        // TROCAS (AJUSTADO PARA RESPEITAR SQUAD)
         window.renderTrocasAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
             const [ano, mesNum] = mes.split('-').map(Number);
             const container = document.getElementById('trocas-accordion-container');
             container.innerHTML = "";
-
-            // Agrupar por data
             const dailyLogs = {};
             currentHistoryList.forEach(log => {
                 if(!dailyLogs[log.data]) dailyLogs[log.data] = [];
                 dailyLogs[log.data].push(log);
             });
-
             const weeks = {};
-            const first = new Date(ano, mesNum - 1, 1);
-            const last = new Date(ano, mesNum, 0);
+            const first = fsDate(ano, mesNum - 1, 1);
+            const last = fsDate(ano, mesNum, 0);
             for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
                 const dateClone = new Date(d);
                 const wNum = getISOWeek(dateClone);
                 if (!weeks[wNum]) weeks[wNum] = [];
                 weeks[wNum].push(new Date(dateClone));
             }
-
             Object.keys(weeks).forEach(wNum => {
                 const days = weeks[wNum];
                 const weekId = `trocas-week-${wNum}`;
-                
                 const header = document.createElement('div');
-                header.className = "week-group-header shadow-sm";
-                header.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-amber-700">Trocas Semana ${wNum}</span>
-                        <span class="text-[10px] text-gray-400">${days[0].toLocaleDateString('pt-BR')} a ${days[days.length-1].toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <i data-lucide="arrow-right-left" class="text-amber-500"></i>
-                `;
+                header.className = "week-group-header shadow-sm flex justify-between items-center";
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span><div class="text-[10px] text-gray-400">${days[0].toLocaleDateString('pt-BR')} a ${days[days.length-1].toLocaleDateString('pt-BR')}</div></div><i data-lucide="arrow-right-left" class="text-indigo-400"></i>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
-
                 const content = document.createElement('div');
                 content.id = weekId;
                 content.className = "week-content p-4";
-
                 let trocasHtml = "";
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
                     const logsDoDia = dailyLogs[dateKey] || [];
-                    
-                    // Quem atuou mas não era o planejado?
-                    const atuantes = logsDoDia.map(l => l.scooteira);
-                    
-                    // Quem deveria estar atuando hoje conforme o cadastro?
-                    // (Lógica simples: se o dia bate com o turno planejado)
                     const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
-                    const ausentes = currentAgents.filter(a => {
-                        const turno = a.turnoPadrao.toLowerCase();
-                        const deveriaEstar = turno.includes(diaSemana) || turno.includes("seg-sex");
-                        const estava = atuantes.includes(a.nome) || atuantes.includes(a.pseudo);
-                        return deveriaEstar && !estava;
-                    });
-
+                    
+                    // Identifica quem atuou "Extra" no dia (trabalhou em dia que não é seu turno padrão)
                     const extras = logsDoDia.filter(l => {
                         const agente = currentAgents.find(a => a.nome === l.scooteira || a.pseudo === l.scooteira);
-                        if(!agente) return true;
+                        if(!agente) return false;
                         const turno = agente.turnoPadrao.toLowerCase();
                         return !(turno.includes(diaSemana) || turno.includes("seg-sex"));
                     });
 
-                    if(ausentes.length > 0 && extras.length > 0) {
-                        trocasHtml += `<div class="mb-4 border-b pb-2"><h4 class="font-bold text-sm text-gray-600 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'})}</h4>`;
+                    // Identifica quem "Faltou" no dia (deveria trabalhar e não atuou)
+                    const atuantesNomes = logsDoDia.map(l => l.scooteira);
+                    const ausentes = currentAgents.filter(a => {
+                        const turno = a.turnoPadrao.toLowerCase();
+                        const deveriaEstar = (turno.includes(diaSemana) || turno.includes("seg-sex"));
+                        const estava = atuantesNomes.includes(a.nome) || atuantesNomes.includes(a.pseudo);
+                        return deveriaEstar && !estava;
+                    });
+
+                    // Cruza apenas se forem da mesma SQUAD
+                    if(extras.length > 0 && ausentes.length > 0) {
+                        let diaHtml = "";
                         extras.forEach(ex => {
-                            ausentes.forEach(au => {
-                                trocasHtml += `
-                                <div class="exchange-card flex justify-between items-center">
-                                    <div>
-                                        <span class="font-bold text-amber-800">${ex.scooteira}</span> 
-                                        <span class="text-xs text-amber-600">cobriu o horário de</span> 
-                                        <span class="font-bold text-amber-800">${au.nome}</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-xs font-bold text-amber-700">${ex.entrada} - ${ex.saida}</div>
-                                        <div class="text-[10px] text-amber-500">${ex.squad}</div>
+                            const exSquad = normalizarSquad(ex.squad);
+                            const par = ausentes.find(au => normalizarSquad(au.squadPadrao) === exSquad);
+                            if(par) {
+                                diaHtml += `<div class="exchange-card">
+                                    <div class="text-xs font-bold text-gray-400 mb-1 flex justify-between"><span>SQUAD: ${exSquad}</span><span>${ex.entrada} - ${ex.saida}</span></div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-indigo-700">${ex.scooteira}</span> 
+                                        <i data-lucide="repeat" class="w-3 h-3 text-gray-400"></i>
+                                        <span class="font-bold text-gray-700">${par.nome}</span>
                                     </div>
                                 </div>`;
-                            });
+                            }
                         });
-                        trocasHtml += `</div>`;
+                        if(diaHtml) {
+                            trocasHtml += `<div class="mb-4 border-b pb-2"><h4 class="font-bold text-xs text-indigo-900 mb-2">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}</h4>${diaHtml}</div>`;
+                        }
                     }
                 });
-
-                content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic">Nenhuma troca detectada nesta semana.</p>`;
+                content.innerHTML = trocasHtml || `<p class="text-xs text-gray-400 italic">Nenhuma troca detectada dentro das squads.</p>`;
                 container.appendChild(header);
                 container.appendChild(content);
             });
+            lucide.createIcons();
         };
 
         // CAPACIDADE
@@ -539,8 +522,8 @@
                 dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
             });
             const weeks = {};
-            const first = new Date(ano, mesNum - 1, 1);
-            const last = new Date(ano, mesNum, 0);
+            const first = fsDate(ano, mesNum - 1, 1);
+            const last = fsDate(ano, mesNum, 0);
             for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
                 const dateClone = new Date(d);
                 const wNum = getISOWeek(dateClone);
@@ -556,18 +539,8 @@
                     if (dataMap[dateKey]) { Object.keys(dataMap[dateKey]).forEach(sq => { weekSquadTotals[sq] = (weekSquadTotals[sq] || 0) + dataMap[dateKey][sq]; }); }
                 });
                 const header = document.createElement('div');
-                header.className = "week-group-header shadow-sm";
-                header.innerHTML = `
-                    <div class="flex justify-between items-center w-full">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-indigo-700">Semana ${wNum}</span>
-                            <span class="text-[10px] text-gray-400">${days[0].toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} a ${days[days.length-1].toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}</span>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            ${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `
-                                <span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}
-                        </div>
-                    </div>`;
+                header.className = "week-group-header shadow-sm flex justify-between items-center";
+                header.innerHTML = `<div><span class="font-bold text-indigo-700">Semana ${wNum}</span><div class="text-[10px] text-gray-400">${days[0].toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} a ${days[days.length-1].toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})}</div></div><div class="flex flex-wrap gap-2">${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `<span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}</div>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
                 const content = document.createElement('div');
                 content.id = weekId;
@@ -605,14 +578,7 @@
         document.getElementById('add-agent-form').onsubmit = async (e) => {
             e.preventDefault();
             const nome = document.getElementById('new-nome').value;
-            await setDoc(doc(db, agentsCol, nome), {
-                nome: nome,
-                pseudo: document.getElementById('new-pseudo').value,
-                squadPadrao: document.getElementById('new-squad').value,
-                turnoPadrao: document.getElementById('new-turno').value,
-                entradaPadrao: document.getElementById('new-entrada').value,
-                saidaPadrao: document.getElementById('new-saida').value
-            });
+            await fsSet(fsDoc(db, agentsCol, nome), { nome: nome, pseudo: document.getElementById('new-pseudo').value, squadPadrao: document.getElementById('new-squad').value, turnoPadrao: document.getElementById('new-turno').value, entradaPadrao: document.getElementById('new-entrada').value, saidaPadrao: document.getElementById('new-saida').value });
             document.getElementById('add-agent-form').reset();
             loadAgents();
         };
@@ -623,10 +589,11 @@
             const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
+        function fsDate(y,m,d) { return new Date(y,m,d); }
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
-        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
-        window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); } };
+        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await fsDel(fsDoc(db, logsCol, id)); loadHistorico(); } };
+        window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await fsDel(fsDoc(db, agentsCol, id)); loadAgents(); } };
     </script>
 </body>
 </html>
