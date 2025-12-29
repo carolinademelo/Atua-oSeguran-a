@@ -610,6 +610,7 @@
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
+            
             for (const box of selectedBoxes) {
                 const nome = box.value;
                 const ent = document.querySelector(`input[name="ent_${nome}"]`).value;
@@ -634,8 +635,19 @@
                     timestamp: new Date()
                 });
             }
+            
             showMessage('Registros salvos com sucesso!', 'success');
             window.closeModal('details-modal');
+            
+            // --- CORREÇÃO AQUI: Atualizar o filtro de mês para o mês do registro ---
+            const novoMes = dataStr.substring(0, 7);
+            const mesAtual = document.getElementById('mes-select').value;
+            
+            if (novoMes !== mesAtual) {
+                document.getElementById('mes-select').value = novoMes;
+            }
+            // ------------------------------------------------------------------------
+            
             window.loadHistorico();
         });
 
@@ -643,13 +655,17 @@
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
+            
+            // Visual feedback de carregamento
+            const tbody = document.getElementById('historico-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Atualizando tabela...</td></tr>';
+            
             const q = query(collection(db, logsCol), where("mes", "==", mes));
             const snap = await getDocs(q);
             const list = [];
             snap.forEach(d => list.push({id: d.id, ...d.data()}));
             list.sort((a,b) => a.data.localeCompare(b.data));
 
-            const tbody = document.getElementById('historico-body');
             tbody.innerHTML = list.length ? '' : '<tr><td colspan="8" class="text-center py-8">Nenhum registro neste mês.</td></tr>';
             
             list.forEach(item => {
@@ -733,15 +749,12 @@
             let successCount = 0;
 
             for(let line of lines) {
-                // Formato esperado: Nome,Data,Entrada,Saida,Squad
                 const cols = line.split(',');
                 if(cols.length >= 4) {
                     const [nome, dataStr, ent, sai, sq] = cols.map(c => c.trim());
                     
-                    // Validação básica
                     if(!nome || !dataStr || !ent || !sai) continue;
 
-                    // Calcular horas
                     const d1 = new Date(`2000-01-01T${ent}`);
                     const d2 = new Date(`2000-01-01T${sai}`);
                     let diff = (d2 - d1) / 1000 / 60 / 60; 
