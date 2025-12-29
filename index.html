@@ -399,10 +399,11 @@
             tbody.innerHTML = '';
             currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
             currentAgents.forEach(a => {
+                const color = getSquadColor(a.squadPadrao);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-gray-900">${a.nome} <span class="text-gray-400 font-normal">(${a.pseudo})</span></td>
-                    <td class="px-6 py-4"><span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">${a.squadPadrao || '-'}</span></td>
+                    <td class="px-6 py-4 border-l-4 border-${color}-500 font-medium text-gray-900">${a.nome} <span class="text-gray-400 font-normal">(${a.pseudo})</span></td>
+                    <td class="px-6 py-4"><span class="bg-${color}-100 text-${color}-800 text-xs px-2 py-1 rounded-full border border-${color}-200">${a.squadPadrao || '-'}</span></td>
                     <td class="px-6 py-4">${a.turnoPadrao || '-'}</td>
                     <td class="px-6 py-4 font-mono text-xs">${a.entradaPadrao} - ${a.saidaPadrao}</td>
                     <td class="px-6 py-4 text-right space-x-2">
@@ -564,18 +565,12 @@
             currentHistoryList.forEach(item => {
                 const color = getSquadColor(item.squad);
 
-                // LÓGICA DE CORREÇÃO DO NOME E PSEUDO
-                // 1. Tenta achar o agente pelo Nome exato
                 let agent = currentAgents.find(a => a.nome === item.scooteira);
-                // 2. Se não achou, tenta achar pelo Pseudo
                 if (!agent) {
                     agent = currentAgents.find(a => a.pseudo === item.scooteira);
                 }
                 
-                // Se ainda não achou nada, cria um objeto temporário
                 const displayAgent = agent || { nome: item.scooteira, pseudo: '-' };
-                
-                // Pega só o primeiro nome para exibir
                 const firstName = displayAgent.nome.split(' ')[0]; 
                 
                 const tr = document.createElement('tr');
@@ -600,37 +595,47 @@
         };
 
         window.loadRelatorioIndividual = async () => {
-                const nome = document.getElementById('relatorio-agente-select').value;
-                const mes = document.getElementById('relatorio-mes-select').value;
-                if(!nome || !mes) return;
-                
-                const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
-                const snap = await getDocs(q);
-                const list = [];
-                snap.forEach(d => list.push(d.data()));
-                list.sort((a,b) => a.data.localeCompare(b.data));
-                
-                const tbody = document.getElementById('relatorio-body');
-                tbody.innerHTML = '';
-                let totalH = 0;
-                let squadStats = {}; 
+            const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            if(!nomeSelecionado || !mes) return;
 
-                list.forEach(i => {
-                    totalH += i.horas;
-                    if(!squadStats[i.squad]) squadStats[i.squad] = 0;
-                    squadStats[i.squad] += i.horas;
-                    tbody.innerHTML += `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4">${i.entrada}</td><td class="px-6 py-4">${i.saida}</td><td class="px-6 py-4">${i.horas}h</td></tr>`;
-                });
-                
-                document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
-                document.getElementById('resumo-total-dias').innerText = list.length;
-                document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
-                
-                const statsContainer = document.getElementById('resumo-squads-list');
-                statsContainer.innerHTML = Object.keys(squadStats).map(s => {
-                    const color = getSquadColor(s);
-                    return `<span class="px-3 py-1 text-xs font-bold text-${color}-700 bg-${color}-50 border border-${color}-200 rounded-full mb-2 mr-2">${s}: ${squadStats[s].toFixed(1)}h</span>`;
-                }).join('');
+            const agente = currentAgents.find(a => a.nome === nomeSelecionado);
+            const pseudo = agente ? agente.pseudo : "";
+
+            const q = query(collection(db, logsCol), where("mes", "==", mes));
+            const snap = await getDocs(q);
+            
+            const list = [];
+            snap.forEach(d => {
+                const item = d.data();
+                if (item.scooteira === nomeSelecionado || item.scooteira === pseudo) {
+                    list.push(item);
+                }
+            });
+            
+            list.sort((a,b) => a.data.localeCompare(b.data));
+            
+            const tbody = document.getElementById('relatorio-body');
+            tbody.innerHTML = '';
+            let totalH = 0;
+            let squadStats = {}; 
+
+            list.forEach(i => {
+                totalH += i.horas;
+                if(!squadStats[i.squad]) squadStats[i.squad] = 0;
+                squadStats[i.squad] += i.horas;
+                tbody.innerHTML += `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4">${i.entrada}</td><td class="px-6 py-4">${i.saida}</td><td class="px-6 py-4">${i.horas}h</td></tr>`;
+            });
+            
+            document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
+            document.getElementById('resumo-total-dias').innerText = list.length;
+            document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
+            
+            const statsContainer = document.getElementById('resumo-squads-list');
+            statsContainer.innerHTML = Object.keys(squadStats).map(s => {
+                const color = getSquadColor(s);
+                return `<span class="px-3 py-1 text-xs font-bold text-${color}-700 bg-${color}-50 border border-${color}-200 rounded-full mb-2 mr-2">${s}: ${squadStats[s].toFixed(1)}h</span>`;
+            }).join('');
         };
 
         const confirmAction = () => new Promise(r => { window.openModal('confirmation-modal'); window.resolveConfirmation = (v) => { window.closeModal('confirmation-modal'); r(v); }});
@@ -711,7 +716,28 @@
             document.getElementById('resumo-squads').innerHTML = Object.keys(squads).map(s => { const color = getSquadColor(s); return `<div class="bg-white p-4 rounded-lg border-l-4 border-${color}-500 shadow-sm flex justify-between items-center"><div><span class="text-xs font-bold text-${color}-600 uppercase tracking-wider">${s}</span><p class="text-2xl font-bold text-gray-700">${squads[s].toFixed(1)}h</p></div></div>`; }).join('');
         };
         const renderRelatorioSelect = () => { document.getElementById('relatorio-agente-select').innerHTML = '<option value="" disabled selected>Selecione...</option>' + currentAgents.map(a => `<option value="${a.nome}">${a.nome}</option>`).join(''); };
-        window.exportIndividualCsv = async () => { /* ... */ };
+        
+        window.exportIndividualCsv = async () => { 
+             const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
+             const mes = document.getElementById('relatorio-mes-select').value;
+             if(!nomeSelecionado || !mes) { showMessage("Selecione scooteira e mês.", "error"); return; }
+             
+             const agente = currentAgents.find(a => a.nome === nomeSelecionado);
+             const pseudo = agente ? agente.pseudo : "";
+             
+             const q = query(collection(db, logsCol), where("mes", "==", mes));
+             const snap = await getDocs(q);
+             let csv = `data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas\n`;
+             
+             snap.forEach(d => { 
+                 const i = d.data();
+                 if (i.scooteira === nomeSelecionado || i.scooteira === pseudo) {
+                    csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; 
+                 }
+             });
+             const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `relatorio_${nomeSelecionado}_${mes}.csv`;
+             document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        };
 
         window.onload = () => {
             const d = new Date();
