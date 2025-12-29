@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Ponto - Scooto</title>
+    <!-- NOME UNIFICADO NA ABA - ATUALIZADO -->
+    <title>Dash Atuação - Scooto</title>
+
+    <!-- Favicon de Scooter -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FONTE ALTERADA PARA MONTSERRAT -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Marked para Markdown da IA -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        /* FONTE APLICADA AQUI */
+        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
         .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -37,7 +44,8 @@
         <header class="bg-indigo-600 p-6 sm:p-10 text-white">
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Atuação Diária</h1>
+                    <!-- NOME UNIFICADO NO CABEÇALHO - ATUALIZADO -->
+                    <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto</h1>
                     <p class="text-indigo-100 text-sm mt-1">Controle de Squads e Scooteiras</p>
                 </div>
                 <div class="hidden md:block text-right">
@@ -166,18 +174,21 @@
                     </div>
                 </div>
 
-                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
+                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                         <span class="text-xs text-gray-500 uppercase font-medium">Dias Trabalhados</span>
                         <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-dias">-</span>
                     </div>
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas</span>
-                        <span class="text-3xl font-bold text-gray-800 mt-1" id="resumo-total-horas">-</span>
+                        <span class="text-xs text-gray-500 uppercase font-medium">Total de Horas Geral</span>
+                        <span class="text-3xl font-bold text-indigo-600 mt-1" id="resumo-total-horas">-</span>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <span class="text-xs text-gray-500 uppercase font-medium">Squad Principal</span>
-                        <span class="text-xl font-bold text-indigo-600 mt-auto" id="resumo-squad-princ">-</span>
+                    <!-- Nova área para Squads - ocupa 2 colunas no LG -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:col-span-2">
+                        <span class="text-xs text-gray-500 uppercase font-medium mb-2">Horas por Squad</span>
+                        <div id="resumo-squads-list" class="flex flex-wrap gap-2 mt-auto">
+                            <!-- Inserido via JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -205,6 +216,9 @@
             <div id="content-cadastro" class="hidden animate-fade-in">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-gray-800">Equipe Cadastrada</h2>
+                    <button onclick="forceResetDefaults()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 px-4 rounded border border-gray-300 flex items-center transition">
+                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-2"></i> Restaurar Padrões
+                    </button>
                 </div>
 
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
@@ -223,8 +237,9 @@
                             <select id="new-squad" class="w-full p-2 border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                                 <option value="CB">CB</option>
                                 <option value="SC">SC</option>
-                                <option value="Rec. Crédito">Rec. Crédito</option>
+                                <option value="Rec Cred">Rec Cred</option>
                                 <option value="Monitoria">Monitoria</option>
+                                <option value="OJR">OJR</option>
                             </select>
                         </div>
                         <div class="md:col-span-2">
@@ -270,6 +285,7 @@
 
     <!-- MODAIS -->
     <!-- Modal Seleção, Detalhes, Importação, Análise e Confirmação... (Mantidos) -->
+    <!-- MODAIS (Selection, Details, Import, Analysis, Confirmation) -->
 
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
@@ -367,15 +383,18 @@ Exemplo Texto (Use IA ✨):
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, runTransaction, deleteDoc, setLogLevel, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, runTransaction, deleteDoc, setLogLevel, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================================
         // CONFIGURAÇÃO PARA GITHUB PAGES - PREENCHA AQUI!
         // =========================================================================================
 
         // 1. Obtenha estes dados no Console do Firebase (Configurações do Projeto > Geral > Seus aplicativos)
-        const firebaseConfig = {
+        // Para usar no GitHub Pages, substitua os valores abaixo.
+        // Para testar no Preview, o sistema usará automaticamente a variável __firebase_config se disponível.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
+           apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ",
   authDomain: "atuacao2026.firebaseapp.com",
   projectId: "atuacao2026",
   storageBucket: "atuacao2026.firebasestorage.app",
@@ -398,27 +417,58 @@ Exemplo Texto (Use IA ✨):
         let isAuthReady = false;
         let agentesByPseudo = {};
 
-        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria"];
+        const SQUADS_OPCOES = ["CB", "SC", "Rec Cred", "Monitoria", "OJR"];
         const TURNOS_OPCOES = ["Diária Extra", "Troca", "Freela", "Monitora", "Meu Turno"];
 
         const MOCK_CADASTROS = [
-            { nome: "Adriana Yurie Becker de Carvalho Chino", pseudo: "Diana C.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00", cargaPadrao: 6 },
-            { nome: "Lissandra Pereira da Frota", pseudo: "Aurora P.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
-            { nome: "Renata Mendes Valentim", pseudo: "Luara M.", squadPadrao: "CB", turnoPadrao: "Seg. à Qui. e Sáb.", entradaPadrao: "09:00", saidaPadrao: "15:00", cargaPadrao: 6 },
-            { nome: "Laís Cristine dos Reis", pseudo: "Malu R.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "8:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Juliana da Silva Sfair", pseudo: "Lóri S", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Raylla Caroline Fernandes Santos", pseudo: "Teresa S.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Barbara Santos De Souza Moreira", pseudo: "Nara M", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Viviane Santiago de Oliveira", pseudo: "Menna S.", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Dom.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00", cargaPadrao: 6 },
+            { nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Maria Eduarda Ferreira Gusmão", pseudo: "Ruth G.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Thaís Hayelen", pseudo: "Raquel H.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Rafaela Lins da Costa", pseudo: "Leila C.", squadPadrao: "SC", turnoPadrao: "FDS", entradaPadrao: "10:00", saidaPadrao: "16:00", cargaPadrao: 6 },
+            { nome: "Ana Claudia Ferreira de Souza", pseudo: "Ravena F.", squadPadrao: "SC", turnoPadrao: "Ter. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Crislaine Gomes da Silva", pseudo: "Izabel G.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Ilanna Rodrigues Nascimento", pseudo: "Noelle R.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00", cargaPadrao: 6 },
+            { nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 },
+            { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00", cargaPadrao: 6 }
         ];
 
         // === Gemini API Helper ===
+        // === API Helpers (CORREÇÃO DE ERRO 404) ===
         async function callGemini(prompt) {
             // Verifica se a chave foi configurada
-            if (!geminiApiKey || geminiApiKey.includes("COLE_SUA")) {
+            // Se estivermos no preview, __gemini_api_key pode ser usado, ou a chave colada manualmente.
+            let key = geminiApiKey;
+            if (key.includes("COLE_SUA")) {
+                 // Fallback para variável de ambiente se disponível
+                 if (typeof apiKey !== 'undefined' && apiKey) key = apiKey; 
+                 else if (typeof __gemini_api_key !== 'undefined') key = __gemini_api_key;
+            }
+
+            if (!key || key.includes("COLE_SUA")) {
                 throw new Error("Chave da API Gemini não configurada no código.");
             }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+            // MUDANÇA: Usando modelo estável 1.5-flash para garantir compatibilidade com API Keys pessoais
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
             const delays = [1000, 2000, 4000];
+            // Lista de modelos para tentar (fallback automático para evitar erro 404)
+            const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash-001", "gemini-pro"];
 
             for (let i = 0; i <= delays.length; i++) {
+            for (const model of modelsToTry) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+                
                 try {
                     const response = await fetch(url, {
                         method: 'POST',
@@ -429,6 +479,12 @@ Exemplo Texto (Use IA ✨):
                     });
 
                     if (!response.ok) {
+                        // Se for erro 404 (Modelo não encontrado), tenta o próximo silenciosamente
+                        if (response.status === 404) {
+                            console.warn(`Modelo ${model} retornou 404. Tentando próximo...`);
+                            continue;
+                        }
+                        
                         const errText = await response.text();
                         if (response.status === 400 || response.status === 403) {
                             throw new Error(`Erro de Permissão/Requisição (${response.status}): Verifique sua API Key.`);
@@ -438,9 +494,14 @@ Exemplo Texto (Use IA ✨):
 
                     const data = await response.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+                    
                 } catch (error) {
                     if (i === delays.length) throw error;
                     await new Promise(r => setTimeout(r, delays[i]));
+                    // Se não for erro 404, ou se for o último modelo da lista, lança o erro
+                    if (!error.message.includes('404') || model === modelsToTry[modelsToTry.length - 1]) {
+                        throw error;
+                    }
                 }
             }
         }
@@ -483,7 +544,8 @@ Exemplo Texto (Use IA ✨):
             const [y, m] = val.split('-').map(Number);
             const filtered = allRegistros.filter(r => {
                 const d = parseDate(r.data);
-                return d && d.getFullYear() === y && d.getMonth() === (m-1);
+                // FIX DATE: Usar UTC para evitar problema de fuso (dia 1 virar dia 30 anterior)
+                return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
             });
 
             if(filtered.length === 0) return showMessage("Sem dados para analisar neste mês.", 'warning');
@@ -509,7 +571,11 @@ Exemplo Texto (Use IA ✨):
             if(!nome || !mes) return showMessage("Selecione scooteira e mês.", 'warning');
 
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1));
+            // FIX DATE: Usar UTC
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            });
 
             if(filtered.length === 0) return showMessage("Sem dados para esta scooteira.", 'warning');
 
@@ -523,11 +589,13 @@ Exemplo Texto (Use IA ✨):
                 const analysis = await callGemini(prompt);
                 modalContent.innerHTML = marked.parse(analysis);
             } catch (e) {
-                modalContent.textContent = "Erro ao gerar análise.";
+                // MUDANÇA: Mostrar a mensagem de erro real
+                console.error(e);
+                modalContent.textContent = "Erro ao gerar análise: " + e.message;
             }
         }
 
-        // Funções de UI, Lógica e Helpers (Mantidas iguais ao original)
+        // Funções de UI, Lógica e Helpers
         window.loadRelatorioIndividual = () => {
             const nome = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
@@ -540,7 +608,11 @@ Exemplo Texto (Use IA ✨):
             }
 
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE: Usar getUTCMonth e getUTCFullYear para garantir precisão no mês
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
 
             if(filtered.length === 0) {
                  document.getElementById('relatorio-resumo-cards').classList.add('hidden');
@@ -549,24 +621,51 @@ Exemplo Texto (Use IA ✨):
             }
 
             let totalSegundos = 0;
-            const squadsCount = {};
+            const squadsDuration = {}; // Mudado para somar duração
+
             tbody.innerHTML = '';
             filtered.forEach(r => {
                 totalSegundos += r.duracaoSegundos;
-                squadsCount[r.squadReal] = (squadsCount[r.squadReal] || 0) + 1;
+                // Acumula segundos por squad
+                squadsDuration[r.squadReal] = (squadsDuration[r.squadReal] || 0) + r.duracaoSegundos;
+
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition border-b border-gray-50";
                 const dateObj = parseDate(r.data);
-                const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' });
+                const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', timeZone: 'UTC' }); // Forçar UTC no display do dia da semana também
                 tr.innerHTML = `<td class="px-6 py-3 font-medium text-gray-900">${r.data}</td><td class="px-6 py-3 text-xs text-gray-500 uppercase">${diaSemana}</td><td class="px-6 py-3">${getSquadBadge(r.squadReal)}</td><td class="px-6 py-3 font-mono text-xs">${r.entrada}</td><td class="px-6 py-3 font-mono text-xs">${r.saida}</td><td class="px-6 py-3 font-mono text-xs font-semibold text-gray-600">${formatDuration(r.duracaoSegundos)}</td><td class="px-6 py-3 text-xs text-gray-500">${r.turnoAtuado}</td>`;
                 tbody.appendChild(tr);
             });
 
+            // Resumo Geral
             document.getElementById('resumo-total-dias').textContent = filtered.length;
             const [h, min] = formatDuration(totalSegundos).split(':');
             document.getElementById('resumo-total-horas').innerHTML = `${h}<span class="text-sm font-normal text-gray-400">h</span> ${min}<span class="text-sm font-normal text-gray-400">m</span>`;
-            const mainSquad = Object.entries(squadsCount).sort((a,b) => b[1] - a[1])[0][0];
-            document.getElementById('resumo-squad-princ').textContent = mainSquad;
+
+            // Resumo por Squad (Novo)
+            const squadsListContainer = document.getElementById('resumo-squads-list');
+            squadsListContainer.innerHTML = '';
+
+            Object.entries(squadsDuration).sort((a,b) => b[1] - a[1]).forEach(([squad, duracao]) => {
+                const [sqH, sqM] = formatDuration(duracao).split(':');
+
+                // Pega cor baseada no badge existente
+                let colorClass = "bg-gray-100 text-gray-700 border-gray-200";
+                if(squad === 'CB') colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                else if(squad === 'SC') colorClass = "bg-purple-50 text-purple-700 border-purple-200";
+                else if(squad.includes('Rec')) colorClass = "bg-red-50 text-red-700 border-red-200";
+                else if(squad.includes('Monitoria')) colorClass = "bg-yellow-50 text-yellow-700 border-yellow-200";
+                else if(squad === 'OJR') colorClass = "bg-orange-50 text-orange-700 border-orange-200";
+
+                const pill = document.createElement('div');
+                pill.className = `flex items-center px-3 py-2 rounded-lg border ${colorClass}`;
+                pill.innerHTML = `
+                    <span class="text-xs font-bold uppercase mr-2">${squad}</span>
+                    <span class="text-sm font-mono font-semibold">${sqH}h${sqM}</span>
+                `;
+                squadsListContainer.appendChild(pill);
+            });
+
             document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
         };
 
@@ -574,7 +673,8 @@ Exemplo Texto (Use IA ✨):
             const val = document.getElementById('mes-select').value;
             if(!val) return showMessage("Selecione um mês.", 'warning');
             const [y, m] = val.split('-').map(Number);
-            const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getFullYear() === y && d.getMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE
+            const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
             if(filtered.length === 0) return showMessage("Sem dados.", 'warning');
             const headers = ["Data", "Nome", "Pseudo", "Squad", "Entrada", "Saída", "Duração (h)", "Turno"];
             const rows = filtered.map(r => [r.data, r.nome, r.pseudo, r.squadReal, r.entrada, r.saida, (r.duracaoSegundos / 3600).toFixed(2).replace('.', ','), r.turnoAtuado]);
@@ -586,7 +686,12 @@ Exemplo Texto (Use IA ✨):
             const mes = document.getElementById('relatorio-mes-select').value;
             if(!nome || !mes) return showMessage("Selecione dados.", 'warning');
             const [y, m] = mes.split('-').map(Number);
-            const filtered = allRegistros.filter(r => r.nome === nome && parseDate(r.data).getMonth() === (m-1)).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+            // FIX DATE
+            const filtered = allRegistros.filter(r => {
+                const d = parseDate(r.data);
+                return d && r.nome === nome && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1);
+            }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+
             if(filtered.length === 0) return showMessage("Sem dados.", 'warning');
             const headers = ["Data", "Nome", "Squad", "Entrada", "Saída", "Duração (h)", "Turno"];
             const rows = filtered.map(r => [r.data, r.nome, r.squadReal, r.entrada, r.saida, (r.duracaoSegundos / 3600).toFixed(2).replace('.', ','), r.turnoAtuado]);
@@ -617,6 +722,12 @@ Exemplo Texto (Use IA ✨):
             const activeBtn = document.getElementById(`tab-${tabName}`);
             const activeContent = document.getElementById(`content-${tabName}`);
             if (activeBtn && activeContent) { activeBtn.classList.add('tab-active'); activeBtn.classList.remove('tab-inactive'); activeContent.classList.remove('hidden'); }
+
+            // Forçar atualização do relatório ao trocar de aba
+            if (tabName === 'relatorio') {
+                window.loadRelatorioIndividual();
+            }
+
             hideMessage();
             refreshIcons();
         };
@@ -661,7 +772,8 @@ Exemplo Texto (Use IA ✨):
         // Firebase Init Logic Atualizada para GitHub Pages
         async function initApp() {
             // Verificar se o usuário preencheu a config
-            if (firebaseConfig.apiKey.includes("COLE_SUA")) {
+            // No preview, usamos a lógica "typeof" abaixo, então ele não cairá no erro se as chaves manuais estiverem vazias, desde que a var de ambiente exista.
+            if (firebaseConfig.apiKey && firebaseConfig.apiKey.includes("COLE_SUA")) {
                 showMessage("ATENÇÃO: Configure as chaves do Firebase no arquivo index.html!", 'error');
                 return;
             }
@@ -690,37 +802,109 @@ Exemplo Texto (Use IA ✨):
             }
         }
 
+        // LÓGICA DE CARREGAMENTO ATUALIZADA
         function loadData() {
-            // Usando a variável 'appId' que definimos no topo do script
             const cadastroRef = collection(db, `artifacts/${appId}/public/data/scooteiras_cadastro`);
+
+            // 1. Renderiza o MOCK localmente IMEDIATAMENTE para feedback visual
+            // (Assim você vê a lista mesmo se o banco demorar para conectar)
+            if (scooteirasCadastro.length === 0) {
+                 scooteirasCadastro = [...MOCK_CADASTROS].sort((a,b) => a.nome.localeCompare(b.nome));
+                 renderCheckboxes();
+                 renderCadastro();
+            }
+
+            // 2. Conecta ao banco para pegar dados reais
             onSnapshot(cadastroRef, async (snap) => {
-                if (snap.empty && MOCK_CADASTROS.length > 0) {
-                    await runTransaction(db, async (txn) => { MOCK_CADASTROS.forEach(s => txn.set(doc(cadastroRef, s.nome), s)); });
+                if (snap.empty) {
+                    // Se o banco está vazio, tenta salvar o Mock lá silenciosamente
+                    try {
+                        const batch = writeBatch(db);
+                        MOCK_CADASTROS.forEach(s => {
+                            const ref = doc(cadastroRef, s.nome);
+                            batch.set(ref, s);
+                        });
+                        await batch.commit();
+                        console.log("Banco estava vazio. Padrões salvos automaticamente.");
+                    } catch (e) {
+                        console.error("Erro ao salvar padrões automáticos:", e);
+                    }
                 } else {
+                    // Se tem dados no banco, usa eles (sobrescreve o mock local)
                     scooteirasCadastro = snap.docs.map(d => d.data()).sort((a,b) => a.nome.localeCompare(b.nome));
                     agentesByPseudo = {};
                     scooteirasCadastro.forEach(a => { if(a.pseudo) agentesByPseudo[a.pseudo] = a; });
+
+                    renderCheckboxes();
+                    renderCadastro();
                 }
-                renderCheckboxes();
-                renderCadastro();
+            }, (error) => {
+                 console.error("Erro no Snapshot:", error);
+                 // Se der erro de conexão, mantém o mock local que já carregamos no passo 1
+                 showMessage("Usando dados locais (Modo Offline).", 'warning');
             });
+
             const monthInput = document.getElementById('mes-select');
             if(monthInput) loadHistorico();
         }
-
-        window.loadHistorico = () => {
+        function loadHistorico() {
             if(!db) return;
             const val = document.getElementById('mes-select').value;
             if(!val) return;
             const [y, m] = val.split('-').map(Number);
             onSnapshot(collection(db, `artifacts/${appId}/public/data/registros_diarios`), (snap) => {
                 allRegistros = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getFullYear() === y && d.getMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
+                // FIX DATE: Usar getUTCMonth e getUTCFullYear
+                const filtered = allRegistros.filter(r => { const d = parseDate(r.data); return d && d.getUTCFullYear() === y && d.getUTCMonth() === (m-1); }).sort((a,b) => parseDate(a.data) - parseDate(b.data));
                 renderHistoryTable(filtered);
                 renderSummary(filtered);
                 if(!document.getElementById('content-relatorio').classList.contains('hidden')) { window.loadRelatorioIndividual(); }
             });
         };
+
+        // Nova função para forçar o reset
+        window.forceResetDefaults = async () => {
+            if(!confirm("Tem certeza? Isso vai apagar TODAS as agentes cadastradas e restaurar a lista padrão de 20 nomes.")) return;
+
+            showMessage("Restaurando padrões...", 'info');
+            try {
+                // 1. Apagar tudo primeiro
+                const cadastroRef = collection(db, `artifacts/${appId}/public/data/scooteiras_cadastro`);
+                const snap = await getDocs(cadastroRef);
+                const batchDel = writeBatch(db);
+                snap.docs.forEach(d => batchDel.delete(d.ref));
+                await batchDel.commit();
+
+                // 2. Inserir Mock
+                const batchAdd = writeBatch(db);
+                MOCK_CADASTROS.forEach(s => {
+                    const ref = doc(cadastroRef, s.nome);
+                    batchAdd.set(ref, s);
+                });
+                await batchAdd.commit();
+
+                showMessage("Lista padrão restaurada com sucesso!", 'success');
+            } catch (e) {
+                console.error(e);
+                showMessage("Erro ao restaurar: " + e.message, 'error');
+            }
+        };
+
+        function renderCadastro() {
+            const tbody = document.getElementById('cadastro-list-body');
+            tbody.innerHTML = '';
+            if(scooteirasCadastro.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">Nenhuma scooteira cadastrada.</td></tr>';
+                return;
+            }
+            scooteirasCadastro.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition border-b border-gray-50 last:border-0";
+                tr.innerHTML = `<td class="px-6 py-3 font-medium text-gray-900">${a.nome} <span class="block text-xs text-gray-400 font-normal">${a.pseudo}</span></td><td class="px-6 py-3">${getSquadBadge(a.squadPadrao)}</td><td class="px-6 py-3 text-sm text-gray-600">${a.turnoPadrao}</td><td class="px-6 py-3 font-mono text-xs text-gray-500">${a.entradaPadrao} - ${a.saidaPadrao}</td><td class="px-6 py-3 text-right"><div class="flex justify-end space-x-2"><button onclick="editAgent('${a.nome}')" class="p-1 text-blue-600 hover:bg-blue-50 rounded"><i data-lucide="pencil" class="w-4 h-4"></i></button><button onclick="deleteAgentConfirmation('${a.nome}')" class="p-1 text-red-600 hover:bg-red-50 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>`;
+                tbody.appendChild(tr);
+            });
+            refreshIcons();
+        }
 
         function renderCheckboxes() {
             const container = document.getElementById('agentes-checkbox-list');
@@ -758,24 +942,103 @@ Exemplo Texto (Use IA ✨):
             const container = document.getElementById('resumo-squads');
             container.innerHTML = '';
             const totals = {};
-            data.forEach(r => { if(!totals[r.squadReal]) totals[r.squadReal] = 0; totals[r.squadReal] += r.duracaoSegundos; });
+            let grandTotal = 0;
+
+            // 1. Agregação e Normalização
+            data.forEach(r => { 
+                let s = r.squadReal ? r.squadReal.trim() : 'Outro';
+
+                // Normalização robusta para garantir agrupamento correto
+                const lower = s.toLowerCase();
+                if(lower.includes('rec') || lower.includes('crédito') || lower.includes('credito')) {
+                    s = 'Rec Cred';
+                } else if(lower.includes('monitor')) {
+                    s = 'Monitoria';
+                }
+
+                if(!totals[s]) totals[s] = 0; 
+                totals[s] += r.duracaoSegundos; 
+                grandTotal += r.duracaoSegundos;
+            });
+
+            // Helper para estilos
+            const getCardStyle = (name) => {
+                if (name === 'SC') return 'border-l-4 border-purple-500';
+                if (name === 'Rec Cred' || name.toLowerCase().includes('rec')) return 'border-l-4 border-red-600'; // Vermelho aqui
+                if (name.includes('Monitoria')) return 'border-l-4 border-yellow-500';
+                if (name === 'OJR') return 'border-l-4 border-orange-500';
+                if (name === 'CB') return 'border-l-4 border-indigo-500';
+                return 'border-l-4 border-gray-500';
+            };
+
+            // Helper para style inline forçado (para garantir override)
+            const getInlineStyle = (name) => {
+                if (name === 'Rec Cred' || name.toLowerCase().includes('rec')) {
+                    return 'style="border-left-color: #dc2626 !important;"'; // Força vermelho
+                }
+                return '';
+            };
+
+            // 2. Renderiza Squads Fixos
             SQUADS_OPCOES.forEach(s => {
                 const sec = totals[s] || 0;
+                if (sec === 0) return;
+
                 const [h, m] = formatDuration(sec).split(':');
-                let borderClass = 'border-l-4 border-indigo-500';
-                if(s.includes('SC')) borderClass = 'border-l-4 border-purple-500';
-                if(s.includes('Rec')) borderClass = 'border-l-4 border-pink-500';
-                if(s.includes('Monitoria')) borderClass = 'border-l-4 border-yellow-500';
-                container.innerHTML += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}"><h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3><p class="text-2xl font-bold text-gray-800">${h}<span class="text-sm text-gray-400 font-normal">h</span> ${m}<span class="text-sm text-gray-400 font-normal">m</span></p></div>`;
+                const borderClass = getCardStyle(s);
+                const styleAttr = getInlineStyle(s);
+
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}" ${styleAttr}>
+                        <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
+                        <p class="text-2xl font-bold text-gray-800">
+                            ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
+                            ${m}<span class="text-sm text-gray-400 font-normal">m</span>
+                        </p>
+                    </div>`;
             });
+
+            // 3. Renderiza Outros Squads
+            Object.keys(totals).forEach(s => {
+                if (!SQUADS_OPCOES.includes(s)) {
+                    const sec = totals[s];
+                    if (sec === 0) return;
+
+                    const [h, m] = formatDuration(sec).split(':');
+                    const borderClass = getCardStyle(s);
+                    const styleAttr = getInlineStyle(s);
+
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 ${borderClass}" ${styleAttr}>
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase mb-1">${s}</h3>
+                            <p class="text-2xl font-bold text-gray-800">
+                                ${h}<span class="text-sm text-gray-400 font-normal">h</span> 
+                                ${m}<span class="text-sm text-gray-400 font-normal">m</span>
+                            </p>
+                        </div>`;
+                }
+            });
+
+            // Total Geral
+            const [gh, gm] = formatDuration(grandTotal).split(':');
+             container.innerHTML += `
+                <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 rounded-lg shadow-md text-white flex flex-col justify-between">
+                    <h3 class="text-xs font-bold text-indigo-100 uppercase mb-1 flex items-center">
+                        <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Total Geral
+                    </h3>
+                    <p class="text-3xl font-bold">${gh}<span class="text-sm text-indigo-200 font-normal">h</span> ${gm}<span class="text-sm text-indigo-200 font-normal">m</span></p>
+                </div>`;
+
+            refreshIcons();
         }
 
         function getSquadBadge(squad) {
             let classes = "bg-gray-100 text-gray-800";
             if(squad === 'CB') classes = "bg-indigo-100 text-indigo-800";
             else if(squad === 'SC') classes = "bg-purple-100 text-purple-800";
-            else if(squad === 'Rec. Crédito') classes = "bg-pink-100 text-pink-800";
+            else if(squad === 'Rec Cred') classes = "bg-pink-100 text-pink-800";
             else if(squad === 'Monitoria') classes = "bg-yellow-100 text-yellow-800";
+            else if(squad === 'OJR') classes = "bg-orange-100 text-orange-800";
             return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${classes}">${squad}</span>`;
         }
 
@@ -852,17 +1115,35 @@ Exemplo Texto (Use IA ✨):
 
         async function processImportedData(rows) {
              const valid = [];
+             let unknownAgents = 0;
+             let duplicates = 0;
+
              for(const item of rows) {
                 let agent = agentesByPseudo[item.nome] || scooteirasCadastro.find(a => a.nome === item.nome || a.pseudo === item.nome);
                 if(!agent) agent = scooteirasCadastro.find(a => item.nome.includes(a.pseudo));
-                if(agent && !checkDuplicate(agent.nome, item.data)) {
-                    valid.push({ nome: agent.nome, pseudo: agent.pseudo, data: item.data, entrada: item.entrada, saida: item.saida, squadReal: item.squadReal || agent.squadPadrao, turnoAtuado: "Meu Turno", duracaoSegundos: calculateDuration(item.entrada, item.saida), registradoEm: new Date().toISOString() });
+
+                if(!agent) {
+                    unknownAgents++;
+                    console.warn(`Agente desconhecida: ${item.nome}`);
+                    continue;
                 }
+
+                if(checkDuplicate(agent.nome, item.data)) {
+                    duplicates++;
+                    continue;
+                }
+
+                valid.push({ nome: agent.nome, pseudo: agent.pseudo, data: item.data, entrada: item.entrada, saida: item.saida, squadReal: item.squadReal || agent.squadPadrao, turnoAtuado: "Meu Turno", duracaoSegundos: calculateDuration(item.entrada, item.saida), registradoEm: new Date().toISOString() });
              }
+
              if(valid.length) {
                  await runTransaction(db, async (txn) => { const col = collection(db, `artifacts/${appId}/public/data/registros_diarios`); valid.forEach(v => txn.set(doc(col), v)); });
                  showMessage(`Importado ${valid.length} registros.`, 'success'); closeModal('import-modal');
-             } else { showMessage("Nenhum dado novo/válido.", 'warning'); }
+             } else { 
+                 if (unknownAgents > 0) showMessage(`Erro: ${unknownAgents} nome(s) não encontrados na aba Equipe. Cadastre-as primeiro!`, 'error');
+                 else if (duplicates > 0) showMessage(`Atenção: Todos os ${duplicates} registros já existiam no sistema.`, 'warning');
+                 else showMessage("Nenhum dado válido encontrado.", 'warning'); 
+             }
         }
 
         window.handleImport = async () => {
