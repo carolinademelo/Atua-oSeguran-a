@@ -53,6 +53,9 @@
             <button id="tab-registro" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-active whitespace-nowrap" onclick="window.switchTab('registro')">
                 <span class="flex items-center"><i data-lucide="calendar-check" class="w-4 h-4 mr-2"></i> Registro Diário</span>
             </button>
+            <button id="tab-capacidade" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('capacidade')">
+                <span class="flex items-center"><i data-lucide="bar-chart-2" class="w-4 h-4 mr-2"></i> Capacidade & Metas</span>
+            </button>
             <button id="tab-relatorio" class="py-4 px-6 text-sm font-semibold focus:outline-none transition-all tab-inactive whitespace-nowrap" onclick="window.switchTab('relatorio')">
                 <span class="flex items-center"><i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i> Relatórios</span>
             </button>
@@ -109,20 +112,6 @@
 
                 <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
 
-                <div id="capacity-container" class="mb-8 overflow-x-auto border border-gray-200 rounded-xl shadow-sm bg-white hidden">
-                    <div class="bg-gray-100 p-3 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-700 uppercase flex items-center">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-500"></i>
-                            Capacidade Diária & Metas
-                        </h3>
-                        <span class="text-xs text-gray-500">Calculado automaticamente (Realizado vs Meta)</span>
-                    </div>
-                    <div class="p-0">
-                        <table class="w-full border-collapse" id="capacity-table">
-                            </table>
-                    </div>
-                </div>
-
                 <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Histórico Detalhado</h3>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200 mb-12">
                     <table class="w-full text-sm text-left text-gray-600">
@@ -145,6 +134,27 @@
                             <tr><td colspan="9" class="text-center py-8 text-gray-400">Carregando dados...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="content-capacidade" class="hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Capacidade & Metas</h2>
+                    <span class="text-sm text-gray-500">Visualização consolidada do mês selecionado</span>
+                </div>
+                
+                <div id="capacity-container" class="mb-8 overflow-x-auto border border-gray-200 rounded-xl shadow-sm bg-white">
+                    <div class="bg-gray-100 p-3 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-gray-700 uppercase flex items-center">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                            Acompanhamento Diário
+                        </h3>
+                    </div>
+                    <div class="p-0">
+                        <table class="w-full border-collapse" id="capacity-table">
+                            <tr><td class="p-8 text-center text-gray-400">Carregando dados...</td></tr>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -335,14 +345,12 @@
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CONFIGURAÇÃO DAS METAS DIÁRIAS (EDITE AQUI)
+        // Vendas, Hunter e Coraliados removidos
         const METAS_SQUAD = {
             "CB": 50,          
             "SC": 40,          
             "Rec. Crédito": 30,
             "Monitoria": 10,
-            "Coraliados": 20,
-            "Hunter": 15,
-            "Vendas": 25,
             "OJR": 10,
             "Outro": 0
         };
@@ -357,7 +365,8 @@
         };
         const appId = "atuacao2026";
         
-        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "Coraliados", "Hunter", "Vendas", "OJR", "Outro"];
+        // Vendas, Hunter e Coraliados removidos da lista de opções
+        const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR", "Outro"];
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -370,8 +379,8 @@
         let currentHistoryList = [];
         
         const getSquadColor = (squad) => {
-            const map = { 'CB': 'indigo', 'SC': 'emerald', 'Rec. Crédito': 'amber', 'Monitoria': 'cyan', 'Coraliados': 'rose', 'Hunter': 'orange', 'Vendas': 'teal', 'OJR': 'purple', 'Outro': 'slate' };
-            return map[squad] || 'blue';
+            const map = { 'CB': 'indigo', 'SC': 'emerald', 'Rec. Crédito': 'amber', 'Monitoria': 'cyan', 'OJR': 'purple', 'Outro': 'slate' };
+            return map[squad] || 'gray';
         };
 
         const timeToMinutes = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -398,8 +407,6 @@
         };
 
         // --- FUNÇÕES DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
-        // (Definidas ANTES de serem usadas para garantir escopo seguro)
-
         const updateStats = (list) => {
             const squads = {};
             list.forEach(i => { if(!squads[i.squad]) squads[i.squad] = 0; squads[i.squad] += i.horas; });
@@ -419,13 +426,7 @@
         const renderCapacityTable = () => {
             const mes = document.getElementById('mes-select').value;
             // Se não tiver mês ou a lista estiver vazia, esconde
-            if(!mes) {
-                document.getElementById('capacity-container').classList.add('hidden');
-                return;
-            }
-
-            // Garante visibilidade se houver registros ou apenas para mostrar a estrutura do mês
-            document.getElementById('capacity-container').classList.remove('hidden');
+            if(!mes) { return; }
 
             const [ano, mesNum] = mes.split('-').map(Number);
             const daysInMonth = new Date(ano, mesNum, 0).getDate();
@@ -504,9 +505,11 @@
 
         // UI Helpers
         window.switchTab = (tabId) => {
-            ['registro', 'relatorio', 'cadastro'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).classList.replace('tab-active', 'tab-inactive');
+            ['registro', 'relatorio', 'cadastro', 'capacidade'].forEach(t => {
+                const elContent = document.getElementById(`content-${t}`);
+                const elTab = document.getElementById(`tab-${t}`);
+                if(elContent) elContent.classList.add('hidden');
+                if(elTab) elTab.classList.replace('tab-active', 'tab-inactive');
             });
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
             document.getElementById(`tab-${tabId}`).classList.replace('tab-inactive', 'tab-active');
@@ -534,7 +537,15 @@
             const snap = await getDocs(q);
             if (snap.empty) { await seedDatabase(true); return; }
             currentAgents = [];
-            snap.forEach(d => currentAgents.push(d.data()));
+            
+            // FILTRANDO SCOOTEIRAS DAS SQUADS REMOVIDAS
+            snap.forEach(d => {
+                const data = d.data();
+                if(SQUADS_OPCOES.includes(data.squadPadrao) || !data.squadPadrao) {
+                    currentAgents.push(data);
+                }
+            });
+            
             renderAgentsTable();
             renderSelectionList();
             renderRelatorioSelect();
@@ -755,18 +766,32 @@
             const q = query(collection(db, logsCol), where("mes", "==", mes));
             const snap = await getDocs(q);
             currentHistoryList = []; 
-            snap.forEach(d => currentHistoryList.push({id: d.id, ...d.data()}));
             
-            // ORDENAÇÃO SEGURA: Trata nulos ou indefinidos
+            // FILTRANDO HISTÓRICO PARA REMOVER SQUADS EXCLUÍDAS
+            snap.forEach(d => {
+                const data = d.data();
+                if(SQUADS_OPCOES.includes(data.squad)) {
+                     currentHistoryList.push({id: d.id, ...data});
+                }
+            });
+            
+            // NOVA ORDENAÇÃO: 1. Data Desc, 2. Hora Desc, 3. Squad Asc, 4. Nome Asc
             currentHistoryList.sort((a, b) => {
                 const dataA = a.data || "";
                 const dataB = b.data || "";
-                const dateDiff = dataB.localeCompare(dataA);
-                if (dateDiff !== 0) return dateDiff;
-                
+                if (dataA !== dataB) return dataB.localeCompare(dataA); // Data (Mais recente primeiro)
+
                 const entA = a.entrada || "";
                 const entB = b.entrada || "";
-                return entB.localeCompare(entA);
+                if (entA !== entB) return entB.localeCompare(entA); // Hora (Mais tarde primeiro)
+
+                const squadA = a.squad || "";
+                const squadB = b.squad || "";
+                if (squadA !== squadB) return squadA.localeCompare(squadB); // Squad (A-Z)
+
+                const nomeA = a.scooteira || "";
+                const nomeB = b.scooteira || "";
+                return nomeA.localeCompare(nomeB); // Nome (A-Z)
             });
             
             tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
@@ -820,7 +845,7 @@
             const list = [];
             snap.forEach(d => {
                 const item = d.data();
-                if (item.scooteira === nomeSelecionado || item.scooteira === pseudo) {
+                if ((item.scooteira === nomeSelecionado || item.scooteira === pseudo) && SQUADS_OPCOES.includes(item.squad)) {
                     list.push(item);
                 }
             });
