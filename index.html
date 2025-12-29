@@ -29,8 +29,6 @@
         .squad-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; border: 1px solid currentColor; }
         
         .exchange-card { border-left: 4px solid #4f46e5; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-left-width: 4px; }
-        .exchange-text { font-size: 0.85rem; line-height: 1.4; }
-        
         .status-active { color: #166534; background: #dcfce7; }
         .status-inactive { color: #991b1b; background: #fee2e2; }
     </style>
@@ -61,7 +59,6 @@
         </div>
 
         <div class="p-6 sm:p-8 min-h-[500px]">
-
             <div id="content-registro" class="animate-fade-in">
                 <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
@@ -128,7 +125,13 @@
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
-                            <tr><th class="px-6 py-3">Data</th><th class="px-6 py-3">Squad</th><th class="px-6 py-3">Entrada</th><th class="px-6 py-3">Saída</th><th class="px-6 py-3 font-bold">Total</th></tr>
+                            <tr>
+                                <th class="px-6 py-3">Data</th>
+                                <th class="px-6 py-3">Squad</th>
+                                <th class="px-6 py-3">Entrada</th>
+                                <th class="px-6 py-3">Saída</th>
+                                <th class="px-6 py-3 font-bold">Total</th>
+                            </tr>
                         </thead>
                         <tbody id="relatorio-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -145,7 +148,7 @@
                         <input type="text" id="new-turno" placeholder="Ex: Seg-Ter" class="p-2 border rounded text-sm">
                         <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
                         <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
-                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6 shadow-sm">Cadastrar</button>
+                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Salvar</button>
                     </form>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
@@ -182,7 +185,7 @@
                 <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
             <div class="p-4 bg-white border-t flex justify-end">
-                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg">Salvar Registros</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold">Salvar Atividades</button>
             </div>
         </div>
     </div>
@@ -203,10 +206,10 @@
         const SQUADS_ATIVAS = ["SC", "CB", "Rec. Crédito", "OJR", "Monitoria"];
         const FERIADOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
         const METAS_POR_DIA = {
-            "SC":           { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
-            "CB":           { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
-            "Rec. Crédito": { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  },
-            "OJR":          { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  }
+            "SC": { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
+            "CB": { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
+            "Rec. Crédito": { 1: 5, 2: 5, 3: 5, 4: 5, 5: 4, 6: 0, 0: 0 },
+            "OJR": { 1: 5, 2: 5, 3: 5, 4: 5, 5: 4, 6: 0, 0: 0 }
         };
         const squadColorMap = { "SC": "emerald", "CB": "indigo", "Rec. Crédito": "amber", "OJR": "purple", "Monitoria": "cyan", "Outro": "slate" };
 
@@ -308,7 +311,7 @@
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
-            if (!data || selected.length === 0) return alert("Selecione data e equipe.");
+            if (!data || selected.length === 0) return alert("Selecione data e scooteiras.");
             document.getElementById('agentes-detalhes-container').innerHTML = selected.map(nome => {
                 const a = currentAgents.find(x => x.nome === nome);
                 return `
@@ -383,18 +386,22 @@
                 </div>`).join('');
         };
 
+        // RELATÓRIOS (FIXED)
         window.loadRelatorioIndividual = async () => {
             const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
             const resumoCards = document.getElementById('relatorio-resumo-cards');
             const tabelaBody = document.getElementById('relatorio-body');
+            
             if(!nomeSelecionado || !mes) return;
             tabelaBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Carregando...</td></tr>';
+            
             const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nomeSelecionado));
             const snap = await getDocs(q);
             const list = [];
             let totalGeral = 0;
             const horasPorSquad = {};
+            
             snap.forEach(d => {
                 const data = d.data();
                 const sq = normalizarSquad(data.squad);
@@ -402,14 +409,16 @@
                 totalGeral += data.horas;
                 horasPorSquad[sq] = (horasPorSquad[sq] || 0) + data.horas;
             });
+            
             list.sort((a,b) => b.data.localeCompare(a.data));
             resumoCards.classList.remove('hidden');
             let squadsHtml = "";
             Object.keys(horasPorSquad).forEach(sq => {
                 squadsHtml += `<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-${squadColorMap[sq] || 'gray'}-500"><div class="text-xs text-gray-400 uppercase font-bold">Total ${sq}</div><div class="text-xl font-bold text-gray-700">${horasPorSquad[sq].toFixed(1)}h</div></div>`;
             });
+            
             resumoCards.innerHTML = `<div class="bg-indigo-600 p-5 rounded-xl shadow-md text-white"><div class="text-xs opacity-80 uppercase font-bold">Total Geral</div><div class="text-3xl font-bold">${totalGeral.toFixed(1)}h</div></div>${squadsHtml}<div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500"><div class="text-xs text-gray-400 uppercase font-bold">Atuações</div><div class="text-xl font-bold text-emerald-600">${list.length}</div></div>`;
-            tabelaBody.innerHTML = list.length === 0 ? '<tr><td colspan="5" class="text-center py-8">Sem registros.</td></tr>' : list.map(i => `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4">${i.squad}</td><td class="px-6 py-4 text-center">${i.entrada}</td><td class="px-6 py-4 text-center">${i.saida}</td><td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(1)}h</td></tr>`).join('');
+            tabelaBody.innerHTML = list.length === 0 ? '<tr><td colspan="5" class="text-center py-8">Sem registros.</td></tr>' : list.map(i => `<tr class="border-b"><td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td><td class="px-6 py-4"><span class="squad-tag text-${squadColorMap[i.squad] || 'gray'}-600 border-${squadColorMap[i.squad] || 'gray'}-600">${i.squad}</span></td><td class="px-6 py-4 text-center">${i.entrada}</td><td class="px-6 py-4 text-center">${i.saida}</td><td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(1)}h</td></tr>`).join('');
         };
 
         window.renderTrocasAccordion = () => {
@@ -540,6 +549,13 @@
             });
         };
 
+        function getISOWeek(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
         document.getElementById('add-agent-form').onsubmit = async (e) => {
             e.preventDefault();
             const nome = document.getElementById('new-nome').value;
@@ -555,13 +571,6 @@
             document.getElementById('add-agent-form').reset();
             loadAgents();
         };
-
-        function getISOWeek(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
 
         window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
         window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); } };
