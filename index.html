@@ -12,26 +12,22 @@
 
     <style>
         body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
-        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 200ms; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        
         .tab-active { border-bottom: 2px solid #4f46e5; color: #4f46e5; background-color: #eef2ff; }
         .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Capacidade Estilos */
-        .cap-cell { font-size: 0.75rem; padding: 8px; text-align: center; border: 1px solid #e2e8f0; }
-        .cap-header { font-size: 0.75rem; font-weight: 700; background-color: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; color: #64748b; }
-        .cap-warn-low { background-color: #fee2e2; color: #991b1b; font-weight: 600; }
-        .cap-warn-high { background-color: #ffedd5; color: #9a3412; font-weight: 600; }
+        .cap-cell { font-size: 0.75rem; padding: 6px; text-align: center; border: 1px solid #e2e8f0; }
+        .cap-header { font-size: 0.7rem; font-weight: 700; background-color: #f8fafc; padding: 8px; border: 1px solid #e2e8f0; color: #64748b; text-transform: uppercase; }
+        .cap-warn-low { background-color: #fee2e2; color: #991b1b; }
+        .cap-warn-high { background-color: #ffedd5; color: #9a3412; }
         .cap-ok { background-color: #dcfce7; color: #166534; }
-        .week-group-header { cursor: pointer; background: #4f46e5; color: white; padding: 12px; border-radius: 8px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
-        .week-group-header:hover { background: #4338ca; }
-        .week-content { display: none; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; overflow: hidden; }
-        .week-content.active { display: block; }
+
+        .week-group-header { cursor: pointer; background: #ffffff; border: 1px solid #e2e8f0; padding: 16px; border-radius: 12px; margin-bottom: 8px; transition: all 0.2s; }
+        .week-group-header:hover { border-color: #4f46e5; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .week-content { display: none; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; overflow-x: auto; background: white; }
+        .week-content.active { display: block; border-top: none; margin-top: -12px; }
+        
+        .squad-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-right: 4px; border: 1px solid currentColor; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
@@ -63,28 +59,28 @@
                 <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div class="md:col-span-3">
-                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Data</label>
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Data do Lançamento</label>
                             <input type="date" id="data-atuacao" class="w-full p-2.5 border-gray-300 rounded-lg text-sm">
                         </div>
                         <div class="md:col-span-6">
-                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Scooteiras</label>
-                            <button onclick="window.showSelectionModal()" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-left text-sm flex justify-between">
-                                <span>Selecionar equipe...</span>
-                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            <label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Selecionar Scooteira(s)</label>
+                            <button onclick="window.showSelectionModal()" class="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-left text-sm flex justify-between items-center">
+                                <span id="selected-count-label">Clique para selecionar...</span>
+                                <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
                             </button>
                         </div>
                         <div class="md:col-span-3">
-                            <button onclick="window.handleEntrySubmission()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold">Registrar</button>
+                            <button onclick="window.handleEntrySubmission()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold shadow-md">Iniciar Lançamento</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Lançamentos</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Histórico de Atuação</h2>
                     <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border-gray-300 rounded-md text-sm">
                 </div>
 
-                <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"></div>
+                <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
 
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
                     <table class="w-full text-sm text-left">
@@ -93,6 +89,7 @@
                                 <th class="px-6 py-3"><input type="checkbox" id="select-all-history" onclick="window.toggleSelectAll()"></th>
                                 <th class="px-6 py-3">Data</th>
                                 <th class="px-6 py-3">Nome</th>
+                                <th class="px-6 py-3">Pseudo</th>
                                 <th class="px-6 py-3">Squad</th>
                                 <th class="px-6 py-3">Horário</th>
                                 <th class="px-6 py-3">Total</th>
@@ -105,39 +102,47 @@
             </div>
 
             <div id="content-capacidade" class="hidden animate-fade-in">
-                <div class="mb-6 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Análise de Capacidade por Semana</h2>
-                    <p class="text-xs text-gray-500">Clique na semana para expandir os dias</p>
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Capacity & Metas</h2>
+                    <p class="text-sm text-gray-500">Acompanhamento de horas semanais por Squad.</p>
                 </div>
                 <div id="capacity-accordion-container" class="space-y-4">
                     </div>
             </div>
 
-            <div id="content-relatorio" class="hidden animate-fade-in"> Conteúdo de Relatórios... </div>
+            <div id="content-relatorio" class="hidden animate-fade-in">
+                <div id="relatorio-form-container"></div>
+                <div id="relatorio-resumo-cards"></div>
+                <table class="w-full mt-4 border"><tbody id="relatorio-body"></tbody></table>
+            </div>
+
             <div id="content-cadastro" class="hidden animate-fade-in">
-                 <div id="cadastro-form-container"></div>
-                 <table class="w-full mt-8 text-sm"><tbody id="cadastro-list-body"></tbody></table>
+                <div id="cadastro-form-container"></div>
+                <table class="w-full mt-8 text-sm"><tbody id="cadastro-list-body"></tbody></table>
             </div>
         </div>
     </div>
 
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 class="font-bold mb-4">Selecionar Equipe</h3>
-            <div id="agentes-checkbox-list" class="space-y-2 max-h-96 overflow-y-auto mb-4"></div>
-            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-2 rounded-lg">Fechar</button>
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="font-bold text-lg mb-4">Selecionar Scooteiras</h3>
+            <div id="agentes-checkbox-list" class="space-y-2 max-h-96 overflow-y-auto mb-6"></div>
+            <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Concluir Seleção</button>
         </div>
     </div>
 
     <div id="details-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-            <div class="p-6 bg-indigo-600 text-white font-bold rounded-t-xl">Ajuste de Detalhes</div>
-            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-xl">Confirmar Lançamentos</h3>
+                <button onclick="window.closeModal('details-modal')"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1 bg-gray-50">
                 <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
-            <div class="p-4 bg-gray-50 flex justify-end space-x-3 rounded-b-xl">
-                <button onclick="window.closeModal('details-modal')" class="px-4 py-2">Cancelar</button>
-                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold">Salvar Tudo</button>
+            <div class="p-6 bg-white border-t flex justify-end space-x-3">
+                <button onclick="window.closeModal('details-modal')" class="px-6 py-2 text-gray-500 font-medium">Cancelar</button>
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg">Salvar Registros</button>
             </div>
         </div>
     </div>
@@ -147,17 +152,13 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURAÇÃO DE SQUADS ---
         const SQUADS_ATIVAS = ["CB", "SC", "Rec. Crédito", "Monitoria", "OJR"];
         
-        // --- METAS DIFERENCIADAS POR DIA ---
-        // 0: Dom, 1: Seg, 2: Ter, 3: Qua, 4: Qui, 5: Sex, 6: Sab
         const METAS_POR_DIA = {
             "CB":           { 1: 50, 2: 50, 3: 50, 4: 50, 5: 50, 6: 20, 0: 10 },
             "SC":           { 1: 40, 2: 40, 3: 40, 4: 40, 5: 40, 6: 15, 0: 5  },
             "Rec. Crédito": { 1: 30, 2: 30, 3: 30, 4: 30, 5: 30, 6: 0,  0: 0  },
             "OJR":          { 1: 10, 2: 10, 3: 10, 4: 10, 5: 10, 6: 5,  0: 0  }
-            // Monitoria não tem meta (calcula apenas soma)
         };
 
         const firebaseConfig = { apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", authDomain: "atuacao2026.firebaseapp.com", projectId: "atuacao2026", storageBucket: "atuacao2026.firebasestorage.app", messagingSenderId: "563632231622", appId: "1:563632231622:web:ce3e04e43cc647614214f5" };
@@ -171,7 +172,14 @@
         let currentAgents = [];
         let currentHistoryList = [];
 
-        // --- UNIFICAÇÃO DE SQUAD (REC) ---
+        const squadColorMap = {
+            "CB": "indigo",
+            "SC": "emerald",
+            "Rec. Crédito": "amber",
+            "Monitoria": "cyan",
+            "OJR": "purple"
+        };
+
         const normalizarSquad = (s) => {
             if (!s) return "Outro";
             const upper = s.toUpperCase().trim();
@@ -179,7 +187,6 @@
             return s;
         };
 
-        // --- FIREBASE INIT ---
         signInAnonymously(auth).then(() => {
             document.getElementById('auth-status').innerText = "ONLINE";
             document.getElementById('auth-status').className = "bg-emerald-600 py-1 px-3 rounded text-xs font-mono text-white";
@@ -195,12 +202,15 @@
 
         window.switchTab = (tabId) => {
             ['registro', 'capacidade', 'relatorio', 'cadastro'].forEach(t => {
-                document.getElementById(`content-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap";
+                const elContent = document.getElementById(`content-${t}`);
+                const elTab = document.getElementById(`tab-${t}`);
+                if(elContent) elContent.classList.add('hidden');
+                if(elTab) elTab.className = "py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap";
             });
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
             document.getElementById(`tab-${tabId}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap";
             if (tabId === 'capacidade') renderCapacityAccordion();
+            lucide.createIcons();
         };
 
         const loadAgents = async () => {
@@ -217,9 +227,12 @@
         const renderSelectionList = () => {
             currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
             document.getElementById('agentes-checkbox-list').innerHTML = currentAgents.map(a => `
-                <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600">
-                    <span class="text-sm">${a.nome} <small class="text-gray-400">(${a.squadPadrao})</small></span>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition">
+                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold text-gray-700">${a.nome}</span>
+                        <span class="text-xs text-gray-400">${a.squadPadrao}</span>
+                    </div>
                 </label>
             `).join('');
         };
@@ -227,22 +240,25 @@
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
-            if (!data || selected.length === 0) return alert("Selecione data e equipe");
+            if (!data || selected.length === 0) return alert("Por favor, selecione a Data e as Scooteiras.");
 
             const container = document.getElementById('agentes-detalhes-container');
             container.innerHTML = selected.map(nome => {
                 const agent = currentAgents.find(a => a.nome === nome);
+                const color = squadColorMap[agent.squadPadrao] || 'gray';
                 return `
-                    <div class="confirm-row p-4 border rounded-lg bg-white relative" data-nome="${agent.nome}">
-                        <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        <div class="font-bold text-indigo-600 mb-3">${agent.nome}</div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <input type="time" value="${agent.entradaPadrao}" class="confirm-ent border p-1 rounded text-sm">
-                            <input type="time" value="${agent.saidaPadrao}" class="confirm-sai border p-1 rounded text-sm">
-                            <select class="confirm-squad border p-1 rounded text-sm">
-                                ${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}
-                            </select>
-                            <input type="text" value="${agent.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm">
+                    <div class="confirm-row p-5 border-l-4 border-${color}-500 bg-white rounded-r-xl shadow-sm relative" data-nome="${agent.nome}">
+                        <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        <div class="font-bold text-gray-800 mb-4">${agent.nome}</div>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="flex flex-col"><label class="text-[10px] uppercase font-bold text-gray-400 mb-1">Entrada</label><input type="time" value="${agent.entradaPadrao}" class="confirm-ent border p-2 rounded-lg text-sm"></div>
+                            <div class="flex flex-col"><label class="text-[10px] uppercase font-bold text-gray-400 mb-1">Saída</label><input type="time" value="${agent.saidaPadrao}" class="confirm-sai border p-2 rounded-lg text-sm"></div>
+                            <div class="flex flex-col"><label class="text-[10px] uppercase font-bold text-gray-400 mb-1">Squad</label>
+                                <select class="confirm-squad border p-2 rounded-lg text-sm">
+                                    ${SQUADS_ATIVAS.map(s => `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex flex-col"><label class="text-[10px] uppercase font-bold text-gray-400 mb-1">Turno</label><input type="text" value="${agent.turnoPadrao}" class="confirm-turno border p-2 rounded-lg text-sm"></div>
                         </div>
                     </div>
                 `;
@@ -255,27 +271,17 @@
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const rows = document.querySelectorAll('.confirm-row');
-            
             for (const row of rows) {
                 const nome = row.dataset.nome;
                 const ent = row.querySelector('.confirm-ent').value;
                 const sai = row.querySelector('.confirm-sai').value;
                 const sq = row.querySelector('.confirm-squad').value;
-                
                 const d1 = new Date(`2000-01-01T${ent}`);
                 const d2 = new Date(`2000-01-01T${sai}`);
                 let diff = (d2 - d1) / 3600000;
                 if (diff < 0) diff += 24;
-
                 await addDoc(collection(db, logsCol), {
-                    data: dataStr,
-                    mes: dataStr.substring(0, 7),
-                    scooteira: nome,
-                    squad: sq,
-                    entrada: ent,
-                    saida: sai,
-                    horas: parseFloat(diff.toFixed(2)),
-                    timestamp: new Date()
+                    data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date()
                 });
             }
             window.closeModal('details-modal');
@@ -284,8 +290,7 @@
 
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
+            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
             currentHistoryList = [];
             snap.forEach(d => {
                 const item = { id: d.id, ...d.data() };
@@ -293,8 +298,6 @@
                 if (SQUADS_ATIVAS.includes(item.squad)) currentHistoryList.push(item);
             });
 
-            // --- ORDENAÇÃO SOLICITADA ---
-            // 1. Data (Desc), 2. Entrada (Desc), 3. Squad (Asc), 4. Nome (Asc)
             currentHistoryList.sort((a,b) => {
                 if (b.data !== a.data) return b.data.localeCompare(a.data);
                 if (b.entrada !== a.entrada) return b.entrada.localeCompare(a.entrada);
@@ -303,19 +306,22 @@
             });
 
             const tbody = document.getElementById('historico-body');
-            tbody.innerHTML = currentHistoryList.map(item => `
-                <tr class="hover:bg-gray-50">
+            tbody.innerHTML = currentHistoryList.map(item => {
+                const color = squadColorMap[item.squad] || 'gray';
+                return `
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
                     <td class="px-6 py-4"><input type="checkbox" value="${item.id}" class="history-checkbox"></td>
-                    <td class="px-6 py-4">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4 font-bold">${item.scooteira.split(' ')[0]}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold">${item.squad}</span></td>
-                    <td class="px-6 py-4 text-xs">${item.entrada} - ${item.saida}</td>
-                    <td class="px-6 py-4 font-bold">${item.horas}h</td>
+                    <td class="px-6 py-4 text-gray-600">${item.data.split('-').reverse().join('/')}</td>
+                    <td class="px-6 py-4 font-bold text-gray-800">${item.scooteira.split(' ')[0]}</td>
+                    <td class="px-6 py-4 text-xs text-gray-400">${item.scooteira}</td>
+                    <td class="px-6 py-4"><span class="squad-tag text-${color}-600 border-${color}-600">${item.squad}</span></td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${item.entrada} - ${item.saida}</td>
+                    <td class="px-6 py-4 font-bold text-indigo-600">${item.horas}h</td>
                     <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteLog('${item.id}')" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteLog('${item.id}')" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
             lucide.createIcons();
             updateStats();
         };
@@ -323,115 +329,139 @@
         const updateStats = () => {
             const totals = {};
             currentHistoryList.forEach(i => { totals[i.squad] = (totals[i.squad] || 0) + i.horas; });
-            document.getElementById('resumo-squads').innerHTML = Object.keys(totals).map(s => `
-                <div class="bg-white p-4 rounded-xl border-l-4 border-indigo-500 shadow-sm">
-                    <div class="text-xs text-gray-500 uppercase font-bold">${s}</div>
-                    <div class="text-2xl font-bold">${totals[s].toFixed(1)}h</div>
-                </div>
-            `).join('');
+            document.getElementById('resumo-squads').innerHTML = SQUADS_ATIVAS.map(s => {
+                const color = squadColorMap[s] || 'gray';
+                const val = totals[s] || 0;
+                return `
+                <div class="bg-white p-4 rounded-xl border-t-4 border-${color}-500 shadow-sm">
+                    <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">${s}</div>
+                    <div class="text-xl font-bold text-gray-700">${val.toFixed(1)}h</div>
+                </div>`;
+            }).join('');
         };
 
-        // --- LÓGICA DO ACORDEÃO DE CAPACIDADE ---
         const renderCapacityAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
             const [ano, mesNum] = mes.split('-').map(Number);
-            const daysInMonth = new Date(ano, mesNum, 0).getDate();
             const container = document.getElementById('capacity-accordion-container');
             container.innerHTML = "";
 
-            // Organiza dados por Data
             const dataMap = {};
             currentHistoryList.forEach(log => {
                 if(!dataMap[log.data]) dataMap[log.data] = {};
                 dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
             });
 
-            // Agrupa por Semanas
+            // Agrupa por Semanas REAIS
             const weeks = {};
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dateObj = new Date(ano, mesNum - 1, i);
-                const weekNum = getWeekOfMonth(dateObj);
-                if (!weeks[weekNum]) weeks[weekNum] = [];
-                weeks[weekNum].push(i);
+            const firstDay = new Date(ano, mesNum - 1, 1);
+            const lastDay = new Date(ano, mesNum, 0);
+
+            for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+                const dateClone = new Date(d);
+                const wNum = getISOWeek(dateClone);
+                if (!weeks[wNum]) weeks[wNum] = [];
+                weeks[wNum].push(new Date(dateClone));
             }
 
             Object.keys(weeks).forEach(wNum => {
                 const days = weeks[wNum];
                 const weekId = `week-${wNum}`;
                 
-                // Calcula Total da Semana
-                let weekTotalHours = 0;
-                days.forEach(d => {
-                    const dateKey = `${mes}-${String(d).padStart(2,'0')}`;
+                // Calcula Totais da Semana por Squad
+                const weekSquadTotals = {};
+                days.forEach(dateObj => {
+                    const dateKey = formatDate(dateObj);
                     if (dataMap[dateKey]) {
-                        Object.values(dataMap[dateKey]).forEach(h => weekTotalHours += h);
+                        Object.keys(dataMap[dateKey]).forEach(sq => {
+                            weekSquadTotals[sq] = (weekSquadTotals[sq] || 0) + dataMap[dateKey][sq];
+                        });
                     }
                 });
 
-                // Cabeçalho do Acordeão
-                const header = document.createElement('div');
-                header.className = "week-group-header";
-                header.innerHTML = `<span>Semana ${wNum}</span> <span class="text-sm font-normal">Total: ${weekTotalHours.toFixed(1)}h</span>`;
-                header.onclick = () => {
-                    document.getElementById(weekId).classList.toggle('active');
-                };
+                const startText = formatDateBr(days[0]);
+                const endText = formatDateBr(days[days.length-1]);
 
-                // Conteúdo da Tabela
+                const header = document.createElement('div');
+                header.className = "week-group-header shadow-sm";
+                header.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-indigo-700">Semana ${wNum}</span>
+                        <span class="text-[10px] text-gray-400">${startText} a ${endText}</span>
+                    </div>
+                    <div class="flex flex-wrap justify-end gap-2">
+                        ${SQUADS_ATIVAS.map(s => {
+                            const val = weekSquadTotals[s] || 0;
+                            const color = squadColorMap[s];
+                            return `<span class="squad-tag text-${color}-600 border-${color}-600" style="font-size: 0.6rem">${s}: ${val.toFixed(1)}h</span>`;
+                        }).join('')}
+                    </div>
+                `;
+                header.onclick = () => document.getElementById(weekId).classList.toggle('active');
+
                 const content = document.createElement('div');
                 content.id = weekId;
                 content.className = "week-content";
 
-                let tableHtml = `<table class="w-full border-collapse"><thead><tr><th class="cap-header text-left">Dia</th>`;
+                let tableHtml = `<table class="w-full"><thead><tr><th class="cap-header text-left">Dia</th>`;
                 SQUADS_ATIVAS.forEach(s => tableHtml += `<th class="cap-header">${s}</th>`);
                 tableHtml += `</tr></thead><tbody>`;
 
-                days.forEach(day => {
-                    const dayStr = String(day).padStart(2,'0');
-                    const fullDate = `${mes}-${dayStr}`;
-                    const dateObj = new Date(ano, mesNum - 1, day);
+                days.forEach(dateObj => {
+                    const dateKey = formatDate(dateObj);
                     const dow = dateObj.getDay();
+                    const dayLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' });
 
-                    tableHtml += `<tr><td class="cap-cell cap-date-col font-bold">${dayStr}/${mesNum}</td>`;
+                    tableHtml += `<tr class="border-b border-gray-50"><td class="cap-cell font-bold bg-gray-50">${dayLabel}</td>`;
                     
                     SQUADS_ATIVAS.forEach(squad => {
-                        const actual = (dataMap[fullDate] && dataMap[fullDate][squad]) ? dataMap[fullDate][squad] : 0;
+                        const actual = (dataMap[dateKey] && dataMap[dateKey][squad]) ? dataMap[dateKey][squad] : 0;
                         let cellClass = "cap-cell";
-                        let content = actual > 0 ? actual.toFixed(1) + 'h' : '-';
+                        let valText = actual > 0 ? actual.toFixed(1) + 'h' : '-';
+                        let subText = "";
 
-                        // Apenas valida se não for Monitoria
                         if (squad !== "Monitoria") {
                             const target = (METAS_POR_DIA[squad] && METAS_POR_DIA[squad][dow]) ? METAS_POR_DIA[squad][dow] : 0;
                             if (target > 0) {
-                                if (actual < target) cellClass += " cap-warn-low";
-                                else if (actual > target) cellClass += " cap-warn-high";
-                                else cellClass += " cap-ok";
+                                if (actual < target) {
+                                    cellClass += " cap-warn-low";
+                                    subText = `<div class="text-[9px] opacity-60">-${(target - actual).toFixed(1)}</div>`;
+                                } else if (actual > target) {
+                                    cellClass += " cap-warn-high";
+                                    subText = `<div class="text-[9px] opacity-60">+${(actual - target).toFixed(1)}</div>`;
+                                } else {
+                                    cellClass += " cap-ok";
+                                }
                             }
                         }
 
-                        tableHtml += `<td class="${cellClass}">${content}</td>`;
+                        tableHtml += `<td class="${cellClass}">${valText}${subText}</td>`;
                     });
                     tableHtml += `</tr>`;
                 });
 
                 tableHtml += `</tbody></table>`;
                 content.innerHTML = tableHtml;
-
                 container.appendChild(header);
                 container.appendChild(content);
             });
         };
 
-        function getWeekOfMonth(date) {
-            const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-            return Math.ceil((date.getDate() + firstDay) / 7);
+        function getISOWeek(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
-        // Helpers de Janela
+        const formatDate = (d) => d.toISOString().split('T')[0];
+        const formatDateBr = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+        window.showSelectionModal = () => window.openModal('selection-modal');
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
-        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
-
+        window.deleteLog = async (id) => { if(confirm("Deseja excluir este registro permanentemente?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
     </script>
 </body>
 </html>
