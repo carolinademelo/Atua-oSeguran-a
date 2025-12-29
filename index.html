@@ -22,16 +22,15 @@
         .tab-inactive:hover { color: #334155; border-bottom: 2px solid #cbd5e1; }
         .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .slide-up { animation: slideUp 0.3s ease-out forwards; }
-        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         /* Estilos da Tabela de Capacidade */
-        .cap-cell { font-size: 0.7rem; padding: 4px; text-align: center; border: 1px solid #e2e8f0; vertical-align: middle; }
-        .cap-header { font-size: 0.75rem; font-weight: 700; background-color: #f1f5f9; text-transform: uppercase; padding: 8px; border: 1px solid #cbd5e1; }
-        .cap-warn-low { background-color: #fee2e2; color: #991b1b; } /* Vermelho claro */
-        .cap-warn-high { background-color: #ffedd5; color: #9a3412; } /* Laranja claro */
-        .cap-ok { background-color: #dcfce7; color: #166534; } /* Verde claro */
-        .cap-weekly-row { background-color: #e0e7ff; font-weight: bold; border-top: 2px solid #6366f1; }
+        .cap-cell { font-size: 0.75rem; padding: 6px; text-align: center; border: 1px solid #e2e8f0; vertical-align: middle; }
+        .cap-header { font-size: 0.75rem; font-weight: 700; background-color: #f8fafc; text-transform: uppercase; padding: 8px; border: 1px solid #e2e8f0; color: #64748b; }
+        .cap-warn-low { background-color: #fee2e2; color: #991b1b; font-weight: 600; } /* Vermelho */
+        .cap-warn-high { background-color: #ffedd5; color: #9a3412; font-weight: 600; } /* Laranja */
+        .cap-ok { background-color: #dcfce7; color: #166534; } /* Verde */
+        .cap-weekly-row { background-color: #e0e7ff; font-weight: bold; border-top: 2px solid #6366f1; color: #3730a3; }
+        .cap-date-col { font-weight: 600; color: #1e293b; background-color: #f8fafc; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
@@ -108,10 +107,15 @@
                     </div>
                 </div>
 
+                <div id="resumo-squads" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+
                 <div id="capacity-container" class="mb-8 overflow-x-auto border border-gray-200 rounded-xl shadow-sm bg-white hidden">
                     <div class="bg-gray-100 p-3 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-700 uppercase">Capacidade & Metas Diárias</h3>
-                        <span class="text-xs text-gray-500">Total calculado automaticamente por dia/squad</span>
+                        <h3 class="text-sm font-bold text-gray-700 uppercase flex items-center">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2 text-indigo-500"></i>
+                            Capacidade Diária & Metas
+                        </h3>
+                        <span class="text-xs text-gray-500">Calculado automaticamente (Realizado vs Meta)</span>
                     </div>
                     <div class="p-0">
                         <table class="w-full border-collapse" id="capacity-table">
@@ -119,7 +123,7 @@
                     </div>
                 </div>
 
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">Histórico de Registros</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center"><i data-lucide="list" class="w-5 h-5 mr-2"></i> Histórico Detalhado</h3>
                 <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200 mb-12">
                     <table class="w-full text-sm text-left text-gray-600">
                         <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
@@ -332,8 +336,8 @@
 
         // CONFIGURAÇÃO DAS METAS DIÁRIAS (EDITE AQUI)
         const METAS_SQUAD = {
-            "CB": 50,          // Exemplo: 50 horas por dia para CB
-            "SC": 40,          // Exemplo: 40 horas por dia para SC
+            "CB": 50,          
+            "SC": 40,          
             "Rec. Crédito": 30,
             "Monitoria": 10,
             "Coraliados": 20,
@@ -393,7 +397,102 @@
             return { found: false };
         };
 
-        // Auth & Load
+        // --- FUNÇÕES DE RENDERIZAÇÃO E ATUALIZAÇÃO ---
+        // (Definidas ANTES de serem usadas para garantir escopo seguro)
+
+        const updateStats = (list) => {
+            const squads = {};
+            list.forEach(i => { if(!squads[i.squad]) squads[i.squad] = 0; squads[i.squad] += i.horas; });
+            document.getElementById('resumo-squads').innerHTML = Object.keys(squads).map(s => { 
+                const color = getSquadColor(s); 
+                return `<div class="bg-white p-4 rounded-lg border-l-4 border-${color}-500 shadow-sm flex justify-between items-center transition hover:shadow-md">
+                            <div>
+                                <span class="text-xs font-bold text-${color}-600 uppercase tracking-wider">${s}</span>
+                                <p class="text-2xl font-bold text-gray-700">${squads[s].toFixed(1)}h</p>
+                            </div>
+                            <i data-lucide="pie-chart" class="w-6 h-6 text-${color}-200"></i>
+                        </div>`; 
+            }).join('');
+            lucide.createIcons();
+        };
+
+        const renderCapacityTable = () => {
+            const mes = document.getElementById('mes-select').value;
+            // Se não tiver mês ou a lista estiver vazia, esconde
+            if(!mes) {
+                document.getElementById('capacity-container').classList.add('hidden');
+                return;
+            }
+
+            // Garante visibilidade se houver registros ou apenas para mostrar a estrutura do mês
+            document.getElementById('capacity-container').classList.remove('hidden');
+
+            const [ano, mesNum] = mes.split('-').map(Number);
+            const daysInMonth = new Date(ano, mesNum, 0).getDate();
+            
+            const dataMap = {};
+            currentHistoryList.forEach(log => {
+                if(!dataMap[log.data]) dataMap[log.data] = {};
+                if(!dataMap[log.data][log.squad]) dataMap[log.data][log.squad] = 0;
+                dataMap[log.data][log.squad] += log.horas;
+            });
+
+            let html = `<thead><tr><th class="cap-header text-left cap-date-col">Data</th>`;
+            SQUADS_OPCOES.forEach(s => html += `<th class="cap-header">${s}</th>`);
+            html += `</tr></thead><tbody>`;
+
+            const weekTotals = {}; 
+            SQUADS_OPCOES.forEach(s => weekTotals[s] = 0);
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayStr = String(i).padStart(2, '0');
+                const fullDate = `${mes}-${dayStr}`;
+                const dateObj = new Date(ano, mesNum - 1, i);
+                const dayOfWeek = dateObj.getDay(); 
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+                html += `<tr class="${isWeekend ? 'bg-gray-50' : 'bg-white'} border-b border-gray-100 hover:bg-gray-50">
+                    <td class="cap-cell font-bold text-left whitespace-nowrap cap-date-col">${dayStr}/${String(mesNum).padStart(2,'0')}</td>`;
+
+                SQUADS_OPCOES.forEach(squad => {
+                    const actual = (dataMap[fullDate] && dataMap[fullDate][squad]) ? dataMap[fullDate][squad] : 0;
+                    const target = METAS_SQUAD[squad] || 0;
+                    weekTotals[squad] += actual;
+                    
+                    let cellClass = "cap-cell";
+                    let content = actual > 0 ? actual.toFixed(1) + 'h' : '-';
+                    
+                    if (target > 0) {
+                        if (actual < target) {
+                            cellClass += " cap-warn-low"; 
+                            content += `<br><span class="text-[9px] opacity-75">Faltam ${(target - actual).toFixed(1)}</span>`;
+                        } else if (actual > target) {
+                            cellClass += " cap-warn-high"; 
+                            content += `<br><span class="text-[9px] opacity-75">+${(actual - target).toFixed(1)}</span>`;
+                        } else {
+                             cellClass += " cap-ok";
+                        }
+                    }
+
+                    html += `<td class="${cellClass}">${content}</td>`;
+                });
+                html += `</tr>`;
+
+                if (dayOfWeek === 6 || i === daysInMonth) {
+                    html += `<tr class="cap-weekly-row"><td class="cap-cell text-left">TOTAL SEMANA</td>`;
+                    SQUADS_OPCOES.forEach(s => {
+                         html += `<td class="cap-cell">${weekTotals[s].toFixed(1)}h</td>`;
+                         weekTotals[s] = 0; 
+                    });
+                    html += `</tr>`;
+                }
+            }
+            html += `</tbody>`;
+            
+            document.getElementById('capacity-table').innerHTML = html;
+        };
+
+        // --- AUTH & INIT ---
         signInAnonymously(auth).then(() => {
             document.getElementById('auth-status').innerText = "Conectado";
             document.getElementById('auth-status').classList.remove('bg-indigo-800');
@@ -596,84 +695,6 @@
             window.loadHistorico();
         });
 
-        // --- RENDERIZAÇÃO DA CAPACIDADE ---
-        const renderCapacityTable = () => {
-            const mes = document.getElementById('mes-select').value;
-            if(!mes || currentHistoryList.length === 0) {
-                document.getElementById('capacity-container').classList.add('hidden');
-                return;
-            }
-
-            // 1. Setup dias do mês
-            const [ano, mesNum] = mes.split('-').map(Number);
-            const daysInMonth = new Date(ano, mesNum, 0).getDate();
-            
-            // 2. Agrupa dados: Date -> Squad -> Hours
-            const dataMap = {};
-            currentHistoryList.forEach(log => {
-                if(!dataMap[log.data]) dataMap[log.data] = {};
-                if(!dataMap[log.data][log.squad]) dataMap[log.data][log.squad] = 0;
-                dataMap[log.data][log.squad] += log.horas;
-            });
-
-            // 3. Constrói Tabela
-            let html = `<thead><tr><th class="cap-header text-left">Data</th>`;
-            SQUADS_OPCOES.forEach(s => html += `<th class="cap-header">${s}</th>`);
-            html += `</tr></thead><tbody>`;
-
-            const weekTotals = {}; 
-            SQUADS_OPCOES.forEach(s => weekTotals[s] = 0);
-
-            for (let i = 1; i <= daysInMonth; i++) {
-                const dayStr = String(i).padStart(2, '0');
-                const fullDate = `${mes}-${dayStr}`;
-                const dateObj = new Date(ano, mesNum - 1, i);
-                const dayOfWeek = dateObj.getDay(); // 0=Dom, 6=Sab
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-                html += `<tr class="${isWeekend ? 'bg-gray-50' : 'bg-white'}">
-                    <td class="cap-cell font-bold text-left whitespace-nowrap">${dayStr}/${String(mesNum).padStart(2,'0')}</td>`;
-
-                SQUADS_OPCOES.forEach(squad => {
-                    const actual = (dataMap[fullDate] && dataMap[fullDate][squad]) ? dataMap[fullDate][squad] : 0;
-                    const target = METAS_SQUAD[squad] || 0;
-                    weekTotals[squad] += actual;
-                    
-                    let cellClass = "cap-cell";
-                    let content = actual > 0 ? actual.toFixed(1) + 'h' : '-';
-                    
-                    if (target > 0) {
-                        if (actual < target) {
-                            cellClass += " cap-warn-low"; // Falta
-                            content += `<br><span class="text-[9px] opacity-75">Faltam ${(target - actual).toFixed(1)}</span>`;
-                        } else if (actual > target) {
-                            cellClass += " cap-warn-high"; // Excedeu
-                            content += `<br><span class="text-[9px] opacity-75">+${(actual - target).toFixed(1)}</span>`;
-                        } else {
-                             cellClass += " cap-ok";
-                        }
-                    }
-
-                    html += `<td class="${cellClass}">${content}</td>`;
-                });
-                html += `</tr>`;
-
-                // Fim de Semana (Sábado) ou Último dia do mês -> Imprime Totais
-                if (dayOfWeek === 6 || i === daysInMonth) {
-                    html += `<tr class="cap-weekly-row"><td class="cap-cell text-left">TOTAL SEMANA</td>`;
-                    SQUADS_OPCOES.forEach(s => {
-                         html += `<td class="cap-cell">${weekTotals[s].toFixed(1)}h</td>`;
-                         weekTotals[s] = 0; // Reset
-                    });
-                    html += `</tr>`;
-                }
-            }
-            html += `</tbody>`;
-            
-            document.getElementById('capacity-table').innerHTML = html;
-            document.getElementById('capacity-container').classList.remove('hidden');
-        };
-
         window.showImportModal = () => window.openModal('import-modal');
         window.handleImport = async () => {
             const text = document.getElementById('import-data-json').value;
@@ -724,6 +745,7 @@
             window.loadHistorico();
         };
 
+        // --- FUNÇÃO DE CARREGAMENTO BLINDADA ---
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -735,12 +757,16 @@
             currentHistoryList = []; 
             snap.forEach(d => currentHistoryList.push({id: d.id, ...d.data()}));
             
-            // ORDENAÇÃO: DATA DESC (MAIS RECENTE), DEPOIS HORA DESC (MAIS TARDE)
+            // ORDENAÇÃO SEGURA: Trata nulos ou indefinidos
             currentHistoryList.sort((a, b) => {
-                const dateDiff = b.data.localeCompare(a.data);
+                const dataA = a.data || "";
+                const dataB = b.data || "";
+                const dateDiff = dataB.localeCompare(dataA);
                 if (dateDiff !== 0) return dateDiff;
-                // Se as datas forem iguais, ordena pelo horário de entrada (Decrescente)
-                return b.entrada.localeCompare(a.entrada);
+                
+                const entA = a.entrada || "";
+                const entB = b.entrada || "";
+                return entB.localeCompare(entA);
             });
             
             tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
@@ -774,8 +800,10 @@
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
+            
+            // Atualiza os cartões e a tabela de metas APÓS carregar os dados
             updateStats(currentHistoryList);
-            renderCapacityTable(); // CHAMA A NOVA FUNÇÃO DE CAPACIDADE
+            renderCapacityTable(); 
         };
 
         window.loadRelatorioIndividual = async () => {
@@ -897,34 +925,6 @@
                 snap.forEach(d => { const i = d.data(); csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; });
                 const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `atuacao_${mes}.csv`;
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        };
-        const updateStats = (list) => {
-            const squads = {};
-            list.forEach(i => { if(!squads[i.squad]) squads[i.squad] = 0; squads[i.squad] += i.horas; });
-            document.getElementById('resumo-squads').innerHTML = Object.keys(squads).map(s => { const color = getSquadColor(s); return `<div class="bg-white p-4 rounded-lg border-l-4 border-${color}-500 shadow-sm flex justify-between items-center"><div><span class="text-xs font-bold text-${color}-600 uppercase tracking-wider">${s}</span><p class="text-2xl font-bold text-gray-700">${squads[s].toFixed(1)}h</p></div></div>`; }).join('');
-        };
-        const renderRelatorioSelect = () => { document.getElementById('relatorio-agente-select').innerHTML = '<option value="" disabled selected>Selecione...</option>' + currentAgents.map(a => `<option value="${a.nome}">${a.nome}</option>`).join(''); };
-        
-        window.exportIndividualCsv = async () => { 
-             const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
-             const mes = document.getElementById('relatorio-mes-select').value;
-             if(!nomeSelecionado || !mes) { showMessage("Selecione scooteira e mês.", "error"); return; }
-             
-             const agente = currentAgents.find(a => a.nome === nomeSelecionado);
-             const pseudo = agente ? agente.pseudo : "";
-             
-             const q = query(collection(db, logsCol), where("mes", "==", mes));
-             const snap = await getDocs(q);
-             let csv = `data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas\n`;
-             
-             snap.forEach(d => { 
-                 const i = d.data();
-                 if (i.scooteira === nomeSelecionado || i.scooteira === pseudo) {
-                    csv += `${i.data},${i.scooteira},${i.squad},${i.entrada},${i.saida},${i.horas}\n`; 
-                 }
-             });
-             const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `relatorio_${nomeSelecionado}_${mes}.csv`;
-             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
         window.onload = () => {
