@@ -9,32 +9,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
-
         .tab-active { border-bottom: 2px solid #4f46e5; color: #4f46e5; background-color: #eef2ff; }
         .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
         .tab-inactive:hover { color: #4f46e5; background-color: #f8fafc; }
-
-        .cap-warn-low { background-color: #fee2e2; color: #991b1b; }
-        .cap-warn-high { background-color: #ffedd5; color: #9a3412; }
-        .cap-ok { background-color: #dcfce7; color: #166534; }
-        
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #4f46e5; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; font-weight: 600; min-width: 250px; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -43,7 +32,6 @@
 <body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 pb-24">
 
     <div id="toast-container"></div>
-
     <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="window.processarExcel(this)">
 
     <div id="app" class="w-full max-w-full sm:max-w-7xl bg-white rounded-2xl shadow-xl overflow-hidden relative fade-in">
@@ -101,7 +89,12 @@
 
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-indigo-500"></i> Histórico</h2>
-                    <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border border-gray-300 rounded-lg p-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <div class="flex gap-2">
+                        <button id="btn-batch-edit" onclick="window.openBatchEditModal()" class="hidden bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold border border-indigo-200 hover:bg-indigo-200 flex items-center gap-2 transition-all">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Editar Selecionados (<span id="batch-count">0</span>)
+                        </button>
+                        <input type="month" id="mes-select" onchange="window.loadHistorico()" class="border border-gray-300 rounded-lg p-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
                 </div>
                 
                 <div id="resumo-squads" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8"></div>
@@ -111,6 +104,9 @@
                         <table class="w-full text-sm text-left relative">
                             <thead class="bg-gray-50 text-gray-500 uppercase text-xs sticky top-0 z-10 shadow-sm">
                                 <tr>
+                                    <th class="px-4 py-3 text-center w-10">
+                                        <input type="checkbox" id="check-all" onclick="window.toggleSelectAll()" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                    </th>
                                     <th class="px-6 py-3 font-semibold">Data</th>
                                     <th class="px-6 py-3 font-semibold">Nome / Pseudo</th>
                                     <th class="px-6 py-3 font-semibold">Squad</th>
@@ -219,6 +215,76 @@
         </div>
     </div>
 
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="p-4 bg-amber-500 text-white font-bold flex justify-between items-center">
+                <span class="flex items-center gap-2"><i data-lucide="edit-3"></i> Editar Registro</span>
+                <button onclick="window.closeModal('edit-modal')" class="hover:bg-amber-600 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Scooteira</label>
+                    <input type="text" id="edit-nome" class="w-full border p-2 rounded bg-gray-100" readonly>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Data</label>
+                    <input type="date" id="edit-data" class="w-full border p-2 rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Entrada</label>
+                        <input type="time" id="edit-entrada" class="w-full border p-2 rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Saída</label>
+                        <input type="time" id="edit-saida" class="w-full border p-2 rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Squad</label>
+                    <select id="edit-squad" class="w-full border p-2 rounded bg-white"></select>
+                </div>
+                <button onclick="window.saveEdit()" class="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded font-bold shadow mt-2">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="batch-edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="p-4 bg-indigo-600 text-white font-bold flex justify-between items-center">
+                <span class="flex items-center gap-2"><i data-lucide="layers"></i> Edição em Lote</span>
+                <button onclick="window.closeModal('batch-edit-modal')" class="hover:bg-indigo-700 p-1 rounded"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-100">
+                    Preencha <b>apenas</b> os campos que deseja alterar para todos os registros selecionados. Campos vazios não serão alterados.
+                </p>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Nova Data (Opcional)</label>
+                    <input type="date" id="batch-data" class="w-full border p-2 rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Nova Entrada</label>
+                        <input type="time" id="batch-entrada" class="w-full border p-2 rounded">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Nova Saída</label>
+                        <input type="time" id="batch-saida" class="w-full border p-2 rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Novo Squad</label>
+                    <select id="batch-squad" class="w-full border p-2 rounded bg-white">
+                        <option value="">-- Não Alterar --</option>
+                    </select>
+                </div>
+                <button onclick="window.saveBatchEdit()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded font-bold shadow mt-2">Aplicar a Todos</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -244,7 +310,6 @@
             { id: "Monitoria", color: "cyan", label: "Monitoria" }
         ];
 
-        // 0 = Domingo, 1 = Segunda... 6 = Sábado
         const METAS_SQUAD = {
             "SC": { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
             "CB": { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
@@ -252,7 +317,6 @@
             "OJR": { 1: 5, 2: 5, 3: 5, 4: 5, 5: 4, 6: 0, 0: 0 }
         };
 
-        // FERIADOS NACIONAIS 2025/2026
         const FERIADOS = [
             '2025-01-01', '2025-04-18', '2025-04-21', '2025-05-01', '2025-09-07', '2025-10-12', '2025-11-02', '2025-11-15', '2025-11-20', '2025-12-25',
             '2026-01-01', '2026-04-03', '2026-04-21', '2026-05-01', '2026-09-07', '2026-10-12', '2026-11-02', '2026-11-15', '2026-11-20', '2026-12-25'
@@ -264,7 +328,6 @@
             unsubscribeHistory: null
         };
 
-        // --- UX HELPERS ---
         const showToast = (msg, type = 'success') => {
             const container = document.getElementById('toast-container');
             const el = document.createElement('div');
@@ -295,7 +358,6 @@
             return sq ? sq.color : "slate";
         };
 
-        // --- INIT ---
         signInAnonymously(auth).then(() => {
             document.getElementById('auth-status').innerText = "ONLINE";
             document.getElementById('auth-status').classList.replace('bg-indigo-800/50', 'bg-emerald-600');
@@ -311,9 +373,13 @@
             document.getElementById('mes-select').value = mesAtual;
             document.getElementById('relatorio-mes-select').value = mesAtual;
             document.getElementById('data-atuacao').valueAsDate = new Date(); 
-            
             document.getElementById('new-squad').innerHTML = SQUADS_CONFIG.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
             
+            // Popula os selects dos modais de edição
+            const squadOptions = SQUADS_CONFIG.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
+            document.getElementById('edit-squad').innerHTML = squadOptions;
+            document.getElementById('batch-squad').innerHTML = `<option value="">-- Não Alterar --</option>` + squadOptions;
+
             await loadAgents(); 
             loadHistorico(); 
         }
@@ -344,26 +410,22 @@
         window.processarExcel = async (input) => {
             const file = input.files[0];
             if (!file) return;
-
             setLoading(true);
             const reader = new FileReader();
-
             reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { raw: false });
-
                     if (jsonData.length === 0) throw new Error("Planilha vazia");
 
                     const batchPromises = [];
                     const duplicados = [];
                     let salvos = 0;
-                    
                     const datasNoExcel = [...new Set(jsonData.map(row => formatarDataExcel(row['Data'])))];
-                    
                     const registrosExistentes = new Set();
+                    
                     for(const d of datasNoExcel) {
                         if(!d) continue;
                         const q = query(collection(db, COLLECTIONS.LOGS), where("data", "==", d));
@@ -377,21 +439,16 @@
                         const entrada = row['Entrada'] || row['Inicio'];
                         const saida = row['Saida'] || row['Fim'];
                         const squad = row['Squad'] || 'Outro';
-
                         if (!nome || !dataBr || !entrada || !saida) continue;
-
                         const dataIso = formatarDataExcel(dataBr);
-                        
                         if (registrosExistentes.has(`${nome}_${dataIso}`)) {
                             duplicados.push(`${nome} (${dataIso})`);
                             continue;
                         }
-
                         const d1 = new Date(`2000-01-01T${entrada}`);
                         const d2 = new Date(`2000-01-01T${saida}`);
                         let horas = (d2 - d1) / 3600000;
                         if (horas < 0) horas += 24;
-
                         batchPromises.push(addDoc(collection(db, COLLECTIONS.LOGS), {
                             data: dataIso,
                             mes: dataIso.substring(0, 7),
@@ -405,18 +462,14 @@
                         salvos++;
                         registrosExistentes.add(`${nome}_${dataIso}`);
                     }
-
                     await Promise.all(batchPromises);
-                    
                     let msg = `${salvos} registros importados!`;
                     if(duplicados.length > 0) msg += ` ${duplicados.length} duplicados ignorados.`;
-                    
                     alert(msg);
                     input.value = ""; 
-                    
                 } catch (err) {
                     console.error(err);
-                    alert("Erro ao ler Excel. Verifique o formato (Colunas: Data, Nome, Squad, Entrada, Saida)");
+                    alert("Erro ao ler Excel.");
                 } finally {
                     setLoading(false);
                 }
@@ -433,47 +486,28 @@
             return val;
         }
 
-        // --- RENDERIZAÇÃO ---
         const renderAgentsTable = () => {
             const tbody = document.getElementById('cadastro-list-body');
             tbody.innerHTML = state.agents.sort((a,b) => a.nome.localeCompare(b.nome)).map(a => `
                 <tr class="hover:bg-gray-50 border-b group transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="font-bold text-gray-800">${a.nome}</div>
-                        <div class="text-xs text-gray-400">Pseudo: ${a.pseudo} • ${a.squadPadrao}</div>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <select onchange="window.toggleStatus('${a.nome}', this.value)" class="text-xs font-bold uppercase rounded-full px-2 py-1 border-0 cursor-pointer focus:ring-2 ${a.status === 'Ativa' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                            <option value="Ativa" ${a.status === 'Ativa' ? 'selected' : ''}>Ativa</option>
-                            <option value="Distrato" ${a.status === 'Distrato' ? 'selected' : ''}>Distrato</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteAgent('${a.nome}')" class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </td>
+                    <td class="px-6 py-4"><div class="font-bold text-gray-800">${a.nome}</div><div class="text-xs text-gray-400">Pseudo: ${a.pseudo} • ${a.squadPadrao}</div></td>
+                    <td class="px-6 py-4 text-center"><select onchange="window.toggleStatus('${a.nome}', this.value)" class="text-xs font-bold uppercase rounded-full px-2 py-1 border-0 cursor-pointer focus:ring-2 ${a.status === 'Ativa' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}"><option value="Ativa" ${a.status === 'Ativa' ? 'selected' : ''}>Ativa</option><option value="Distrato" ${a.status === 'Distrato' ? 'selected' : ''}>Distrato</option></select></td>
+                    <td class="px-6 py-4 text-right"><button onclick="window.deleteAgent('${a.nome}')" class="text-gray-300 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                 </tr>`).join('');
             lucide.createIcons();
         };
 
         window.toggleStatus = async (nome, novoStatus) => {
-            try {
-                await updateDoc(doc(db, COLLECTIONS.AGENTS, nome), { status: novoStatus });
-                showToast("Status atualizado!");
-                loadAgents(); 
-            } catch(e) { showToast("Erro ao atualizar.", "error"); }
+            try { await updateDoc(doc(db, COLLECTIONS.AGENTS, nome), { status: novoStatus }); showToast("Status atualizado!"); loadAgents(); } catch(e) { showToast("Erro ao atualizar.", "error"); }
         };
 
+        // --- HISTÓRICO E EDIÇÃO ---
         window.loadHistorico = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
-
             setLoading(true);
             if(state.unsubscribeHistory) state.unsubscribeHistory(); 
-
             const q = query(collection(db, COLLECTIONS.LOGS), where("mes", "==", mes));
-            
             state.unsubscribeHistory = onSnapshot(q, (snapshot) => {
                 state.history = [];
                 snapshot.forEach(d => {
@@ -481,85 +515,172 @@
                     item.squad = normalizarSquad(item.squad);
                     state.history.push(item);
                 });
-                
-                // ORDENAÇÃO: Data Recente (Topo) -> Data Antiga, Hora 14h -> Hora 08h
-                state.history.sort((a,b) => 
-                    b.data.localeCompare(a.data) ||       
-                    b.entrada.localeCompare(a.entrada) || 
-                    a.squad.localeCompare(b.squad) ||     
-                    a.scooteira.localeCompare(b.scooteira)
-                );
-                
+                state.history.sort((a,b) => b.data.localeCompare(a.data) || b.entrada.localeCompare(a.entrada) || a.squad.localeCompare(b.squad));
                 renderHistoricoTable();
                 updateStats();
+                window.updateBatchUI(); // Atualiza botão de lote
                 setLoading(false);
-                
                 const activeTab = document.querySelector('.tab-active').id;
                 if(activeTab === 'tab-capacidade') window.renderCapacityAccordion();
                 if(activeTab === 'tab-trocas') window.renderTrocasAccordion();
-
-            }, (error) => {
-                console.error(error);
-                showToast("Erro ao sincronizar histórico.", "error");
-                setLoading(false);
-            });
+            }, (error) => { console.error(error); showToast("Erro ao sincronizar histórico.", "error"); setLoading(false); });
         };
 
         const renderHistoricoTable = () => {
             const tbody = document.getElementById('historico-body');
-            if(state.history.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-gray-400 italic">Nenhum registro encontrado neste mês.</td></tr>`;
-                return;
-            }
-
+            if(state.history.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400 italic">Nenhum registro encontrado neste mês.</td></tr>`; return; }
             tbody.innerHTML = state.history.map(item => {
                 const agente = state.agents.find(a => a.nome === item.scooteira || a.pseudo === item.scooteira);
                 let contratado = 0;
-                
                 const nomeExibicao = agente ? agente.nome : item.scooteira;
                 const pseudoExibicao = (agente && agente.pseudo && agente.pseudo !== agente.nome) ? agente.pseudo : "";
-
                 if (agente) {
                     const h1 = new Date(`2000-01-01T${agente.entradaPadrao}`);
                     const h2 = new Date(`2000-01-01T${agente.saidaPadrao}`);
                     contratado = (h2 - h1) / 3600000;
                     if (contratado < 0) contratado += 24;
                 }
-                
                 const diff = Math.abs(item.horas - contratado);
                 let corBadge = "bg-emerald-100 text-emerald-800"; 
-                if (diff > 0.1) { 
-                    corBadge = item.horas < contratado ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800";
-                }
+                if (diff > 0.1) corBadge = item.horas < contratado ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800";
                 const colorName = getSquadColor(item.squad);
-
+                
                 return `
                 <tr class="hover:bg-gray-50 border-b transition-colors">
+                    <td class="px-4 py-4 text-center"><input type="checkbox" value="${item.id}" class="history-checkbox rounded text-indigo-600 focus:ring-indigo-500" onclick="window.updateBatchUI()"></td>
                     <td class="px-6 py-4 text-gray-600 font-mono text-xs">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4">
-                        <div class="font-bold text-gray-700">${nomeExibicao}</div>
-                        ${pseudoExibicao ? `<div class="text-xs text-gray-400 font-normal">${pseudoExibicao}</div>` : ''}
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-${colorName}-100 text-${colorName}-700 border border-${colorName}-200">
-                            ${item.squad}
-                        </span>
-                    </td>
+                    <td class="px-6 py-4"><div class="font-bold text-gray-700">${nomeExibicao}</div>${pseudoExibicao ? `<div class="text-xs text-gray-400 font-normal">${pseudoExibicao}</div>` : ''}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-${colorName}-100 text-${colorName}-700 border border-${colorName}-200">${item.squad}</span></td>
                     <td class="px-6 py-4 text-xs text-center font-mono text-gray-500">${item.entrada} - ${item.saida}</td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="inline-block px-2 py-1 rounded text-xs font-bold ${corBadge}">
-                            ${item.horas.toFixed(2)}h
-                        </span>
-                        <span class="text-[10px] text-gray-400 ml-1">/ ${contratado.toFixed(1)}h</span>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteLog('${item.id}')" class="text-gray-300 hover:text-red-500 p-2 hover:bg-red-50 rounded transition-all" title="Excluir">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                    <td class="px-6 py-4 text-center"><span class="inline-block px-2 py-1 rounded text-xs font-bold ${corBadge}">${item.horas.toFixed(2)}h</span><span class="text-[10px] text-gray-400 ml-1">/ ${contratado.toFixed(1)}h</span></td>
+                    <td class="px-6 py-4 text-right flex justify-end gap-2">
+                        <button onclick="window.openEditModal('${item.id}')" class="text-gray-400 hover:text-amber-500 p-2 hover:bg-amber-50 rounded" title="Editar"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteLog('${item.id}')" class="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>`;
             }).join('');
             lucide.createIcons();
+        };
+
+        // --- LÓGICA DE EDIÇÃO ---
+        window.openEditModal = (id) => {
+            const item = state.history.find(i => i.id === id);
+            if(!item) return;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nome').value = item.scooteira;
+            document.getElementById('edit-data').value = item.data;
+            document.getElementById('edit-entrada').value = item.entrada;
+            document.getElementById('edit-saida').value = item.saida;
+            document.getElementById('edit-squad').value = item.squad;
+            window.openModal('edit-modal');
+        };
+
+        window.saveEdit = async () => {
+            const id = document.getElementById('edit-id').value;
+            const dataStr = document.getElementById('edit-data').value;
+            const ent = document.getElementById('edit-entrada').value;
+            const sai = document.getElementById('edit-saida').value;
+            const sq = document.getElementById('edit-squad').value;
+
+            if(!dataStr || !ent || !sai) return alert("Preencha todos os campos.");
+
+            const d1 = new Date(`2000-01-01T${ent}`);
+            const d2 = new Date(`2000-01-01T${sai}`);
+            let diff = (d2 - d1) / 3600000;
+            if (diff < 0) diff += 24;
+
+            setLoading(true);
+            try {
+                await updateDoc(doc(db, COLLECTIONS.LOGS, id), {
+                    data: dataStr,
+                    mes: dataStr.substring(0, 7),
+                    entrada: ent,
+                    saida: sai,
+                    squad: sq,
+                    horas: parseFloat(diff.toFixed(2))
+                });
+                showToast("Registro atualizado!");
+                window.closeModal('edit-modal');
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao editar.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // --- LÓGICA DE LOTE (BATCH) ---
+        window.toggleSelectAll = () => {
+            const master = document.getElementById('check-all');
+            document.querySelectorAll('.history-checkbox').forEach(cb => cb.checked = master.checked);
+            window.updateBatchUI();
+        };
+
+        window.updateBatchUI = () => {
+            const count = document.querySelectorAll('.history-checkbox:checked').length;
+            const btn = document.getElementById('btn-batch-edit');
+            document.getElementById('batch-count').innerText = count;
+            if(count > 0) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+        };
+
+        window.openBatchEditModal = () => {
+            document.getElementById('batch-data').value = "";
+            document.getElementById('batch-entrada').value = "";
+            document.getElementById('batch-saida').value = "";
+            document.getElementById('batch-squad').value = "";
+            window.openModal('batch-edit-modal');
+        };
+
+        window.saveBatchEdit = async () => {
+            const ids = Array.from(document.querySelectorAll('.history-checkbox:checked')).map(cb => cb.value);
+            if(ids.length === 0) return;
+
+            const newData = document.getElementById('batch-data').value;
+            const newEnt = document.getElementById('batch-entrada').value;
+            const newSai = document.getElementById('batch-saida').value;
+            const newSq = document.getElementById('batch-squad').value;
+
+            if(!newData && !newEnt && !newSai && !newSq) return alert("Preencha pelo menos um campo para alterar.");
+
+            setLoading(true);
+            const promises = [];
+
+            ids.forEach(id => {
+                const currentItem = state.history.find(h => h.id === id);
+                if(!currentItem) return;
+
+                const finalData = newData || currentItem.data;
+                const finalEnt = newEnt || currentItem.entrada;
+                const finalSai = newSai || currentItem.saida;
+                const finalSq = newSq || currentItem.squad;
+
+                const d1 = new Date(`2000-01-01T${finalEnt}`);
+                const d2 = new Date(`2000-01-01T${finalSai}`);
+                let diff = (d2 - d1) / 3600000;
+                if (diff < 0) diff += 24;
+
+                promises.push(updateDoc(doc(db, COLLECTIONS.LOGS, id), {
+                    data: finalData,
+                    mes: finalData.substring(0, 7),
+                    entrada: finalEnt,
+                    saida: finalSai,
+                    squad: finalSq,
+                    horas: parseFloat(diff.toFixed(2))
+                }));
+            });
+
+            try {
+                await Promise.all(promises);
+                showToast(`${promises.length} registros atualizados!`);
+                window.closeModal('batch-edit-modal');
+                document.getElementById('check-all').checked = false;
+                window.updateBatchUI();
+            } catch(e) {
+                console.error(e);
+                alert("Erro na edição em lote.");
+            } finally {
+                setLoading(false);
+            }
         };
 
         const updateStats = () => {
@@ -567,11 +688,7 @@
             state.history.forEach(i => { totals[i.squad] = (totals[i.squad] || 0) + i.horas; });
             document.getElementById('resumo-squads').innerHTML = SQUADS_CONFIG.map(s => {
                 const val = (totals[s.id] || 0);
-                return `
-                <div class="bg-white p-4 rounded-xl border-l-4 border-${s.color}-500 shadow-sm flex flex-col justify-between">
-                    <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">${s.id}</div>
-                    <div class="text-2xl font-bold text-gray-700">${val.toFixed(1)}<span class="text-sm font-normal text-gray-400 ml-1">h</span></div>
-                </div>`
+                return `<div class="bg-white p-4 rounded-xl border-l-4 border-${s.color}-500 shadow-sm flex flex-col justify-between"><div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">${s.id}</div><div class="text-2xl font-bold text-gray-700">${val.toFixed(1)}<span class="text-sm font-normal text-gray-400 ml-1">h</span></div></div>`
             }).join('');
         };
 
@@ -581,14 +698,7 @@
         window.renderSelectionList = () => {
             const ativas = state.agents.filter(a => a.status === 'Ativa');
             const container = document.getElementById('agentes-checkbox-list');
-            container.innerHTML = ativas.map(a => `
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all">
-                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300">
-                    <div>
-                        <span class="text-sm font-bold text-gray-700 block">${a.nome}</span>
-                        <span class="text-xs text-gray-400">${a.squadPadrao}</span>
-                    </div>
-                </label>`).join('');
+            container.innerHTML = ativas.map(a => `<label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200 transition-all"><input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"><div><span class="text-sm font-bold text-gray-700 block">${a.nome}</span><span class="text-xs text-gray-400">${a.squadPadrao}</span></div></label>`).join('');
         };
 
         window.filterSelectionList = () => {
@@ -603,202 +713,79 @@
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const checkboxes = document.querySelectorAll('.agent-checkbox:checked');
-            
             if (!data) return showToast("Selecione a data de atuação.", "error");
             if (checkboxes.length === 0) return showToast("Selecione pelo menos uma pessoa.", "error");
-
             const selectedNames = Array.from(checkboxes).map(cb => cb.value);
-            
             document.getElementById('agentes-detalhes-container').innerHTML = selectedNames.map(nome => {
                 const a = state.agents.find(x => x.nome === nome);
                 const color = getSquadColor(a.squadPadrao);
-                return `
-                <div class="confirm-row p-4 border rounded-xl bg-white shadow-sm relative flex flex-col gap-3" data-nome="${a.nome}">
-                    <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    <div class="flex items-center gap-2">
-                         <div class="font-bold text-gray-800">${a.nome}</div>
-                         <span class="text-[10px] bg-gray-100 px-2 rounded text-gray-500">${a.squadPadrao}</span>
-                    </div>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                            <label class="text-[10px] uppercase font-bold text-gray-400">Entrada</label>
-                            <input type="time" value="${a.entradaPadrao}" class="confirm-ent w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="text-[10px] uppercase font-bold text-gray-400">Saída</label>
-                            <input type="time" value="${a.saidaPadrao}" class="confirm-sai w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="text-[10px] uppercase font-bold text-gray-400">Squad Real</label>
-                            <select class="confirm-squad w-full border border-gray-300 p-2 rounded-lg text-sm bg-white">
-                                ${SQUADS_CONFIG.map(s => `<option value="${s.id}" ${s.id === a.squadPadrao ? 'selected' : ''}>${s.label}</option>`).join('')}
-                                <option value="Outro">Outro</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>`;
+                return `<div class="confirm-row p-4 border rounded-xl bg-white shadow-sm relative flex flex-col gap-3" data-nome="${a.nome}"><button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button><div class="flex items-center gap-2"><div class="font-bold text-gray-800">${a.nome}</div><span class="text-[10px] bg-gray-100 px-2 rounded text-gray-500">${a.squadPadrao}</span></div><div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><div><label class="text-[10px] uppercase font-bold text-gray-400">Entrada</label><input type="time" value="${a.entradaPadrao}" class="confirm-ent w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"></div><div><label class="text-[10px] uppercase font-bold text-gray-400">Saída</label><input type="time" value="${a.saidaPadrao}" class="confirm-sai w-full border border-gray-300 p-2 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500"></div><div><label class="text-[10px] uppercase font-bold text-gray-400">Squad Real</label><select class="confirm-squad w-full border border-gray-300 p-2 rounded-lg text-sm bg-white">${SQUADS_CONFIG.map(s => `<option value="${s.id}" ${s.id === a.squadPadrao ? 'selected' : ''}>${s.label}</option>`).join('')}<option value="Outro">Outro</option></select></div></div></div>`;
             }).join('');
-            
             lucide.createIcons();
             window.openModal('details-modal');
-            
             const btnLabel = document.getElementById('selected-count-label');
             btnLabel.innerText = `${selectedNames.length} Selecionada(s)`;
             btnLabel.classList.add('text-indigo-600', 'font-bold');
         };
 
-        // --- SALVAMENTO COM TRAVA DE DUPLICIDADE ---
         document.getElementById('details-form').onsubmit = async (e) => {
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const rows = document.querySelectorAll('.confirm-row');
-            
             if(rows.length === 0) return window.closeModal('details-modal');
-
             setLoading(true);
-
             try {
-                // 1. Busca todos os registros QUE JÁ EXISTEM para essa data
                 const qCheck = query(collection(db, COLLECTIONS.LOGS), where("data", "==", dataStr));
                 const snapCheck = await getDocs(qCheck);
-                
                 const nomesJaRegistrados = new Set();
-                snapCheck.forEach(doc => {
-                    const d = doc.data();
-                    nomesJaRegistrados.add(d.scooteira);
-                });
-
+                snapCheck.forEach(doc => { const d = doc.data(); nomesJaRegistrados.add(d.scooteira); });
                 const duplicados = [];
                 const paraSalvar = [];
-
                 for (const row of rows) {
                     const nome = row.dataset.nome;
-                    
-                    if (nomesJaRegistrados.has(nome)) {
-                        duplicados.push(nome); 
-                        continue; 
-                    }
-
+                    if (nomesJaRegistrados.has(nome)) { duplicados.push(nome); continue; }
                     const ent = row.querySelector('.confirm-ent').value;
                     const sai = row.querySelector('.confirm-sai').value;
                     const sq = row.querySelector('.confirm-squad').value;
-                    
                     const d1 = new Date(`2000-01-01T${ent}`);
                     const d2 = new Date(`2000-01-01T${sai}`);
                     let diff = (d2 - d1) / 3600000;
                     if (diff < 0) diff += 24; 
-
                     if(isNaN(diff)) continue;
-
-                    paraSalvar.push({ 
-                        data: dataStr, 
-                        mes: dataStr.substring(0, 7), 
-                        scooteira: nome, 
-                        squad: sq, 
-                        entrada: ent, 
-                        saida: sai, 
-                        horas: parseFloat(diff.toFixed(2)), 
-                        timestamp: new Date() 
-                    });
+                    paraSalvar.push({ data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
                 }
-                
-                if (duplicados.length > 0) {
-                    alert(`⚠️ ATENÇÃO: Os seguintes nomes JÁ TÊM registro no dia ${dataStr.split('-').reverse().join('/')}:\n\n${duplicados.join(', ')}\n\nNenhum registro foi salvo. Remova as duplicatas da lista e tente novamente.`);
-                    setLoading(false);
-                    return; 
-                }
-
-                if (paraSalvar.length > 0) {
-                    await Promise.all(paraSalvar.map(dados => addDoc(collection(db, COLLECTIONS.LOGS), dados)));
-                    showToast(`${paraSalvar.length} registros salvos com sucesso!`);
-                } else {
-                    showToast("Nenhum dado válido para salvar.", "error");
-                }
-                
+                if (duplicados.length > 0) { alert(`⚠️ ATENÇÃO: Os seguintes nomes JÁ TÊM registro no dia ${dataStr.split('-').reverse().join('/')}:\n\n${duplicados.join(', ')}\n\nNenhum registro foi salvo.`); setLoading(false); return; }
+                if (paraSalvar.length > 0) { await Promise.all(paraSalvar.map(dados => addDoc(collection(db, COLLECTIONS.LOGS), dados))); showToast(`${paraSalvar.length} registros salvos com sucesso!`); } else { showToast("Nenhum dado válido para salvar.", "error"); }
                 document.getElementById('selected-count-label').innerText = "Selecionar Scooteiras...";
                 document.getElementById('selected-count-label').classList.remove('text-indigo-600', 'font-bold');
                 document.querySelectorAll('.agent-checkbox').forEach(cb => cb.checked = false);
-                
                 window.closeModal('details-modal');
-
-            } catch(error) {
-                console.error(error);
-                showToast("Erro ao processar dados.", "error");
-            } finally {
-                setLoading(false);
-            }
+            } catch(error) { console.error(error); showToast("Erro ao processar dados.", "error"); } finally { setLoading(false); }
         };
 
-        window.deleteLog = async (id) => { 
-            if(confirm("Tem certeza que deseja excluir este registro?")) { 
-                try {
-                    await deleteDoc(doc(db, COLLECTIONS.LOGS, id)); 
-                    showToast("Registro excluído.");
-                } catch(e) { showToast("Erro ao excluir.", "error"); }
-            } 
-        };
+        window.deleteLog = async (id) => { if(confirm("Tem certeza que deseja excluir este registro?")) { try { await deleteDoc(doc(db, COLLECTIONS.LOGS, id)); showToast("Registro excluído."); } catch(e) { showToast("Erro ao excluir.", "error"); } } };
 
-        window.switchTab = (tabId) => {
-            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('[id^="tab-"]').forEach(el => {
-                el.className = "flex-1 py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap focus:outline-none";
-            });
-            const content = document.getElementById(`content-${tabId}`);
-            const btn = document.getElementById(`tab-${tabId}`);
-            content.classList.remove('hidden');
-            btn.className = "flex-1 py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap focus:outline-none";
-            if (tabId === 'capacidade') window.renderCapacityAccordion();
-            if (tabId === 'trocas') window.renderTrocasAccordion();
-            lucide.createIcons();
-        };
-
-        window.renderRelatorioSelect = () => {
-             document.getElementById('relatorio-agente-select').innerHTML = '<option value="" disabled selected>Escolher...</option>' + 
-                state.agents.sort((a,b) => a.nome.localeCompare(b.nome)).map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
-        };
-
-        function getISOWeek(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-
-        // --- CAPACIDADE (Com Feriados) ---
         window.renderCapacityAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
             const [ano, mesNum] = mes.split('-').map(Number);
             const container = document.getElementById('capacity-accordion-container');
             container.innerHTML = "";
-            if (state.history.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 py-8 italic">Sem dados neste mês para calcular a capacidade.</div>';
-                return;
-            }
+            if (state.history.length === 0) { container.innerHTML = '<div class="text-center text-gray-400 py-8 italic">Sem dados neste mês para calcular a capacidade.</div>'; return; }
             const dataMap = {};
-            state.history.forEach(log => {
-                if(!dataMap[log.data]) dataMap[log.data] = {};
-                dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
-            });
+            state.history.forEach(log => { if(!dataMap[log.data]) dataMap[log.data] = {}; dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas; });
             const weeks = {};
             const first = new Date(ano, mesNum - 1, 1);
             const last = new Date(ano, mesNum, 0);
-            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
-                const w = getISOWeek(new Date(d));
-                if (!weeks[w]) weeks[w] = [];
-                weeks[w].push(new Date(d));
-            }
+            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) { const w = getISOWeek(new Date(d)); if (!weeks[w]) weeks[w] = []; weeks[w].push(new Date(d)); }
+            
             Object.keys(weeks).forEach(wNum => {
                 const days = weeks[wNum];
                 const weekId = `week-${wNum}`;
                 const header = document.createElement('div');
                 header.className = "cursor-pointer bg-white border border-gray-200 p-4 rounded-lg mb-2 hover:border-indigo-500 hover:shadow-md transition-all flex justify-between items-center";
                 header.innerHTML = `<div><span class="font-bold text-indigo-700">Semana ${wNum}</span></div><i data-lucide="chevron-down" class="text-gray-400 w-4 h-4"></i>`;
-                header.onclick = () => {
-                    const content = document.getElementById(weekId);
-                    content.classList.toggle('hidden');
-                    lucide.createIcons();
-                };
+                header.onclick = () => { document.getElementById(weekId).classList.toggle('hidden'); lucide.createIcons(); };
                 const content = document.createElement('div');
                 content.id = weekId;
                 content.className = "hidden mb-6 border border-gray-200 border-t-0 rounded-b-lg overflow-x-auto bg-white p-2 shadow-inner";
@@ -808,13 +795,10 @@
                 
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
-                    // --- VERIFICAÇÃO DE FERIADO ---
-                    const isFeriado = FERIADOS.includes(dateKey);
+                    const isFeriado = FERIADOS.includes(dateKey); 
                     const dow = isFeriado ? 0 : dateObj.getDay(); 
-                    
                     const labelDia = dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'}) + (isFeriado ? ' (Fer)' : '');
                     const styleDia = isFeriado ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600';
-
                     tableHtml += `<tr><td class="p-2 border font-bold ${styleDia}">${labelDia}</td>`;
                     SQUADS_CONFIG.forEach(sq => {
                         const squadName = sq.id;
@@ -823,16 +807,9 @@
                         let cellClass = "p-2 border text-center";
                         let badgeClass = "text-gray-400";
                         if (target > 0) {
-                            if (actual < target) {
-                                cellClass += " bg-red-50 text-red-800";
-                                badgeClass = "text-red-300";
-                            } else if (actual > target) {
-                                cellClass += " bg-amber-50 text-amber-800";
-                                badgeClass = "text-amber-300";
-                            } else {
-                                cellClass += " bg-emerald-50 text-emerald-800";
-                                badgeClass = "text-emerald-300";
-                            }
+                            if (actual < target) { cellClass += " bg-red-50 text-red-800"; badgeClass = "text-red-300"; }
+                            else if (actual > target) { cellClass += " bg-amber-50 text-amber-800"; badgeClass = "text-amber-300"; }
+                            else { cellClass += " bg-emerald-50 text-emerald-800"; badgeClass = "text-emerald-300"; }
                         }
                         tableHtml += `<td class="${cellClass}"><div class="font-bold">${actual.toFixed(1)}h</div><div class="text-[9px] ${badgeClass}">Meta: ${target}</div></td>`;
                     });
@@ -845,7 +822,6 @@
             lucide.createIcons();
         };
 
-        // --- CORREÇÃO DE DUPLICAÇÃO NAS TROCAS ---
         window.renderTrocasAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -857,21 +833,14 @@
             const weeks = {};
             const first = new Date(ano, mesNum - 1, 1);
             const last = new Date(ano, mesNum, 0);
-            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
-                const w = getISOWeek(new Date(d));
-                if (!weeks[w]) weeks[w] = [];
-                weeks[w].push(new Date(d));
-            }
+            for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) { const w = getISOWeek(new Date(d)); if (!weeks[w]) weeks[w] = []; weeks[w].push(new Date(d)); }
             Object.keys(weeks).forEach(wNum => {
                 const days = weeks[wNum];
                 const weekId = `trocas-week-${wNum}`;
                 const header = document.createElement('div');
                 header.className = "cursor-pointer bg-white border border-gray-200 p-4 rounded-lg mb-2 hover:border-indigo-500 hover:shadow-md transition-all flex justify-between items-center";
                 header.innerHTML = `<div><span class="font-bold text-indigo-700">Trocas Semana ${wNum}</span></div><i data-lucide="chevron-down" class="text-gray-400 w-4 h-4"></i>`;
-                header.onclick = () => {
-                    document.getElementById(weekId).classList.toggle('hidden');
-                    lucide.createIcons();
-                };
+                header.onclick = () => { document.getElementById(weekId).classList.toggle('hidden'); lucide.createIcons(); };
                 const content = document.createElement('div');
                 content.id = weekId;
                 content.className = "hidden mb-4 p-4 bg-white border border-t-0 rounded-b-lg shadow-inner";
@@ -881,29 +850,20 @@
                     const logsDia = dailyLogs[dateKey] || [];
                     const diaSeman = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase().replace('.',''); 
                     
-                    // --- NOVA LÓGICA DE EXTRA ---
                     const extras = logsDia.filter(l => {
                         const a = state.agents.find(ag => ag.nome === l.scooteira || ag.pseudo === l.scooteira);
                         if (!a) return false;
-                        
                         const turno = a.turnoPadrao.toLowerCase();
                         const ehDiaDeTrabalho = turno.includes(diaSeman) || turno.includes("seg-sex");
-                        
                         let horarioDiferente = false;
                         if(ehDiaDeTrabalho) {
                             const entradaPadrao = parseInt(a.entradaPadrao.split(':')[0]);
                             const entradaReal = parseInt(l.entrada.split(':')[0]);
-                            // Se diferença for maior que 2h, considera extra (cobrindo turno diferente)
-                            if(Math.abs(entradaReal - entradaPadrao) > 2) {
-                                horarioDiferente = true;
-                            }
+                            if(Math.abs(entradaReal - entradaPadrao) > 2) horarioDiferente = true;
                         }
-
-                        // É Extra se não for dia de trabalho OU se for dia mas horário muito diferente
                         return !ehDiaDeTrabalho || horarioDiferente;
                     });
 
-                    // Lista de ausentes (mutável)
                     const ausentes = state.agents.filter(a => {
                         if (a.status === 'Distrato') return false;
                         const turno = a.turnoPadrao.toLowerCase();
@@ -916,29 +876,13 @@
                         let diaHtml = "";
                         extras.forEach(ex => {
                             const exSq = normalizarSquad(ex.squad);
-                            
-                            // Procura índice de ausente do mesmo squad
                             const indexPar = ausentes.findIndex(au => normalizarSquad(au.squadPadrao) === exSq);
-                            
                             const agentEx = state.agents.find(ag => ag.nome === ex.scooteira || ag.pseudo === ex.scooteira);
                             const nomeEx = agentEx ? agentEx.nome.split(' ')[0] : ex.scooteira.split(' ')[0];
-
                             if(indexPar !== -1) {
                                 const par = ausentes[indexPar];
                                 const nomePar = par.nome.split(' ')[0];
-
-                                diaHtml += `
-                                <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg mb-2 border-l-4 border-indigo-500">
-                                    <i data-lucide="arrow-right-left" class="text-indigo-400 w-4 h-4"></i>
-                                    <div class="text-sm">
-                                        <strong class="text-indigo-800">${nomeEx}</strong> cobriu 
-                                        <strong class="text-gray-600">${nomePar}</strong> 
-                                        <span class="text-xs text-gray-500 bg-gray-100 px-1 rounded ml-1">(${par.entradaPadrao} - ${par.saidaPadrao})</span>
-                                        no squad ${exSq}.
-                                    </div>
-                                </div>`;
-                                
-                                // REMOVE ausente para não ser duplicado na próxima iteração
+                                diaHtml += `<div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg mb-2 border-l-4 border-indigo-500"><i data-lucide="arrow-right-left" class="text-indigo-400 w-4 h-4"></i><div class="text-sm"><strong class="text-indigo-800">${nomeEx}</strong> cobriu <strong class="text-gray-600">${nomePar}</strong> <span class="text-xs text-gray-500 bg-gray-100 px-1 rounded ml-1">(${par.entradaPadrao} - ${par.saidaPadrao})</span> no squad ${exSq}.</div></div>`;
                                 ausentes.splice(indexPar, 1);
                             }
                         });
@@ -952,102 +896,8 @@
             lucide.createIcons();
         };
 
-        window.loadRelatorioIndividual = async () => {
-            const nome = document.getElementById('relatorio-agente-select').value;
-            const mes = document.getElementById('relatorio-mes-select').value;
-            const table = document.getElementById('relatorio-body');
-            const cards = document.getElementById('relatorio-resumo-cards');
-            if(!nome || !mes) return;
-            table.innerHTML = '<tr><td colspan="5" class="text-center py-8"><div class="loader mx-auto"></div></td></tr>';
-            cards.classList.add('hidden');
-            try {
-                const q = query(collection(db, COLLECTIONS.LOGS), where("mes", "==", mes));
-                const snap = await getDocs(q);
-                const agente = state.agents.find(a => a.nome === nome);
-                const pseudo = agente ? agente.pseudo : "";
-                const list = [];
-                let total = 0;
-                const sqTotal = {};
-                snap.forEach(d => {
-                    const data = d.data();
-                    if(data.scooteira === nome || data.scooteira === pseudo) {
-                        const sq = normalizarSquad(data.squad);
-                        list.push({ ...data, squad: sq });
-                        total += data.horas;
-                        sqTotal[sq] = (sqTotal[sq] || 0) + data.horas;
-                    }
-                });
-                list.sort((a,b) => b.data.localeCompare(a.data));
-                cards.classList.remove('hidden');
-                let sqHtml = "";
-                Object.keys(sqTotal).forEach(s => { 
-                    const color = getSquadColor(s);
-                    sqHtml += `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-${color}-500">
-                        <div class="text-xs text-gray-400 uppercase font-bold">${s}</div>
-                        <div class="text-xl font-bold text-gray-700">${sqTotal[s].toFixed(1)}h</div>
-                    </div>`; 
-                });
-                cards.innerHTML = `
-                <div class="bg-indigo-600 p-4 rounded-xl shadow-md text-white">
-                    <div class="text-xs opacity-80 uppercase font-bold">Total Mês</div>
-                    <div class="text-3xl font-bold">${total.toFixed(1)}h</div>
-                </div>${sqHtml}`;
-                if(list.length === 0) {
-                    table.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400 italic">Nenhum registro encontrado para esta scooteira neste mês.</td></tr>';
-                } else {
-                    table.innerHTML = list.map(i => `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td>
-                            <td class="px-6 py-4"><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded text-gray-600">${i.squad}</span></td>
-                            <td class="px-6 py-4 text-center text-gray-500 font-mono text-xs">${i.entrada}</td>
-                            <td class="px-6 py-4 text-center text-gray-500 font-mono text-xs">${i.saida}</td>
-                            <td class="px-6 py-4 font-bold text-center text-indigo-600">${i.horas.toFixed(2)}h</td>
-                        </tr>`).join('');
-                }
-            } catch (e) {
-                console.error(e);
-                showToast("Erro ao gerar relatório.", "error");
-                table.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Erro ao buscar dados.</td></tr>';
-            }
-        };
-
-        document.getElementById('add-agent-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const nome = document.getElementById('new-nome').value.trim();
-            if(!nome) return;
-            setLoading(true);
-            try {
-                await setDoc(doc(db, COLLECTIONS.AGENTS, nome), {
-                    nome: nome, 
-                    pseudo: document.getElementById('new-pseudo').value,
-                    squadPadrao: document.getElementById('new-squad').value, 
-                    turnoPadrao: document.getElementById('new-turno').value,
-                    entradaPadrao: document.getElementById('new-entrada').value, 
-                    saidaPadrao: document.getElementById('new-saida').value,
-                    status: 'Ativa'
-                });
-                showToast("Scooteira cadastrada com sucesso!");
-                document.getElementById('add-agent-form').reset();
-                loadAgents(); 
-            } catch(e) {
-                console.error(e);
-                showToast("Erro ao cadastrar.", "error");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        window.deleteAgent = async (id) => { 
-            if(confirm(`Excluir ${id} do cadastro permanentemente?`)) { 
-                try {
-                    await deleteDoc(doc(db, COLLECTIONS.AGENTS, id)); 
-                    showToast("Cadastro removido.");
-                    loadAgents();
-                } catch(e) { showToast("Erro ao excluir.", "error"); }
-            } 
-        };
-
+        window.deleteAgent = async (id) => { if(confirm(`Excluir ${id} do cadastro permanentemente?`)) { try { await deleteDoc(doc(db, COLLECTIONS.AGENTS, id)); showToast("Cadastro removido."); loadAgents(); } catch(e) { showToast("Erro ao excluir.", "error"); } } };
+        function getISOWeek(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); }
         lucide.createIcons();
     </script>
 </body>
