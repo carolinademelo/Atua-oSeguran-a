@@ -14,17 +14,27 @@
 
     <style>
         body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #334155; }
+        
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #a0a0a0; }
+
         .tab-active { border-bottom: 2px solid #4f46e5; color: #4f46e5; background-color: #eef2ff; }
         .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
         .tab-inactive:hover { color: #4f46e5; background-color: #f8fafc; }
+
+        .cap-warn-low { background-color: #fee2e2; color: #991b1b; }
+        .cap-warn-high { background-color: #ffedd5; color: #9a3412; }
+        .cap-ok { background-color: #dcfce7; color: #166534; }
+        
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
         .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #4f46e5; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; font-weight: 600; min-width: 250px; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -118,7 +128,7 @@
             <div id="content-capacidade" class="hidden fade-in">
                 <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-start gap-3">
                     <i data-lucide="info" class="w-5 h-5 text-blue-500 mt-0.5"></i>
-                    <p class="text-sm text-blue-800">Visualização de metas semanais vs horas realizadas por Squad. Clique nas semanas para expandir.</p>
+                    <p class="text-sm text-blue-800">Visualização de metas semanais vs horas realizadas por Squad. Clique nas semanas para expandir. <br><span class="font-bold">Nota:</span> Feriados nacionais assumem a meta de fim de semana.</p>
                 </div>
                 <div id="capacity-accordion-container" class="space-y-4"></div>
             </div>
@@ -234,12 +244,19 @@
             { id: "Monitoria", color: "cyan", label: "Monitoria" }
         ];
 
+        // 0 = Domingo, 1 = Segunda... 6 = Sábado
         const METAS_SQUAD = {
             "SC": { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
             "CB": { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
             "Rec. Crédito": { 1: 5, 2: 5, 3: 5, 4: 5, 5: 4, 6: 0, 0: 0 },
             "OJR": { 1: 5, 2: 5, 3: 5, 4: 5, 5: 4, 6: 0, 0: 0 }
         };
+
+        // FERIADOS NACIONAIS 2025/2026
+        const FERIADOS = [
+            '2025-01-01', '2025-04-18', '2025-04-21', '2025-05-01', '2025-09-07', '2025-10-12', '2025-11-02', '2025-11-15', '2025-11-20', '2025-12-25',
+            '2026-01-01', '2026-04-03', '2026-04-21', '2026-05-01', '2026-09-07', '2026-10-12', '2026-11-02', '2026-11-15', '2026-11-20', '2026-12-25'
+        ];
 
         let state = {
             agents: [],
@@ -747,6 +764,7 @@
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
+        // --- CAPACIDADE (Com Feriados) ---
         window.renderCapacityAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -787,10 +805,17 @@
                 let tableHtml = `<table class="w-full text-xs"><thead><tr><th class="p-2 text-left bg-gray-50 border">Dia</th>`;
                 SQUADS_CONFIG.forEach(s => tableHtml += `<th class="p-2 text-center bg-gray-50 border font-bold text-${s.color}-700">${s.id}</th>`);
                 tableHtml += `</tr></thead><tbody>`;
+                
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
-                    const dow = dateObj.getDay(); 
-                    tableHtml += `<tr><td class="p-2 border font-bold bg-gray-50 text-gray-600">${dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'})}</td>`;
+                    // --- VERIFICAÇÃO DE FERIADO ---
+                    const isFeriado = FERIADOS.includes(dateKey);
+                    const dow = isFeriado ? 0 : dateObj.getDay(); 
+                    
+                    const labelDia = dateObj.toLocaleDateString('pt-BR', {day:'2-digit', weekday:'short'}) + (isFeriado ? ' (Fer)' : '');
+                    const styleDia = isFeriado ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600';
+
+                    tableHtml += `<tr><td class="p-2 border font-bold ${styleDia}">${labelDia}</td>`;
                     SQUADS_CONFIG.forEach(sq => {
                         const squadName = sq.id;
                         const actual = (dataMap[dateKey] && dataMap[dateKey][squadName]) ? dataMap[dateKey][squadName] : 0;
