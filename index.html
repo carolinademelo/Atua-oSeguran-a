@@ -293,11 +293,12 @@
                 <button onclick="window.closeModal('import-modal')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6">
-                <p class="text-sm text-gray-600 mb-4">Cole o texto CSV ou JSON aqui:</p>
-                <textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50" placeholder="Scooteira,Data,Entrada,Saida,Squad"></textarea>
+                <p class="text-sm text-gray-600 mb-2">Cole os dados em formato CSV (separado por vírgula):</p>
+                <code class="block bg-gray-100 p-2 rounded text-xs mb-4 text-gray-500">Nome da Scooteira, Data (AAAA-MM-DD), Entrada (HH:MM), Saída (HH:MM), Squad</code>
+                <textarea id="import-data-json" rows="10" class="w-full p-4 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50" placeholder="Ex:&#10;Celina Z,2024-05-20,08:00,14:00,CB&#10;Malu R,2024-05-20,08:00,14:00,CB"></textarea>
             </div>
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-end space-x-3">
-                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="window.handleImport()">Processar</button>
+                 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition" onclick="window.handleImport()">Importar Dados</button>
             </div>
         </div>
     </div>
@@ -326,7 +327,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, onSnapshot, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
         // CONFIGURAÇÃO E DADOS INICIAIS
@@ -341,12 +342,9 @@
         };
         const appId = "atuacao2026";
         
-        // Configuração das Opções
         const SQUADS_OPCOES = ["CB", "SC", "Rec. Crédito", "Monitoria", "Coraliados", "Hunter", "Vendas", "OJR", "Outro"];
         
-        // MOCK_CADASTROS - LISTA COMPLETA
         const MOCK_CADASTROS = [
-            // SQUAD CB
             { nome: "Jéssica Zanquettin", pseudo: "Celina Z", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Laís Cristine dos Reis", pseudo: "Malu R", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Renata Mendes Valentim", pseudo: "Luara M", squadPadrao: "CB", turnoPadrao: "Seg à Qui. e Sáb.", entradaPadrao: "09:00", saidaPadrao: "15:00" },
@@ -357,8 +355,6 @@
             { nome: "Adriana Yurie Becker de Carvalho Chino", pseudo: "Diana C.", squadPadrao: "CB", turnoPadrao: "Dom. à Quar.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
             { nome: "Lissandra Pereira da Frota", pseudo: "Aurora P.", squadPadrao: "CB", turnoPadrao: "Seg. à Sex.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
             { nome: "Janaina Gonzaga Fioravante", pseudo: "Solar F.", squadPadrao: "CB", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "16:00", saidaPadrao: "22:00" },
-            
-            // SQUAD SC
             { nome: "Gizele Uglar Leite Lima", pseudo: "Mari U", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Gleiciéle Nogueira", pseudo: "Mariana N.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Lindisen Guiomar Lemos dos Santos", pseudo: "Ruama S.", squadPadrao: "SC", turnoPadrao: "Dom. à Quar.", entradaPadrao: "08:00", saidaPadrao: "14:00" },
@@ -371,26 +367,14 @@
             { nome: "Isabelle Cristine Marques", pseudo: "Ísis M.", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
             { nome: "Lidia Lorraine Silva Cruz", pseudo: "Alba C.", squadPadrao: "SC", turnoPadrao: "Quin. à Sáb.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
             { nome: "Thainá Jaqueline Batista Ferreira", pseudo: "Cíntia B", squadPadrao: "SC", turnoPadrao: "Seg. à Sex.", entradaPadrao: "14:00", saidaPadrao: "20:00" },
-
-            // Monitoria
             { nome: "Elice Pisciotta", pseudo: "Yarin P.", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Débora da Silva Lima de Jesus", pseudo: "Serena L", squadPadrao: "Monitoria", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
-
-            // Coraliados
             { nome: "Ingrid de Arruda Azeredo", pseudo: "Duda A.", squadPadrao: "Coraliados", turnoPadrao: "Semanal", entradaPadrao: "08:00", saidaPadrao: "14:00" },
             { nome: "Vanessa Maria de Medeiros Abreu", pseudo: "Sara M", squadPadrao: "Coraliados", turnoPadrao: "Semanal", entradaPadrao: "14:00", saidaPadrao: "18:00" },
-
-            // Hunter
             { nome: "Marcia de Paulo Araujo de Souza", pseudo: "Maria Marc", squadPadrao: "Hunter", turnoPadrao: "Semanal", entradaPadrao: "11:00", saidaPadrao: "17:00" },
             { nome: "Juliana Dos Santos Candido", pseudo: "Mia C", squadPadrao: "Hunter", turnoPadrao: "Semanal", entradaPadrao: "11:00", saidaPadrao: "17:00" },
-
-            // Vendas
             { nome: "Pryscilla Santos Seabra", pseudo: "Paula", squadPadrao: "Vendas", turnoPadrao: "Semanal", entradaPadrao: "10:00", saidaPadrao: "16:00" },
-
-            // Rec Cred
             { nome: "Pamella Ferreira de Lima Amorim", pseudo: "Cassia A.", squadPadrao: "Rec. Crédito", turnoPadrao: "Semanal", entradaPadrao: "10:00", saidaPadrao: "15:00" },
-
-            // OJR
             { nome: "Mariana Bezerra André", pseudo: "Vitória M.", squadPadrao: "OJR", turnoPadrao: "Semanal", entradaPadrao: "09:00", saidaPadrao: "14:00" }
         ];
 
@@ -411,7 +395,7 @@
             document.getElementById('auth-status').classList.remove('bg-indigo-800');
             document.getElementById('auth-status').classList.add('bg-emerald-600');
             initSquadSelect();
-            loadAgents(); // <--- Agora tem inteligência para auto-seed
+            loadAgents(); 
             loadHistorico();
         }).catch((error) => {
             console.error(error);
@@ -449,11 +433,10 @@
             const q = query(collection(db, agentsCol));
             const snap = await getDocs(q);
             
-            // AUTO-SEED FIX: Se o banco estiver vazio, preencher automaticamente
             if (snap.empty) {
                 console.log("Banco vazio. Iniciando auto-seed...");
                 showMessage("Primeiro acesso detectado. Configurando banco de dados...", "info");
-                await seedDatabase(true); // true = silent/auto mode
+                await seedDatabase(true); 
                 return; 
             }
 
@@ -467,10 +450,7 @@
         const renderAgentsTable = () => {
             const tbody = document.getElementById('cadastro-list-body');
             tbody.innerHTML = '';
-            
-            // Ordenar por nome
             currentAgents.sort((a,b) => a.nome.localeCompare(b.nome));
-
             currentAgents.forEach(a => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition border-b border-gray-50";
@@ -489,38 +469,26 @@
             lucide.createIcons();
         };
         
-        // SEED DATABASE - Agora aceita modo silencioso para automação
         window.seedDatabase = async (silent = false) => {
             if(!silent) {
                 if(!confirm("Atenção: Isso irá REENVIAR a lista padrão de 30+ scooteiras para o banco. Deseja continuar?")) return;
             }
-            
             if(!silent) showMessage('Carregando dados... aguarde.', 'info');
             let count = 0;
-            
             for(const a of MOCK_CADASTROS) {
                 try {
                     await setDoc(doc(db, agentsCol, a.nome), a);
                     count++;
                 } catch(e) { console.error("Erro ao salvar", a.nome, e); }
             }
-            
             showMessage(`${count} scooteiras sincronizadas!`, 'success');
-            
-            // Se foi chamado pelo loadAgents (silent), chamamos loadAgents de novo para atualizar a tela
-            if(silent) {
-                // Pequeno delay para garantir propagação
-                setTimeout(() => loadAgents(), 1000);
-            } else {
-                loadAgents();
-            }
+            if(silent) setTimeout(() => loadAgents(), 1000); else loadAgents();
         };
 
         document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome = document.getElementById('new-nome').value.trim();
             if(!nome) return;
-            
             const data = {
                 nome: nome,
                 pseudo: document.getElementById('new-pseudo').value,
@@ -529,7 +497,6 @@
                 entradaPadrao: document.getElementById('new-entrada').value,
                 saidaPadrao: document.getElementById('new-saida').value
             };
-
             try {
                 await setDoc(doc(db, agentsCol, nome), data);
                 showMessage('Scooteira adicionada!', 'success');
@@ -551,10 +518,7 @@
         window.editAgent = (nome) => {
             const a = currentAgents.find(x => x.nome === nome);
             if(!a) return;
-            
-            // Modal de edição atualizado com OJR e novos squads
             const options = SQUADS_OPCOES.map(s => `<option value="${s}" ${s===a.squadPadrao?'selected':''}>${s}</option>`).join('');
-
             const m = document.createElement('div');
             m.id = 'edit-agent-modal';
             m.className = 'fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50';
@@ -585,7 +549,6 @@
                     </form>
                 </div>`;
             document.body.appendChild(m);
-            
             document.getElementById('edit-agent-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 await updateDoc(doc(db, agentsCol, nome), {
@@ -620,15 +583,12 @@
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
-            
             if (!data || selectedBoxes.length === 0) {
                 showMessage('Selecione uma data e pelo menos uma scooteira.', 'error');
                 return;
             }
-
             const container = document.getElementById('agentes-detalhes-container');
             container.innerHTML = '';
-            
             selectedBoxes.forEach(box => {
                 const nome = box.value;
                 const agent = currentAgents.find(a => a.nome === nome);
@@ -643,7 +603,6 @@
                         </div>
                     </div>`;
             });
-            
             window.openModal('details-modal');
         };
 
@@ -651,7 +610,6 @@
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
             const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
-            
             for (const box of selectedBoxes) {
                 const nome = box.value;
                 const ent = document.querySelector(`input[name="ent_${nome}"]`).value;
@@ -664,7 +622,7 @@
                 let diff = (d2 - d1) / 1000 / 60 / 60; 
                 if (diff < 0) diff += 24;
                 
-                await setDoc(doc(collection(db, logsCol)), {
+                await addDoc(collection(db, logsCol), {
                     data: dataStr,
                     mes: dataStr.substring(0, 7),
                     scooteira: nome,
@@ -676,17 +634,15 @@
                     timestamp: new Date()
                 });
             }
-            
             showMessage('Registros salvos com sucesso!', 'success');
             window.closeModal('details-modal');
             window.loadHistorico();
         });
 
-        // --- HISTÓRICO ---
+        // --- HISTÓRICO E EXPORTAÇÃO ---
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
-            
             const q = query(collection(db, logsCol), where("mes", "==", mes));
             const snap = await getDocs(q);
             const list = [];
@@ -717,13 +673,39 @@
             updateStats(list);
         };
 
+        // --- FUNÇÃO DE EXPORTAÇÃO CSV GERAL (NOVA) ---
+        window.exportToCsv = async () => {
+            const mes = document.getElementById('mes-select').value;
+            if (!mes) return;
+            
+            showMessage('Gerando CSV...', 'info');
+            const q = query(collection(db, logsCol), where("mes", "==", mes));
+            const snap = await getDocs(q);
+            
+            if(snap.empty) { showMessage('Nada para exportar.', 'error'); return; }
+
+            let csvContent = "data:text/csv;charset=utf-8,Data,Scooteira,Squad,Entrada,Saida,Horas,Turno\n";
+            snap.forEach(doc => {
+                const d = doc.data();
+                csvContent += `${d.data},${d.scooteira},${d.squad},${d.entrada},${d.saida},${d.horas},${d.turno}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `atuacao_scooto_${mes}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage('Download iniciado!', 'success');
+        };
+
         const updateStats = (list) => {
             const squads = {};
             list.forEach(i => {
                 if(!squads[i.squad]) squads[i.squad] = 0;
                 squads[i.squad] += i.horas;
             });
-            
             const div = document.getElementById('resumo-squads');
             div.innerHTML = Object.keys(squads).map(s => `
                 <div class="bg-white p-4 rounded-lg border shadow-sm">
@@ -740,7 +722,53 @@
             }
         };
 
-        // --- EXTRAS ---
+        // --- FUNÇÕES DE IMPORTAÇÃO (NOVAS) ---
+        window.showImportModal = () => window.openModal('import-modal');
+
+        window.handleImport = async () => {
+            const text = document.getElementById('import-data-json').value;
+            if(!text.trim()) { showMessage('Cole os dados primeiro.', 'error'); return; }
+
+            const lines = text.split('\n');
+            let successCount = 0;
+
+            for(let line of lines) {
+                // Formato esperado: Nome,Data,Entrada,Saida,Squad
+                const cols = line.split(',');
+                if(cols.length >= 4) {
+                    const [nome, dataStr, ent, sai, sq] = cols.map(c => c.trim());
+                    
+                    // Validação básica
+                    if(!nome || !dataStr || !ent || !sai) continue;
+
+                    // Calcular horas
+                    const d1 = new Date(`2000-01-01T${ent}`);
+                    const d2 = new Date(`2000-01-01T${sai}`);
+                    let diff = (d2 - d1) / 1000 / 60 / 60; 
+                    if (diff < 0) diff += 24;
+
+                    try {
+                        await addDoc(collection(db, logsCol), {
+                            data: dataStr,
+                            mes: dataStr.substring(0, 7),
+                            scooteira: nome,
+                            squad: sq || 'Importado',
+                            entrada: ent,
+                            saida: sai,
+                            turno: 'Importado',
+                            horas: parseFloat(diff.toFixed(2)),
+                            timestamp: new Date()
+                        });
+                        successCount++;
+                    } catch(e) { console.error(e); }
+                }
+            }
+            
+            showMessage(`${successCount} registros importados!`, 'success');
+            window.closeModal('import-modal');
+            window.loadHistorico();
+        };
+
         const confirmAction = () => {
             return new Promise((resolve) => {
                 window.openModal('confirmation-modal');
@@ -760,7 +788,6 @@
         window.loadRelatorioIndividual = async () => {
             const nome = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
-            
             if(!nome || !mes) return;
             
             const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
@@ -772,7 +799,6 @@
             const tbody = document.getElementById('relatorio-body');
             tbody.innerHTML = '';
             let totalH = 0;
-            
             list.forEach(i => {
                 totalH += i.horas;
                 tbody.innerHTML += `
@@ -784,10 +810,36 @@
                         <td class="px-6 py-4">${i.horas}h</td>
                     </tr>`;
             });
-
             document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
             document.getElementById('resumo-total-dias').innerText = list.length;
             document.getElementById('resumo-total-horas').innerText = totalH.toFixed(2) + 'h';
+        };
+
+        // --- EXPORTAÇÃO INDIVIDUAL CSV (NOVA) ---
+        window.exportIndividualCsv = async () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+
+            if(!nome || !mes) { showMessage('Selecione uma scooteira e mês.', 'error'); return; }
+
+            const q = query(collection(db, logsCol), where("mes", "==", mes), where("scooteira", "==", nome));
+            const snap = await getDocs(q);
+            
+            if(snap.empty) { showMessage('Sem dados para exportar.', 'error'); return; }
+
+            let csvContent = "data:text/csv;charset=utf-8,Data,Squad,Entrada,Saida,Horas\n";
+            snap.forEach(doc => {
+                const d = doc.data();
+                csvContent += `${d.data},${d.squad},${d.entrada},${d.saida},${d.horas}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `relatorio_${nome.split(' ')[0]}_${mes}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
 
         window.analyzeMonthlyData = async () => {
