@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dash Atuação - Scooto</title>
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚜️</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛵</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -37,7 +37,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold tracking-tight">Dash Atuação - Scooto</h1>
-                    <p class="text-indigo-100 text-sm mt-1">Gestão de Horas x Squads</p>
+                    <p class="text-indigo-100 text-sm mt-1">Gestão de Capacity e Squads</p>
                 </div>
                 <div id="auth-status" class="bg-indigo-800 py-1 px-3 rounded text-xs font-mono">Conectando...</div>
             </div>
@@ -101,36 +101,86 @@
 
             <div id="content-capacidade" class="hidden animate-fade-in">
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Capacidade & Metas Diárias</h2>
-                    <p class="text-sm text-gray-500">Exibição baseada nas metas oficiais.</p>
+                    <h2 class="text-2xl font-bold text-gray-800">Capacidade & Metas</h2>
+                    <p class="text-sm text-gray-500">Acompanhamento de metas diárias. Feriados nacionais marcados com 🚩.</p>
                 </div>
                 <div id="capacity-accordion-container" class="space-y-4"></div>
             </div>
 
-            <div id="content-relatorio" class="hidden"></div>
-            <div id="content-cadastro" class="hidden"></div>
+            <div id="content-relatorio" class="hidden animate-fade-in">
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Scooteira</label>
+                            <select id="relatorio-agente-select" class="w-full p-2.5 border-gray-300 rounded-lg" onchange="window.loadRelatorioIndividual()">
+                                <option value="" disabled selected>Selecione...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Mês</label>
+                            <input type="month" id="relatorio-mes-select" class="w-full p-2.5 border-gray-300 rounded-lg" onchange="window.loadRelatorioIndividual()">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="window.loadRelatorioIndividual()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg w-full font-bold">Gerar Relatório</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="relatorio-resumo-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 hidden"></div>
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                            <tr><th class="px-6 py-3">Data</th><th class="px-6 py-3">Squad</th><th class="px-6 py-3">Entrada</th><th class="px-6 py-3">Saída</th><th class="px-6 py-3">Horas</th></tr>
+                        </thead>
+                        <tbody id="relatorio-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-cadastro" class="hidden animate-fade-in">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase">Cadastrar Nova Scooteira</h3>
+                    <form id="add-agent-form" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <input type="text" id="new-nome" placeholder="Nome Completo" class="p-2 border rounded text-sm" required>
+                        <input type="text" id="new-pseudo" placeholder="Pseudo" class="p-2 border rounded text-sm" required>
+                        <select id="new-squad" class="p-2 border rounded text-sm"></select>
+                        <input type="text" id="new-turno" placeholder="Ex: Seg-Sex" class="p-2 border rounded text-sm">
+                        <input type="time" id="new-entrada" value="08:00" class="p-2 border rounded text-sm">
+                        <input type="time" id="new-saida" value="14:00" class="p-2 border rounded text-sm">
+                        <button type="submit" class="bg-indigo-600 text-white py-2 rounded font-bold lg:col-span-6">Adicionar Scooteira</button>
+                    </form>
+                </div>
+                <div class="overflow-x-auto bg-white rounded-xl shadow border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                            <tr><th class="px-6 py-3">Nome (Pseudo)</th><th class="px-6 py-3">Squad Padrão</th><th class="px-6 py-3">Horário</th><th class="px-6 py-3 text-right">Ações</th></tr>
+                        </thead>
+                        <tbody id="cadastro-list-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div id="selection-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 class="font-bold text-lg mb-4">Equipe</h3>
+            <h3 class="font-bold text-lg mb-4">Selecionar Equipe</h3>
             <div id="agentes-checkbox-list" class="space-y-2 max-h-96 overflow-y-auto mb-6"></div>
             <button onclick="window.closeModal('selection-modal')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Concluir</button>
         </div>
     </div>
 
     <div id="details-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
-            <div class="p-6 bg-indigo-600 text-white font-bold rounded-t-xl flex justify-between">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 bg-indigo-600 text-white font-bold flex justify-between">
                 <span>Confirmar Dados</span>
                 <button onclick="window.closeModal('details-modal')"><i data-lucide="x"></i></button>
             </div>
-            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1">
+            <form id="details-form" class="overflow-y-auto p-6 space-y-4 flex-1 bg-gray-50">
                 <div id="agentes-detalhes-container" class="space-y-4"></div>
             </form>
-            <div class="p-4 bg-gray-50 flex justify-end space-x-3 rounded-b-xl">
-                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold">Salvar Tudo</button>
+            <div class="p-4 bg-white border-t flex justify-end">
+                <button type="submit" form="details-form" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold">Salvar Registros</button>
             </div>
         </div>
     </div>
@@ -140,17 +190,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- METAS CONFORME IMAGENS ENVIADAS ---
-        const SQUADS_ATIVAS = ["SC", "CB", "Rec. Crédito", "OJR", "Monitoria"];
-        
-        // Mapeamento de metas diárias
-        const METAS_POR_DIA = {
-            "SC":           { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
-            "CB":           { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
-            "Rec. Crédito": { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  },
-            "OJR":          { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  }
-        };
-
         const firebaseConfig = { apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", authDomain: "atuacao2026.firebaseapp.com", projectId: "atuacao2026", storageBucket: "atuacao2026.firebasestorage.app", messagingSenderId: "563632231622", appId: "1:563632231622:web:ce3e04e43cc647614214f5" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -158,10 +197,22 @@
         const logsCol = `artifacts/atuacao2026/public/data/scooteiras_atividades`;
         const agentsCol = `artifacts/atuacao2026/public/data/scooteiras_cadastro`;
 
+        const SQUADS_ATIVAS = ["SC", "CB", "Rec. Crédito", "OJR", "Monitoria"];
+        const FERIADOS = ["01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
+        const METAS_POR_DIA = {
+            "SC":           { 1: 54, 2: 60, 3: 60, 4: 54, 5: 54, 6: 18, 0: 18 },
+            "CB":           { 1: 54, 2: 54, 3: 54, 4: 54, 5: 42, 6: 12, 0: 12 },
+            "Rec. Crédito": { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  },
+            "OJR":          { 1: 5,  2: 5,  3: 5,  4: 5,  5: 4,  6: 0,  0: 0  }
+        };
+
+        const squadColorMap = {
+            "SC": "emerald", "CB": "indigo", "Rec. Crédito": "amber", "OJR": "purple", "Monitoria": "cyan", "Outro": "slate"
+        };
+
         let currentAgents = [];
         let currentHistoryList = [];
 
-        // --- LÓGICA DE NORMALIZAÇÃO INTELIGENTE ---
         const normalizarSquad = (s) => {
             if (!s) return "Outro";
             const val = s.toUpperCase().trim();
@@ -172,18 +223,6 @@
             return s;
         };
 
-        const normalizarDiaSemana = (dia) => {
-            const val = dia.toLowerCase().trim();
-            if (val.includes("seg")) return 1;
-            if (val.includes("ter")) return 2;
-            if (val.includes("qua")) return 3;
-            if (val.includes("qui")) return 4;
-            if (val.includes("sex")) return 5;
-            if (val.includes("sab")) return 6;
-            if (val.includes("dom")) return 0;
-            return null;
-        };
-
         signInAnonymously(auth).then(() => {
             document.getElementById('auth-status').innerText = "ONLINE";
             loadInitialData();
@@ -191,17 +230,22 @@
 
         async function loadInitialData() {
             const d = new Date();
-            document.getElementById('mes-select').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const mesAtual = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('mes-select').value = mesAtual;
+            document.getElementById('relatorio-mes-select').value = mesAtual;
+            
+            // Popular selects de Squads
+            const squadHtml = SQUADS_ATIVAS.map(s => `<option value="${s}">${s}</option>`).join('');
+            document.getElementById('new-squad').innerHTML = squadHtml;
+
             await loadAgents();
             await loadHistorico();
         }
 
         window.switchTab = (tabId) => {
             ['registro', 'capacidade', 'relatorio', 'cadastro'].forEach(t => {
-                const el = document.getElementById(`content-${t}`);
-                if(el) el.classList.add('hidden');
-                const btn = document.getElementById(`tab-${t}`);
-                if(btn) btn.className = "py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap";
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-inactive whitespace-nowrap";
             });
             document.getElementById(`content-${tabId}`).classList.remove('hidden');
             document.getElementById(`tab-${tabId}`).className = "py-4 px-6 text-sm font-semibold transition-all tab-active whitespace-nowrap";
@@ -217,23 +261,45 @@
                 a.squadPadrao = normalizarSquad(a.squadPadrao);
                 currentAgents.push(a);
             });
+            renderAgentsTable();
             renderSelectionList();
+            renderRelatorioSelect();
+        };
+
+        const renderAgentsTable = () => {
+            const tbody = document.getElementById('cadastro-list-body');
+            tbody.innerHTML = currentAgents.sort((a,b) => a.nome.localeCompare(b.nome)).map(a => `
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="px-6 py-4 font-medium">${a.nome} <span class="text-gray-400">(${a.pseudo})</span></td>
+                    <td class="px-6 py-4"><span class="squad-tag text-${squadColorMap[a.squadPadrao]}-600 border-${squadColorMap[a.squadPadrao]}-600">${a.squadPadrao}</span></td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${a.entradaPadrao} - ${a.saidaPadrao} (${a.turnoPadrao})</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="window.deleteAgent('${a.nome}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
         };
 
         const renderSelectionList = () => {
             document.getElementById('agentes-checkbox-list').innerHTML = currentAgents.map(a => `
                 <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600">
+                    <input type="checkbox" value="${a.nome}" class="agent-checkbox w-5 h-5 text-indigo-600 rounded">
                     <span class="text-sm">${a.nome} <small class="text-gray-400">(${a.squadPadrao})</small></span>
                 </label>
             `).join('');
+        };
+
+        const renderRelatorioSelect = () => {
+            const select = document.getElementById('relatorio-agente-select');
+            select.innerHTML = '<option value="" disabled selected>Selecione...</option>' + 
+                currentAgents.sort((a,b) => a.nome.localeCompare(b.nome)).map(a => `<option value="${a.nome}">${a.nome}</option>`).join('');
         };
 
         window.handleEntrySubmission = () => {
             const data = document.getElementById('data-atuacao').value;
             const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
             if (!data || selected.length === 0) return alert("Selecione data e equipe");
-
             const container = document.getElementById('agentes-detalhes-container');
             container.innerHTML = selected.map(nome => {
                 const agent = currentAgents.find(a => a.nome === nome);
@@ -249,11 +315,25 @@
                             </select>
                             <input type="text" value="${agent.turnoPadrao}" class="confirm-turno border p-1 rounded text-sm">
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
             window.openModal('details-modal');
             lucide.createIcons();
+        };
+
+        document.getElementById('add-agent-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('new-nome').value;
+            await setDoc(doc(db, agentsCol, nome), {
+                nome: nome,
+                pseudo: document.getElementById('new-pseudo').value,
+                squadPadrao: document.getElementById('new-squad').value,
+                turnoPadrao: document.getElementById('new-turno').value,
+                entradaPadrao: document.getElementById('new-entrada').value,
+                saidaPadrao: document.getElementById('new-saida').value
+            });
+            document.getElementById('add-agent-form').reset();
+            loadAgents();
         };
 
         document.getElementById('details-form').onsubmit = async (e) => {
@@ -269,10 +349,7 @@
                 const d2 = new Date(`2000-01-01T${sai}`);
                 let diff = (d2 - d1) / 3600000;
                 if (diff < 0) diff += 24;
-
-                await addDoc(collection(db, logsCol), {
-                    data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date()
-                });
+                await addDoc(collection(db, logsCol), { data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
             }
             window.closeModal('details-modal');
             loadHistorico();
@@ -280,32 +357,27 @@
 
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
-            const q = query(collection(db, logsCol), where("mes", "==", mes));
-            const snap = await getDocs(q);
+            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
             currentHistoryList = [];
             snap.forEach(d => {
                 const item = { id: d.id, ...d.data() };
                 item.squad = normalizarSquad(item.squad);
                 currentHistoryList.push(item);
             });
-
-            currentHistoryList.sort((a,b) => b.data.localeCompare(a.data) || b.entrada.localeCompare(a.entrada));
-
+            currentHistoryList.sort((a,b) => b.data.localeCompare(a.data) || b.entrada.localeCompare(a.entrada) || a.squad.localeCompare(b.squad));
             const tbody = document.getElementById('historico-body');
             tbody.innerHTML = currentHistoryList.map(item => `
-                <tr class="hover:bg-gray-50 border-b">
+                <tr class="hover:bg-gray-50 border-b border-gray-100">
                     <td class="px-6 py-4"><input type="checkbox" value="${item.id}"></td>
-                    <td class="px-6 py-4">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="px-6 py-4 font-bold">${item.scooteira.split(' ')[0]}</td>
-                    <td class="px-6 py-4 text-gray-400 text-xs">${item.scooteira}</td>
-                    <td class="px-6 py-4"><span class="squad-tag text-indigo-600 border-indigo-600">${item.squad}</span></td>
-                    <td class="px-6 py-4 text-xs">${item.entrada} - ${item.saida}</td>
+                    <td class="px-6 py-4 text-xs">${item.data.split('-').reverse().join('/')}</td>
+                    <td class="px-6 py-4 font-bold text-gray-800">${item.scooteira.split(' ')[0]}</td>
+                    <td class="px-6 py-4"><span class="squad-tag text-${squadColorMap[item.squad]}-600 border-${squadColorMap[item.squad]}-600">${item.squad}</span></td>
+                    <td class="px-6 py-4 text-xs text-gray-500">${item.entrada} - ${item.saida}</td>
                     <td class="px-6 py-4 font-bold text-indigo-600">${item.horas}h</td>
                     <td class="px-6 py-4 text-right">
-                        <button onclick="window.deleteLog('${item.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteLog('${item.id}')" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
             lucide.createIcons();
             updateStats();
         };
@@ -314,11 +386,49 @@
             const totals = {};
             currentHistoryList.forEach(i => { totals[i.squad] = (totals[i.squad] || 0) + i.horas; });
             document.getElementById('resumo-squads').innerHTML = SQUADS_ATIVAS.map(s => `
-                <div class="bg-white p-4 rounded-xl border-t-4 border-indigo-500 shadow-sm">
+                <div class="bg-white p-4 rounded-xl border-t-4 border-${squadColorMap[s]}-500 shadow-sm">
                     <div class="text-[10px] text-gray-400 uppercase font-bold mb-1">${s}</div>
-                    <div class="text-xl font-bold">${(totals[s] || 0).toFixed(1)}h</div>
+                    <div class="text-xl font-bold text-gray-700">${(totals[s] || 0).toFixed(1)}h</div>
+                </div>`).join('');
+        };
+
+        window.loadRelatorioIndividual = async () => {
+            const nome = document.getElementById('relatorio-agente-select').value;
+            const mes = document.getElementById('relatorio-mes-select').value;
+            if(!nome || !mes) return;
+
+            const q = query(collection(db, logsCol), where("scooteira", "==", nome), where("mes", "==", mes));
+            const snap = await getDocs(q);
+            const list = [];
+            let totalH = 0;
+            snap.forEach(d => {
+                const data = d.data();
+                list.push(data);
+                totalH += data.horas;
+            });
+            
+            list.sort((a,b) => a.data.localeCompare(b.data));
+
+            document.getElementById('relatorio-resumo-cards').classList.remove('hidden');
+            document.getElementById('relatorio-resumo-cards').innerHTML = `
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                    <div class="text-xs text-gray-400 uppercase font-bold">Total de Horas</div>
+                    <div class="text-2xl font-bold text-indigo-600">${totalH.toFixed(2)}h</div>
                 </div>
-            `).join('');
+                <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-emerald-500">
+                    <div class="text-xs text-gray-400 uppercase font-bold">Dias Atuados</div>
+                    <div class="text-2xl font-bold text-emerald-600">${list.length}</div>
+                </div>
+            `;
+
+            document.getElementById('relatorio-body').innerHTML = list.map(i => `
+                <tr class="border-b">
+                    <td class="px-6 py-4">${i.data.split('-').reverse().join('/')}</td>
+                    <td class="px-6 py-4">${i.squad}</td>
+                    <td class="px-6 py-4">${i.entrada}</td>
+                    <td class="px-6 py-4">${i.saida}</td>
+                    <td class="px-6 py-4 font-bold">${i.horas}h</td>
+                </tr>`).join('');
         };
 
         const renderCapacityAccordion = () => {
@@ -337,7 +447,6 @@
             const weeks = {};
             const firstDay = new Date(ano, mesNum - 1, 1);
             const lastDay = new Date(ano, mesNum, 0);
-
             for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
                 const dateClone = new Date(d);
                 const wNum = getISOWeek(dateClone);
@@ -368,11 +477,9 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             ${SQUADS_ATIVAS.filter(s => s !== 'Monitoria').map(s => `
-                                <span class="squad-tag border-indigo-400 text-indigo-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>
-                            `).join('')}
+                                <span class="squad-tag border-${squadColorMap[s]}-400 text-${squadColorMap[s]}-700 text-[10px]">${s}: ${(weekSquadTotals[s] || 0).toFixed(1)}h</span>`).join('')}
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 header.onclick = () => document.getElementById(weekId).classList.toggle('active');
 
                 const content = document.createElement('div');
@@ -385,35 +492,37 @@
 
                 days.forEach(dateObj => {
                     const dateKey = dateObj.toISOString().split('T')[0];
-                    const dow = dateObj.getDay();
-                    const dayLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+                    const dataSimplificada = dateKey.substring(5);
+                    const ehFeriado = FERIADOS.includes(dataSimplificada);
+                    let dow = dateObj.getDay();
+                    if (ehFeriado) dow = 0;
 
-                    tableHtml += `<tr><td class="cap-cell font-bold bg-gray-50 text-left px-4">${dayLabel}</td>`;
+                    const dayLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+                    const labelFinal = ehFeriado ? `${dayLabel} 🚩` : dayLabel;
+
+                    tableHtml += `<tr><td class="cap-cell font-bold bg-gray-50 text-left px-4">${labelFinal}</td>`;
                     SQUADS_ATIVAS.forEach(squad => {
                         const actual = (dataMap[dateKey] && dataMap[dateKey][squad]) ? dataMap[dateKey][squad] : 0;
+                        const target = (METAS_POR_DIA[squad] && METAS_POR_DIA[squad][dow]) ? METAS_POR_DIA[squad][dow] : 0;
                         let cellClass = "cap-cell";
                         let valText = actual > 0 ? actual.toFixed(1) + 'h' : '-';
                         let subText = "";
 
-                        if (squad !== "Monitoria") {
-                            const target = (METAS_POR_DIA[squad] && METAS_POR_DIA[squad][dow]) ? METAS_POR_DIA[squad][dow] : 0;
-                            if (target > 0) {
-                                if (actual < target) {
-                                    cellClass += " cap-warn-low";
-                                    subText = `<div class="text-[9px] opacity-60">-${(target - actual).toFixed(1)}</div>`;
-                                } else if (actual > target) {
-                                    cellClass += " cap-warn-high";
-                                    subText = `<div class="text-[9px] opacity-60">+${(actual - target).toFixed(1)}</div>`;
-                                } else {
-                                    cellClass += " cap-ok";
-                                }
+                        if (squad !== "Monitoria" && target > 0) {
+                            if (actual < target) {
+                                cellClass += " cap-warn-low";
+                                subText = `<div class="text-[9px] opacity-60">-${(target - actual).toFixed(1)}</div>`;
+                            } else if (actual > target) {
+                                cellClass += " cap-warn-high";
+                                subText = `<div class="text-[9px] opacity-60">+${(actual - target).toFixed(1)}</div>`;
+                            } else {
+                                cellClass += " cap-ok";
                             }
                         }
                         tableHtml += `<td class="${cellClass}">${valText}${subText}</td>`;
                     });
                     tableHtml += `</tr>`;
                 });
-
                 content.innerHTML = tableHtml + `</tbody></table>`;
                 container.appendChild(header);
                 container.appendChild(content);
@@ -430,6 +539,7 @@
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
         window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
+        window.deleteAgent = async (id) => { if(confirm("Excluir scooteira?")) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); } };
     </script>
 </body>
 </html>
