@@ -194,13 +194,12 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore as fs, collection as fsCol, query as fsQuery, where as fsWhere, getDocs as fsGet, deleteDoc as fsDel, addDoc as fsAdd, doc as fsDoc, setDoc as fsSet } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyBgKe2n4c6vL4-B0hSAGT16ELDUQLW0OTQ", authDomain: "atuacao2026.firebaseapp.com", projectId: "atuacao2026", storageBucket: "atuacao2026.firebasestorage.app", messagingSenderId: "563632231622", appId: "1:563632231622:web:ce3e04e43cc647614214f5" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = fs(app);
+        const db = getFirestore(app);
         const logsCol = `artifacts/atuacao2026/public/data/scooteiras_atividades`;
         const agentsCol = `artifacts/atuacao2026/public/data/scooteiras_cadastro`;
 
@@ -257,7 +256,7 @@
         };
 
         const loadAgents = async () => {
-            const snap = await fsGet(fsCol(db, agentsCol));
+            const snap = await getDocs(collection(db, agentsCol));
             currentAgents = [];
             snap.forEach(d => {
                 const a = d.data();
@@ -332,7 +331,7 @@
                 const d2 = new Date(`2000-01-01T${sai}`);
                 let diff = (d2 - d1) / 3600000;
                 if (diff < 0) diff += 24;
-                await fsAdd(fsCol(db, logsCol), { data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
+                await addDoc(collection(db, logsCol), { data: dataStr, mes: dataStr.substring(0, 7), scooteira: nome, squad: sq, entrada: ent, saida: sai, horas: parseFloat(diff.toFixed(2)), timestamp: new Date() });
             }
             window.closeModal('details-modal');
             loadHistorico();
@@ -340,7 +339,7 @@
 
         window.loadHistorico = async () => {
             const mes = document.getElementById('mes-select').value;
-            const snap = await fsGet(fsQuery(fsCol(db, logsCol), fsWhere("mes", "==", mes)));
+            const snap = await getDocs(query(collection(db, logsCol), where("mes", "==", mes)));
             currentHistoryList = [];
             snap.forEach(d => {
                 const item = { id: d.id, ...d.data() };
@@ -374,15 +373,15 @@
                 </div>`).join('');
         };
 
-        // RELATÓRIOS
+        // RELATÓRIOS INDIVIDUAIS
         window.loadRelatorioIndividual = async () => {
             const nomeSelecionado = document.getElementById('relatorio-agente-select').value;
             const mes = document.getElementById('relatorio-mes-select').value;
             if(!nomeSelecionado || !mes) return;
             const agente = currentAgents.find(a => a.nome === nomeSelecionado);
             const pseudo = agente ? agente.pseudo : "";
-            const q = fsQuery(fsCol(db, logsCol), fsWhere("mes", "==", mes));
-            const snap = await fsGet(q);
+            const q = query(collection(db, logsCol), where("mes", "==", mes));
+            const snap = await getDocs(q);
             const list = [];
             let totalGeral = 0;
             const horasPorSquad = {};
@@ -426,7 +425,7 @@
                 </tr>`).join('');
         };
 
-        // TROCAS (AJUSTADO PARA RESPEITAR SQUAD)
+        // LÓGICA DE TROCAS (RESPEITANDO SQUAD)
         window.renderTrocasAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -439,8 +438,8 @@
                 dailyLogs[log.data].push(log);
             });
             const weeks = {};
-            const first = fsDate(ano, mesNum - 1, 1);
-            const last = fsDate(ano, mesNum, 0);
+            const first = new Date(ano, mesNum - 1, 1);
+            const last = new Date(ano, mesNum, 0);
             for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
                 const dateClone = new Date(d);
                 const wNum = getISOWeek(dateClone);
@@ -463,7 +462,6 @@
                     const logsDoDia = dailyLogs[dateKey] || [];
                     const diaSemana = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' }).toLowerCase();
                     
-                    // Identifica quem atuou "Extra" no dia (trabalhou em dia que não é seu turno padrão)
                     const extras = logsDoDia.filter(l => {
                         const agente = currentAgents.find(a => a.nome === l.scooteira || a.pseudo === l.scooteira);
                         if(!agente) return false;
@@ -471,7 +469,6 @@
                         return !(turno.includes(diaSemana) || turno.includes("seg-sex"));
                     });
 
-                    // Identifica quem "Faltou" no dia (deveria trabalhar e não atuou)
                     const atuantesNomes = logsDoDia.map(l => l.scooteira);
                     const ausentes = currentAgents.filter(a => {
                         const turno = a.turnoPadrao.toLowerCase();
@@ -480,7 +477,6 @@
                         return deveriaEstar && !estava;
                     });
 
-                    // Cruza apenas se forem da mesma SQUAD
                     if(extras.length > 0 && ausentes.length > 0) {
                         let diaHtml = "";
                         extras.forEach(ex => {
@@ -509,7 +505,7 @@
             lucide.createIcons();
         };
 
-        // CAPACIDADE
+        // CAPACIDADE E METAS
         const renderCapacityAccordion = () => {
             const mes = document.getElementById('mes-select').value;
             if(!mes) return;
@@ -522,8 +518,8 @@
                 dataMap[log.data][log.squad] = (dataMap[log.data][log.squad] || 0) + log.horas;
             });
             const weeks = {};
-            const first = fsDate(ano, mesNum - 1, 1);
-            const last = fsDate(ano, mesNum, 0);
+            const first = new Date(ano, mesNum - 1, 1);
+            const last = new Date(ano, mesNum, 0);
             for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
                 const dateClone = new Date(d);
                 const wNum = getISOWeek(dateClone);
@@ -574,26 +570,26 @@
             });
         };
 
-        // CADASTRO
+        // CADASTRO DE EQUIPE
         document.getElementById('add-agent-form').onsubmit = async (e) => {
             e.preventDefault();
             const nome = document.getElementById('new-nome').value;
-            await fsSet(fsDoc(db, agentsCol, nome), { nome: nome, pseudo: document.getElementById('new-pseudo').value, squadPadrao: document.getElementById('new-squad').value, turnoPadrao: document.getElementById('new-turno').value, entradaPadrao: document.getElementById('new-entrada').value, saidaPadrao: document.getElementById('new-saida').value });
+            await setDoc(doc(db, agentsCol, nome), { nome: nome, pseudo: document.getElementById('new-pseudo').value, squadPadrao: document.getElementById('new-squad').value, turnoPadrao: document.getElementById('new-turno').value, entradaPadrao: document.getElementById('new-entrada').value, saidaPadrao: document.getElementById('new-saida').value });
             document.getElementById('add-agent-form').reset();
             loadAgents();
         };
 
+        // UTILITÁRIOS
         function getISOWeek(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
             const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
-        function fsDate(y,m,d) { return new Date(y,m,d); }
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
-        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await fsDel(fsDoc(db, logsCol, id)); loadHistorico(); } };
-        window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await fsDel(fsDoc(db, agentsCol, id)); loadAgents(); } };
+        window.deleteLog = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, logsCol, id)); loadHistorico(); } };
+        window.deleteAgent = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, agentsCol, id)); loadAgents(); } };
     </script>
 </body>
 </html>
