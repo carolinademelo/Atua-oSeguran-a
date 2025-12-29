@@ -452,38 +452,41 @@
             const data = document.getElementById('data-atuacao').value;
             const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
             if (!data || selectedBoxes.length === 0) { showMessage('Selecione data e scooteira.', 'error'); return; }
+            
             const container = document.getElementById('agentes-detalhes-container');
             container.innerHTML = '';
+            
             selectedBoxes.forEach(box => {
                 const nome = box.value;
                 const agent = currentAgents.find(a => a.nome === nome);
                 
-                // CRIAÇÃO DO SELECT DE SQUAD
+                if (!agent) return;
+
                 const squadOptions = SQUADS_OPCOES.map(s => 
                     `<option value="${s}" ${s === agent.squadPadrao ? 'selected' : ''}>${s}</option>`
                 ).join('');
 
                 container.innerHTML += `
-                    <div class="p-4 border rounded-lg bg-gray-50">
+                    <div class="p-4 border rounded-lg bg-gray-50 confirm-row" data-nome="${agent.nome}">
                         <h4 class="font-bold text-indigo-900 mb-2">${agent.nome}</h4>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
                                 <label class="text-xs font-semibold text-gray-500">Entrada</label>
-                                <input type="time" name="ent_${nome}" value="${agent.entradaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                                <input type="time" value="${agent.entradaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-ent">
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-500">Saída</label>
-                                <input type="time" name="sai_${nome}" value="${agent.saidaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                                <input type="time" value="${agent.saidaPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-sai">
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-500">Squad do Dia</label>
-                                <select name="sq_${nome}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 bg-white">
+                                <select class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 bg-white confirm-squad">
                                     ${squadOptions}
                                 </select>
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-gray-500">Turno</label>
-                                <input type="text" name="trn_${nome}" value="${agent.turnoPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500">
+                                <input type="text" value="${agent.turnoPadrao}" class="w-full border border-gray-300 rounded p-1.5 text-sm focus:border-indigo-500 confirm-turno">
                             </div>
                         </div>
                     </div>`;
@@ -494,17 +497,17 @@
         document.getElementById('details-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const dataStr = document.getElementById('data-atuacao').value;
-            const selectedBoxes = document.querySelectorAll('.agent-checkbox:checked');
+            const rows = document.querySelectorAll('.confirm-row');
+            
             let conflictFound = false;
             let successCount = 0;
 
-            for (const box of selectedBoxes) {
-                const nome = box.value;
-                const ent = document.querySelector(`input[name="ent_${nome}"]`).value;
-                const sai = document.querySelector(`input[name="sai_${nome}"]`).value;
-                // Agora pegamos o valor do Select
-                const sq = document.querySelector(`select[name="sq_${nome}"]`).value; 
-                const trn = document.querySelector(`input[name="trn_${nome}"]`).value;
+            for (const row of rows) {
+                const nome = row.getAttribute('data-nome');
+                const ent = row.querySelector('.confirm-ent').value;
+                const sai = row.querySelector('.confirm-sai').value;
+                const sq = row.querySelector('.confirm-squad').value;
+                const trn = row.querySelector('.confirm-turno').value;
                 
                 if (await verificarSobreposicao(nome, dataStr, ent, sai)) { conflictFound = true; continue; }
 
@@ -592,7 +595,7 @@
             currentHistoryList = []; 
             snap.forEach(d => currentHistoryList.push({id: d.id, ...d.data()}));
             
-            // ALTERAÇÃO: ORDEM DECRESCENTE (MAIS RECENTE PRIMEIRO)
+            // ORDENAÇÃO: Mais recente primeiro
             currentHistoryList.sort((a,b) => b.data.localeCompare(a.data));
             
             tbody.innerHTML = currentHistoryList.length ? '' : '<tr><td colspan="9" class="text-center py-8">Nenhum registro.</td></tr>';
