@@ -340,30 +340,18 @@
             }
         };
 
-        // --- FUNÇÃO DE IMPORTAÇÃO CORRIGIDA ---
+        // --- IMPORTAÇÃO EXCEL ---
         window.processarExcel = async (input) => {
             const file = input.files[0];
             if (!file) return;
 
             setLoading(true);
             const reader = new FileReader();
-            
-            // Verifica se é CSV para tratar encoding
-            const isCSV = file.name.toLowerCase().endsWith('.csv');
 
             reader.onload = async (e) => {
                 try {
-                    let workbook;
-                    if (isCSV) {
-                        // Se CSV, lê como String (já decodificada pelo FileReader como ISO-8859-1)
-                        const text = e.target.result;
-                        workbook = XLSX.read(text, { type: 'string' });
-                    } else {
-                        // Se Excel, lê como Array Buffer
-                        const data = new Uint8Array(e.target.result);
-                        workbook = XLSX.read(data, { type: 'array' });
-                    }
-
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { raw: false });
 
@@ -373,15 +361,7 @@
                     const duplicados = [];
                     let salvos = 0;
                     
-                    // Normalização de chaves para buscar colunas com nomes variados
-                    const dadosNormalizados = jsonData.map(row => {
-                         const obj = {};
-                         Object.keys(row).forEach(k => obj[k.trim().toLowerCase()] = row[k]);
-                         return obj;
-                    });
-
-                    // Pega datas únicas para checar no DB
-                    const datasNoExcel = [...new Set(dadosNormalizados.map(row => formatarDataExcel(row['data'])))];
+                    const datasNoExcel = [...new Set(jsonData.map(row => formatarDataExcel(row['Data'])))];
                     
                     const registrosExistentes = new Set();
                     for(const d of datasNoExcel) {
@@ -391,13 +371,12 @@
                         snap.forEach(doc => registrosExistentes.add(`${doc.data().scooteira}_${d}`));
                     }
 
-                    for (const row of dadosNormalizados) {
-                        // Busca colunas de forma flexível (Ex: "Nome" ou "Scooteira" ou "Agente")
-                        const nome = row['nome'] || row['scooteira'] || row['agente'];
-                        const dataBr = row['data']; 
-                        const entrada = row['entrada'] || row['inicio'];
-                        const saida = row['saida'] || row['saída'] || row['fim']; // 'saída' com acento
-                        const squad = row['squad'] || 'Outro';
+                    for (const row of jsonData) {
+                        const nome = row['Nome'] || row['Scooteira'] || row['Agente'];
+                        const dataBr = row['Data']; 
+                        const entrada = row['Entrada'] || row['Inicio'];
+                        const saida = row['Saida'] || row['Fim'];
+                        const squad = row['Squad'] || 'Outro';
 
                         if (!nome || !dataBr || !entrada || !saida) continue;
 
@@ -437,18 +416,12 @@
                     
                 } catch (err) {
                     console.error(err);
-                    alert("Erro ao ler arquivo. Verifique se as colunas são: Data, Nome, Squad, Entrada, Saida.");
+                    alert("Erro ao ler Excel. Verifique o formato (Colunas: Data, Nome, Squad, Entrada, Saida)");
                 } finally {
                     setLoading(false);
                 }
             };
-            
-            // Se for CSV, força leitura como ISO-8859-1 (Brasil/Win1252) para corrigir acentos
-            if (isCSV) {
-                reader.readAsText(file, "ISO-8859-1");
-            } else {
-                reader.readAsArrayBuffer(file);
-            }
+            reader.readAsArrayBuffer(file);
         };
 
         function formatarDataExcel(val) {
@@ -457,7 +430,6 @@
                 const parts = val.split('/');
                 if(parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
             }
-            // Retorna se já estiver em ISO ou outro formato
             return val;
         }
 
