@@ -92,8 +92,8 @@
                             <button onclick="window.handleEntrySubmission()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-bold shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
                                 <i data-lucide="clock" class="w-4 h-4"></i> Lançar
                             </button>
-                            <button onclick="const fi=document.getElementById('file-upload'); fi.value=''; fi.click()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
-                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Importar Dados
+                            <button onclick="document.getElementById('file-upload').click()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Importar Excel
                             </button>
                         </div>
                     </div>
@@ -340,7 +340,7 @@
             }
         };
 
-        // --- IMPORTAÇÃO EXCEL ATUALIZADA (NOVOS CABEÇALHOS) ---
+        // --- IMPORTAÇÃO EXCEL ---
         window.processarExcel = async (input) => {
             const file = input.files[0];
             if (!file) return;
@@ -362,8 +362,8 @@
                     let salvos = 0;
                     
                     const datasNoExcel = [...new Set(jsonData.map(row => formatarDataExcel(row['Data'])))];
-                    const registrosExistentes = new Set();
                     
+                    const registrosExistentes = new Set();
                     for(const d of datasNoExcel) {
                         if(!d) continue;
                         const q = query(collection(db, COLLECTIONS.LOGS), where("data", "==", d));
@@ -372,28 +372,21 @@
                     }
 
                     for (const row of jsonData) {
-                        // Mapeamento baseado nos cabeçalhos informados
-                        // Prioriza 'Pseudo', se não tiver, tenta 'Nome' (caso mude)
-                        const nome = row['Pseudo'] || row['Nome'];
+                        const nome = row['Nome'] || row['Scooteira'] || row['Agente'];
                         const dataBr = row['Data']; 
-                        const entrada = row['Hora de início do turno'];
-                        const saida = row['Hora de término do turno'];
-                        
-                        // Squad: tenta a coluna 'Squad que você atuou', depois 'Sua squad'
-                        const squad = row['Squad que você atuou'] || row['Sua squad'] || 'Outro';
+                        const entrada = row['Entrada'] || row['Inicio'];
+                        const saida = row['Saida'] || row['Fim'];
+                        const squad = row['Squad'] || 'Outro';
 
-                        // Se faltar algum dado essencial, pula
                         if (!nome || !dataBr || !entrada || !saida) continue;
 
                         const dataIso = formatarDataExcel(dataBr);
                         
-                        // Verifica duplicidade no banco ou no próprio arquivo
                         if (registrosExistentes.has(`${nome}_${dataIso}`)) {
                             duplicados.push(`${nome} (${dataIso})`);
                             continue;
                         }
 
-                        // Cálculo de horas
                         const d1 = new Date(`2000-01-01T${entrada}`);
                         const d2 = new Date(`2000-01-01T${saida}`);
                         let horas = (d2 - d1) / 3600000;
@@ -415,17 +408,17 @@
 
                     await Promise.all(batchPromises);
                     
-                    let msg = `${salvos} registros importados com sucesso!`;
-                    if(duplicados.length > 0) msg += `\n${duplicados.length} duplicados ignorados.`;
+                    let msg = `${salvos} registros importados!`;
+                    if(duplicados.length > 0) msg += ` ${duplicados.length} duplicados ignorados.`;
                     
                     alert(msg);
+                    input.value = ""; 
                     
                 } catch (err) {
                     console.error(err);
-                    alert("Erro ao ler Excel.\nVerifique se as colunas estão corretas (Pseudo, Data, Hora de início do turno, etc).");
+                    alert("Erro ao ler Excel. Verifique o formato (Colunas: Data, Nome, Squad, Entrada, Saida)");
                 } finally {
                     setLoading(false);
-                    input.value = ""; // Limpa o input para permitir reenvio
                 }
             };
             reader.readAsArrayBuffer(file);
